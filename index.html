@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>目标追踪 · 手机版</title>
+    <title>目标追踪 · 极简灰</title>
     <style>
         * {
             margin: 0;
@@ -13,20 +13,19 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f5f7fa;
+            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8f8f8;
             min-height: 100vh;
         }
 
         #app {
             max-width: 500px;
             margin: 0 auto;
-            background-color: #f5f7fa;
+            background-color: #f8f8f8;
             min-height: 100vh;
             position: relative;
         }
 
-        /* 页面容器 */
         .page {
             padding: 16px;
             padding-bottom: 32px;
@@ -34,11 +33,11 @@
 
         /* 主目标卡片 */
         .main-goal-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            background: #5a7a9a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
             color: white;
         }
 
@@ -50,49 +49,26 @@
         }
 
         .goal-icon {
-            font-size: 32px;
+            font-size: 28px;
+            opacity: 0.8;
         }
 
         .goal-text {
-            font-size: 24px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 400;
             flex: 1;
             word-break: break-word;
+            letter-spacing: 0.5px;
+            color: #ffffff;
         }
 
         .edit-hint {
-            font-size: 12px;
-            opacity: 0.8;
+            font-size: 11px;
+            opacity: 0.5;
             white-space: nowrap;
+            font-weight: 300;
         }
 
-        .edit-goal {
-            display: flex;
-            gap: 8px;
-        }
-
-        .goal-input {
-            flex: 1;
-            padding: 12px;
-            font-size: 18px;
-            border: 2px solid #fff;
-            border-radius: 12px;
-            outline: none;
-            background: rgba(255,255,255,0.9);
-        }
-
-        .save-btn {
-            padding: 12px 20px;
-            background-color: #fff;
-            color: #667eea;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* 项目列表 */
         .projects-header {
             display: flex;
             justify-content: space-between;
@@ -101,259 +77,451 @@
         }
 
         .section-title {
-            font-size: 18px;
-            color: #333;
+            font-size: 16px;
+            color: #555;
             margin: 0;
+            font-weight: 400;
+            letter-spacing: 0.3px;
         }
 
         .add-project-btn {
-            padding: 8px 16px;
-            background-color: #667eea;
+            padding: 6px 14px;
+            background-color: #5a7a9a;
             color: white;
             border: none;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 400;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-project-btn:hover {
+            background-color: #4a6b8a;
         }
 
         .projects-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 24px;
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
+        /* 项目卡片 */
         .project-card {
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            background-color: white;
-            border-radius: 16px;
-            text-decoration: none;
-            color: #333;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            position: relative;
-            border: 1px solid #f0f0f0;
+            background-color: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #eaeaea;
+            overflow: hidden;
+            padding: 16px 12px;
             cursor: pointer;
         }
 
-        .project-icon {
-            font-size: 32px;
-            margin-right: 16px;
+        .project-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            cursor: pointer;
         }
 
         .project-info {
             flex: 1;
+            cursor: pointer;
         }
 
         .project-name {
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 4px;
+            font-size: 16px;
+            font-weight: 400;
+            margin-bottom: 2px;
+            color: #333;
+            cursor: pointer;
         }
 
         .project-target {
-            font-size: 13px;
-            color: #666;
+            font-size: 12px;
+            color: #888;
+            font-weight: 300;
+            cursor: pointer;
         }
 
-        .delete-btn {
+        .project-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            cursor: default;
+        }
+
+        .project-edit-btn,
+        .project-delete-btn {
+            width: 22px;
+            height: 22px;
             background: none;
             border: none;
-            font-size: 20px;
+            font-size: 16px;
             cursor: pointer;
-            padding: 8px;
-            opacity: 0.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            transition: color 0.2s;
+            padding: 0;
+            opacity: 0.7;
         }
 
-        .delete-btn:hover {
+        .project-edit-btn:hover,
+        .project-delete-btn:hover {
+            color: #666;
             opacity: 1;
         }
 
-        /* 进度摘要 */
+        /* 进度条区域 */
+        .progress-section {
+            margin-top: 8px;
+            cursor: default;
+        }
+
+        .progress-bar-container {
+            height: 6px;
+            background-color: #eaeaea;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #5a7a9a;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* 进度数值和按钮放在同一行，左右布局 */
+        .progress-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        /* 左边的进度数值 */
+        .progress-value {
+            font-size: 12px;
+            color: #5a7a9a;
+            font-weight: 400;
+        }
+
+        /* 右边的按钮组 */
+        .button-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn {
+            width: 22px;
+            height: 22px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            color: #5a7a9a;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .control-btn:hover {
+            background-color: #5a7a9a;
+            color: white;
+            border-color: #5a7a9a;
+        }
+
+        .control-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .current-count {
+            font-size: 12px;
+            color: #333;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        /* 进度卡片 */
         .summary-card {
             background-color: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-top: 20px;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #eaeaea;
+            margin-top: 16px;
         }
 
         .summary-title {
-            font-size: 16px;
+            font-size: 14px;
             margin-bottom: 12px;
-            color: #333;
+            color: #666;
+            font-weight: 400;
         }
 
         .progress-bar {
-            height: 12px;
+            height: 4px;
             background-color: #f0f0f0;
-            border-radius: 6px;
+            border-radius: 2px;
             overflow: hidden;
             margin-bottom: 8px;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            border-radius: 6px;
-            text-align: right;
-            padding-right: 8px;
-            font-size: 10px;
-            line-height: 12px;
-            color: white;
+            background: #5a7a9a;
+            border-radius: 2px;
         }
 
         .summary-text {
-            font-size: 14px;
-            color: #666;
+            font-size: 12px;
+            color: #888;
+            font-weight: 300;
         }
 
-        /* 月视图 */
+        /* 月视图头部 */
         .month-header {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .nav-btn {
-            padding: 8px 16px;
+            padding: 4px 12px;
             background-color: white;
             border: 1px solid #e0e0e0;
-            border-radius: 20px;
-            font-size: 14px;
+            border-radius: 16px;
+            font-size: 13px;
             cursor: pointer;
-            color: #333;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background-color: #f5f5f5;
+            border-color: #ccc;
         }
 
         .project-title {
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 400;
             margin: 0;
-            color: #333;
+            color: #444;
             flex: 1;
             word-break: break-word;
+        }
+
+        .stats-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #eaeaea;
         }
 
         .month-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: white;
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 12px;
         }
 
         .month-btn {
-            padding: 8px 12px;
-            background-color: #f5f5f5;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 4px 12px;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            font-size: 13px;
             cursor: pointer;
-            color: #333;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .month-btn:hover {
+            background-color: #f5f5f5;
+            border-color: #ccc;
         }
 
         .current-month {
-            font-size: 18px;
-            font-weight: 500;
-            color: #667eea;
+            font-size: 15px;
+            font-weight: 400;
+            color: #666;
         }
 
-        .days-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .day-card {
-            background-color: white;
-            border-radius: 12px;
-            padding: 12px;
-            border: 1px solid #f0f0f0;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        }
-
-        .today-card {
-            border: 2px solid #667eea;
-            background-color: #f0f4ff;
-        }
-
-        .day-header {
+        .progress-info {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .day-number {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .today-badge {
             font-size: 12px;
-            background-color: #667eea;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-        }
-
-        .day-textarea {
-            width: 100%;
-            border: 1px solid #f0f0f0;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 14px;
-            resize: vertical;
-            font-family: inherit;
-            background-color: #fafafa;
-        }
-
-        .day-textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            background-color: #fff;
-        }
-
-        /* 统计卡片 */
-        .stats-card {
-            background-color: white;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-top: 12px;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #666;
+            color: #888;
             margin-bottom: 4px;
         }
 
-        .stat-value {
-            font-size: 18px;
-            font-weight: 600;
-            color: #667eea;
+        .month-progress-bar {
+            height: 4px;
+            background-color: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .month-progress-fill {
+            height: 100%;
+            background: #5a7a9a;
+            border-radius: 2px;
+        }
+
+        .daily-records {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #eaeaea;
+        }
+
+        .records-title {
+            font-size: 14px;
+            margin: 0 0 16px 0;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .date-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            min-height: 26px;
+        }
+
+        .date-column {
+            width: 55px;
+            color: #666;
+            padding: 0;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 4px;
+            min-height: 26px;
+        }
+
+        .date-day {
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.4;
+            min-width: 20px;
+            text-align: right;
+            color: #666;
+        }
+
+        .date-week {
+            font-size: 14px;
+            color: #999;
+            font-weight: 300;
+            line-height: 1.4;
+            min-width: 20px;
+            text-align: left;
+        }
+
+        .today-date .date-day,
+        .today-date .date-week {
+            color: #5a7a9a;
+        }
+
+        .today-label {
+            font-size: 10px;
+            color: #5a7a9a;
+            font-weight: 300;
+            margin-left: 2px;
+            background-color: #f0f4fa;
+            padding: 1px 3px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .content-column {
+            flex: 1;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 0;
+            min-height: 26px;
+        }
+
+        .record-text-wrapper {
+            flex: 1;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+            padding: 3px 8px;
+            min-height: 26px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #f0f0f0;
+        }
+
+        .record-text {
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    line-height: 1.5;
+    color: #333;
+    white-space: pre-wrap;
+    word-break: break-word;
+    width: 100%;
+    font-weight: 400;  /* 正常粗细 */
+    -webkit-font-smoothing: antialiased;  /* 字体抗锯齿，让文字更平滑 */
+    -moz-osx-font-smoothing: grayscale;
+}.record-text {
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    line-height: 1.5;
+    color: #333;
+    white-space: pre-wrap;
+    word-break: break-word;
+    width: 100%;
+    font-weight: 400;  /* 正常粗细 */
+    -webkit-font-smoothing: antialiased;  /* 字体抗锯齿，让文字更平滑 */
+    -moz-osx-font-smoothing: grayscale;
+}
+
+        .today-content .record-text-wrapper {
+            background-color: #f0f4fa;
+            border-color: #d0e0f0;
+        }
+
+        .edit-btn {
+            width: 24px;
+            height: 24px;
+            background: none;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            color: #999;
+            flex-shrink: 0;
+            padding: 0;
+            transition: all 0.2s;
+            opacity: 0.7;
+        }
+
+        .edit-btn:hover {
+            border-color: #aaa;
+            color: #666;
+            opacity: 1;
+        }
+
+        .today-content .edit-btn {
+            border-color: #5a7a9a;
+            color: #5a7a9a;
         }
 
         /* 弹窗 */
@@ -363,7 +531,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0,0,0,0.3);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -373,29 +541,48 @@
 
         .modal-content {
             background-color: white;
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 20px;
             width: 100%;
             max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
+            border: 1px solid #eaeaea;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         .modal-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
+            font-size: 16px;
+            font-weight: 400;
+            color: #555;
             margin-bottom: 16px;
             text-align: center;
         }
 
-        .modal-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 16px;
+       .modal-input,
+.modal-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;  /* 修改这里 */
+    margin-bottom: 16px;
+    color: #555;
+    font-weight: 400;  /* 从300改成400，让输入的文字更清晰 */
+    background-color: #fafafa;
+    -webkit-font-smoothing: antialiased;  /* 添加抗锯齿 */
+    -moz-osx-font-smoothing: grayscale;
+}
+
+        .modal-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-input:focus,
+        .modal-textarea:focus {
+            outline: none;
+            border-color: #5a7a9a;
+            background-color: white;
         }
 
         .modal-buttons {
@@ -406,42 +593,34 @@
         .modal-btn {
             flex: 1;
             padding: 12px;
-            border: none;
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 400;
             cursor: pointer;
-        }
-
-        .modal-btn-primary {
-            background-color: #667eea;
-            color: white;
-        }
-
-        .modal-btn-secondary {
-            background-color: #f0f0f0;
-            color: #333;
-        }
-
-        /* 隐藏元素 */
-        .hidden {
-            display: none !important;
-        }
-
-        /* 加载状态 */
-        .loading {
-            text-align: center;
-            padding: 40px;
+            transition: all 0.2s;
+            background-color: white;
             color: #666;
         }
 
-        /* 空状态 */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
-            background-color: #f8f9fa;
-            border-radius: 12px;
+        .modal-btn-primary {
+            background-color: #5a7a9a;
+            border-color: #5a7a9a;
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background-color: #4a6b8a;
+            border-color: #4a6b8a;
+        }
+
+        .modal-btn-secondary:hover {
+            background-color: #f5f5f5;
+            border-color: #ccc;
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -449,33 +628,31 @@
     <div id="app"></div>
 
     <script>
-        // 应用状态
-        const STORAGE_KEY = 'goal_tracker_v2';
+        const STORAGE_KEY = 'goal_tracker_v7';
         
-        // 主要目标
         let mainGoal = '赚钱1000元';
         
-        // 项目列表
+        // 项目列表 - 进度条直接显示
         let projects = [
-            { id: 1, name: '淘宝开店', icon: '🛒', target: '月入500元' },
-            { id: 2, name: '闲鱼卖东西', icon: '📱', target: '卖出10件' },
-            { id: 3, name: '抖音带货', icon: '🎵', target: '涨粉1000' }
+            { id: 1, name: '淘宝开店', target: '月入500元', progressTarget: 10, progressCurrent: 3, progressUnit: '件' },
+            { id: 2, name: '闲鱼卖东西', target: '卖出10件', progressTarget: 10, progressCurrent: 5, progressUnit: '件' },
+            { id: 3, name: '抖音带货', target: '涨粉1000', progressTarget: 1000, progressCurrent: 230, progressUnit: '粉' }
         ];
         
-        // 每日记录: { projectId_month: { day: content } }
         let dailyRecords = {};
 
-        // 当前页面
         let currentPage = 'home';
         let currentProjectId = null;
-        let currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        let currentMonth = new Date().toISOString().slice(0, 7);
 
-        // 弹窗状态
         let showAddProjectModal = false;
         let showEditGoalModal = false;
-        let tempGoalText = '';
+        let showEditRecordModal = false;
+        let showEditProjectModal = false;
+        let currentEditDay = null;
+        let currentEditContent = '';
+        let currentEditProjectId = null;
 
-        // 加载数据
         function loadData() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
@@ -490,32 +667,31 @@
             }
         }
 
-        // 保存数据
         function saveData() {
             try {
-                const data = {
-                    mainGoal,
-                    projects,
-                    dailyRecords
-                };
+                const data = { mainGoal, projects, dailyRecords };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             } catch (error) {
                 console.error('保存数据失败:', error);
             }
         }
 
-        // 随机图标
-        function getRandomIcon() {
-            const icons = ['📦', '🎮', '📚', '💻', '🎨', '🏃', '🎵', '📷', '✈️', '🍳'];
-            return icons[Math.floor(Math.random() * icons.length)];
+        function safeString(value) {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'object') {
+                try {
+                    return JSON.stringify(value);
+                } catch {
+                    return '';
+                }
+            }
+            return String(value);
         }
 
-        // 获取当月天数
         function getDaysInMonth(year, month) {
             return new Date(year, month + 1, 0).getDate();
         }
 
-        // 获取当前日期的年月
         function getCurrentYearMonth() {
             const now = new Date();
             return {
@@ -525,116 +701,171 @@
             };
         }
 
-        // 计算项目进度
-        function calculateProjectProgress(projectId, monthStr) {
-            const key = `${projectId}_${monthStr}`;
-            const records = dailyRecords[key] || {};
-            const days = Object.keys(records);
-            const daysWithContent = days.filter(day => records[day].trim() !== '');
-            
-            if (days.length === 0) return 0;
-            
-            const totalDays = getDaysInMonth(
-                parseInt(monthStr.split('-')[0]),
-                parseInt(monthStr.split('-')[1]) - 1
-            );
-            
-            return Math.round((daysWithContent.length / totalDays) * 100);
+        function getSafeString(value) {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'string') return value;
+            return String(value);
         }
 
-        // 获取所有项目的总进度
+        function hasContent(value) {
+            const str = getSafeString(value);
+            return str.trim() !== '';
+        }
+
+        // 计算总体进度
         function getOverallProgress() {
-            const currentMonthStr = getCurrentYearMonth().monthStr;
-            let totalDays = 0;
-            let totalDaysWithContent = 0;
+            if (projects.length === 0) return 0;
             
-            projects.forEach(project => {
-                const key = `${project.id}_${currentMonthStr}`;
-                const records = dailyRecords[key] || {};
-                const days = Object.keys(records);
-                totalDays += days.length;
-                totalDaysWithContent += days.filter(day => records[day].trim() !== '').length;
-            });
+            let totalProgress = 0;
+            for (let i = 0; i < projects.length; i++) {
+                const p = projects[i];
+                if (p.progressTarget && p.progressTarget > 0) {
+                    totalProgress += (p.progressCurrent || 0) / p.progressTarget * 100;
+                }
+            }
             
-            if (totalDays === 0) return 0;
-            
-            const monthDays = getDaysInMonth(
-                parseInt(currentMonthStr.split('-')[0]),
-                parseInt(currentMonthStr.split('-')[1]) - 1
-            );
-            
-            return Math.round((totalDaysWithContent / (projects.length * monthDays)) * 100);
+            return Math.round(totalProgress / projects.length);
         }
 
-        // 获取当月已完成天数
-        function getCompletedDaysCount() {
-            const currentMonthStr = getCurrentYearMonth().monthStr;
+        // 获取已完成项目数量
+        function getCompletedProjectsCount() {
             let count = 0;
-            
-            projects.forEach(project => {
-                const key = `${project.id}_${currentMonthStr}`;
-                const records = dailyRecords[key] || {};
-                Object.values(records).forEach(content => {
-                    if (content.trim() !== '') count++;
-                });
-            });
-            
+            for (let i = 0; i < projects.length; i++) {
+                const p = projects[i];
+                if (p.progressCurrent >= p.progressTarget) {
+                    count++;
+                }
+            }
             return count;
         }
 
-        // 主页渲染
+        function getWeekday(year, month, day) {
+            const date = new Date(year, month - 1, day);
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            return weekdays[date.getDay()];
+        }
+
+        function updateProgress(projectId, delta) {
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
+                const newValue = (project.progressCurrent || 0) + delta;
+                if (newValue >= 0 && newValue <= project.progressTarget) {
+                    project.progressCurrent = newValue;
+                    saveData();
+                    render();
+                }
+            }
+        }
+
+        function openRecordModal(day, content) {
+            currentEditDay = day;
+            currentEditContent = getSafeString(content);
+            showEditRecordModal = true;
+            render();
+            setTimeout(() => {
+                const textarea = document.getElementById('record-input');
+                if (textarea) {
+                    textarea.focus();
+                    textarea.value = currentEditContent;
+                }
+            }, 100);
+        }
+
+        function closeRecordModal() {
+            showEditRecordModal = false;
+            currentEditDay = null;
+            currentEditContent = '';
+            render();
+        }
+
+        function saveRecord() {
+            const textarea = document.getElementById('record-input');
+            if (textarea && currentEditDay) {
+                const content = textarea.value;
+                const key = currentProjectId + '_' + currentMonth;
+                if (!dailyRecords[key]) dailyRecords[key] = {};
+                dailyRecords[key][currentEditDay] = content;
+                saveData();
+            }
+            closeRecordModal();
+        }
+
         function renderHome() {
             const overallProgress = getOverallProgress();
-            const completedDays = getCompletedDaysCount();
-            const monthDays = getDaysInMonth(
-                new Date().getFullYear(),
-                new Date().getMonth()
-            );
+            const completedProjects = getCompletedProjectsCount();
+            
+            let projectsHtml = '';
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                const projectName = safeString(project.name);
+                const projectTarget = safeString(project.target);
+                const progressPercent = project.progressTarget > 0 
+                    ? Math.round((project.progressCurrent || 0) / project.progressTarget * 100) 
+                    : 0;
+                
+                projectsHtml += `
+    <div class="project-card">
+        <div class="project-header" onclick="goToProject(${project.id})">
+            <div class="project-info">
+                <div class="project-name">${projectName}</div>
+                <div class="project-target">${projectTarget}</div>
+            </div>
+            <div class="project-actions" onclick="event.stopPropagation()">
+                <button class="project-edit-btn" onclick="editProject(event, ${project.id})">✎</button>
+                <button class="project-delete-btn" onclick="deleteProject(event, ${project.id})">✕</button>
+            </div>
+        </div>
+        
+        <div class="progress-section" onclick="event.stopPropagation()">
+            <!-- 进度条 -->
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: ${progressPercent}%;"></div>
+            </div>
+            
+            <!-- 进度数值和加减按钮放在同一行：数值在左，按钮在右 -->
+            <div class="progress-controls">
+                <span class="progress-value">${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}</span>
+                <div class="button-group">
+                    <button class="control-btn" onclick="updateProgress(${project.id}, -1); event.stopPropagation();" ${project.progressCurrent <= 0 ? 'disabled' : ''}>−</button>
+                    <span class="current-count">${project.progressCurrent || 0}</span>
+                    <button class="control-btn" onclick="updateProgress(${project.id}, 1); event.stopPropagation();" ${project.progressCurrent >= project.progressTarget ? 'disabled' : ''}>+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+`;
+            }
             
             return `
                 <div class="page">
-                    <!-- 主目标卡片 -->
                     <div class="main-goal-card">
                         <div class="goal-display" onclick="openEditGoalModal()">
                             <span class="goal-icon">🎯</span>
-                            <span class="goal-text">${mainGoal}</span>
+                            <span class="goal-text">${safeString(mainGoal)}</span>
                             <span class="edit-hint">点击修改</span>
                         </div>
                     </div>
 
-                    <!-- 项目列表头部 -->
                     <div class="projects-header">
                         <h3 class="section-title">我的项目</h3>
                         <button class="add-project-btn" onclick="openAddProjectModal()">+ 新建</button>
                     </div>
 
-                    <!-- 项目列表 -->
                     <div class="projects-list">
-                        ${projects.map(project => `
-                            <div class="project-card" onclick="goToProject(${project.id})">
-                                <span class="project-icon">${project.icon}</span>
-                                <div class="project-info">
-                                    <div class="project-name">${project.name}</div>
-                                    <div class="project-target">${project.target}</div>
-                                </div>
-                                <button class="delete-btn" onclick="deleteProject(event, ${project.id})">🗑️</button>
-                            </div>
-                        `).join('')}
+                        ${projectsHtml}
                     </div>
 
-                    <!-- 本月进度摘要 -->
                     <div class="summary-card">
-                        <h4 class="summary-title">本月进度</h4>
+                        <h4 class="summary-title">总体进度</h4>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${overallProgress}%">${overallProgress}%</div>
+                            <div class="progress-fill" style="width: ${overallProgress}%"></div>
                         </div>
-                        <p class="summary-text">已完成 ${completedDays} 条记录 / 总计 ${projects.length * monthDays} 条</p>
+                        <p class="summary-text">已完成 ${completedProjects}/${projects.length} 个项目</p>
                     </div>
                 </div>
             `;
         }
 
-        // 月视图渲染
         function renderMonthlyView() {
             const project = projects.find(p => p.id === currentProjectId);
             if (!project) {
@@ -644,102 +875,84 @@
 
             const [year, month] = currentMonth.split('-').map(Number);
             const daysInMonth = getDaysInMonth(year, month - 1);
-            
-            // 获取该项目的当月记录
-            const key = `${currentProjectId}_${currentMonth}`;
+            const key = currentProjectId + '_' + currentMonth;
             const records = dailyRecords[key] || {};
-
-            // 生成日期列表
-            const days = [];
-            for (let i = 1; i <= daysInMonth; i++) {
-                days.push(i);
-            }
-
             const today = new Date();
             const todayStr = today.toISOString().slice(0, 7);
             const todayDay = today.getDate();
 
-            // 计算当月已完成天数
-            const daysWithContent = Object.values(records).filter(v => v.trim() !== '').length;
+            let daysWithContent = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+                if (hasContent(records[d])) daysWithContent++;
+            }
             const progress = Math.round((daysWithContent / daysInMonth) * 100);
+
+            let daysRows = '';
+            for (let day = 1; day <= daysInMonth; day++) {
+                const isToday = currentMonth === todayStr && day === todayDay;
+                const content = getSafeString(records[day]);
+                const weekday = getWeekday(year, month, day);
+                
+                const todayClass = isToday ? 'today-date' : '';
+                const contentClass = isToday ? 'today-content' : '';
+                const escapedContent = content.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
+                daysRows += `
+                    <div class="date-row">
+                        <div class="date-column ${todayClass}">
+                            <span class="date-day">${day}</span>
+                            <span class="date-week">${weekday}</span>
+                            
+                        </div>
+                        <div class="content-column ${contentClass}">
+                            <div class="record-text-wrapper">
+                                <div class="record-text">${content.replace(/</g, '&lt;')}</div>
+                            </div>
+                            <button class="edit-btn" onclick="openRecordModal(${day}, '${escapedContent}')">✎</button>
+                        </div>
+                    </div>
+                `;
+            }
 
             return `
                 <div class="page">
-                    <!-- 头部 -->
                     <div class="month-header">
                         <button class="nav-btn" onclick="goToHome()">← 返回</button>
-                        <h2 class="project-title">${project.name}</h2>
+                        <h2 class="project-title">${safeString(project.name)}</h2>
                     </div>
 
-                    <!-- 月份切换 -->
-                    <div class="month-nav">
-                        <button class="month-btn" onclick="changeMonth(-1)">◀ 上月</button>
-                        <span class="current-month">${currentMonth}</span>
-                        <button class="month-btn" onclick="changeMonth(1)">下月 ▶</button>
-                    </div>
-
-                    <!-- 统计卡片 -->
                     <div class="stats-card">
-                        <div style="font-weight: 500; margin-bottom: 8px;">📊 本月统计</div>
-                        <div class="stats-grid">
-                            <div class="stat-item">
-                                <div class="stat-label">已记录</div>
-                                <div class="stat-value">${daysWithContent}</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">总天数</div>
-                                <div class="stat-value">${daysInMonth}</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">完成率</div>
-                                <div class="stat-value">${progress}%</div>
-                            </div>
+                        <div class="month-nav">
+                            <button class="month-btn" onclick="changeMonth(-1)">◀ 上月</button>
+                            <span class="current-month">${currentMonth}</span>
+                            <button class="month-btn" onclick="changeMonth(1)">下月 ▶</button>
+                        </div>
+                        <div class="progress-info">
+                            <span>本月打卡</span>
+                            <span>${daysWithContent}/${daysInMonth} 天</span>
+                        </div>
+                        <div class="month-progress-bar">
+                            <div class="month-progress-fill" style="width: ${progress}%;"></div>
                         </div>
                     </div>
 
-                    <!-- 每日记录 -->
-                    <div class="days-container">
-                        ${days.map(day => {
-                            const isToday = currentMonth === todayStr && day === todayDay;
-                            const content = records[day] || '';
-                            
-                            return `
-                                <div class="day-card ${isToday ? 'today-card' : ''}">
-                                    <div class="day-header">
-                                        <span class="day-number">${day}日</span>
-                                        ${isToday ? '<span class="today-badge">今天</span>' : ''}
-                                    </div>
-                                    <textarea
-                                        class="day-textarea"
-                                        placeholder="记录今天做的事情..."
-                                        rows="3"
-                                        onchange="saveDailyRecord(${currentProjectId}, ${day}, this.value)"
-                                    >${content}</textarea>
-                                </div>
-                            `;
-                        }).join('')}
+                    <div class="daily-records">
+                        <h3 class="records-title">每日记录</h3>
+                        ${daysRows}
                     </div>
                 </div>
             `;
         }
 
-        // 渲染弹窗
         function renderModals() {
             let modals = '';
 
-            // 修改主目标弹窗
             if (showEditGoalModal) {
                 modals += `
                     <div class="modal-overlay" onclick="closeEditGoalModal()">
                         <div class="modal-content" onclick="event.stopPropagation()">
                             <div class="modal-title">修改主要目标</div>
-                            <input 
-                                type="text" 
-                                class="modal-input" 
-                                id="goal-input"
-                                value="${mainGoal}"
-                                placeholder="输入主要目标"
-                            >
+                            <input type="text" id="goal-input" class="modal-input" value="${safeString(mainGoal).replace(/"/g, '&quot;')}" placeholder="输入主要目标">
                             <div class="modal-buttons">
                                 <button class="modal-btn modal-btn-secondary" onclick="closeEditGoalModal()">取消</button>
                                 <button class="modal-btn modal-btn-primary" onclick="saveGoalEdit()">保存</button>
@@ -749,24 +962,15 @@
                 `;
             }
 
-            // 添加项目弹窗
             if (showAddProjectModal) {
                 modals += `
                     <div class="modal-overlay" onclick="closeAddProjectModal()">
                         <div class="modal-content" onclick="event.stopPropagation()">
                             <div class="modal-title">新建项目</div>
-                            <input 
-                                type="text" 
-                                class="modal-input" 
-                                id="project-name-input"
-                                placeholder="项目名称"
-                            >
-                            <input 
-                                type="text" 
-                                class="modal-input" 
-                                id="project-target-input"
-                                placeholder="项目目标（可选）"
-                            >
+                            <input type="text" id="project-name-input" class="modal-input" placeholder="项目名称">
+                            <input type="text" id="project-target-input" class="modal-input" placeholder="项目目标（如：卖出10件）">
+                            <input type="number" id="project-target-number" class="modal-input" placeholder="目标数量" value="10">
+                            <input type="text" id="project-unit" class="modal-input" placeholder="单位（件/个/粉）" value="件">
                             <div class="modal-buttons">
                                 <button class="modal-btn modal-btn-secondary" onclick="closeAddProjectModal()">取消</button>
                                 <button class="modal-btn modal-btn-primary" onclick="saveProjectAdd()">添加</button>
@@ -776,21 +980,58 @@
                 `;
             }
 
+            if (showEditRecordModal) {
+                modals += `
+                    <div class="modal-overlay" onclick="closeRecordModal()">
+                        <div class="modal-content" onclick="event.stopPropagation()">
+                            <div class="modal-title">编辑记录</div>
+                            <textarea id="record-input" class="modal-textarea" placeholder="输入今天做的事...">${currentEditContent.replace(/</g, '&lt;')}</textarea>
+                            <div class="modal-buttons">
+                                <button class="modal-btn modal-btn-secondary" onclick="closeRecordModal()">取消</button>
+                                <button class="modal-btn modal-btn-primary" onclick="saveRecord()">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (showEditProjectModal) {
+                modals += `
+                    <div class="modal-overlay" onclick="closeEditProjectModal()">
+                        <div class="modal-content" onclick="event.stopPropagation()">
+                            <div class="modal-title">编辑项目</div>
+                            
+                            <input type="text" id="edit-project-name" class="modal-input" placeholder="项目名称" value="">
+                            
+                            <input type="text" id="edit-project-target" class="modal-input" placeholder="项目目标描述" value="">
+                            
+                            <input type="number" id="edit-project-target-number" class="modal-input" placeholder="目标数量" min="1" value="10">
+                            
+                            <input type="text" id="edit-project-unit" class="modal-input" placeholder="单位（件/个/粉）" value="件">
+                            
+                            <input type="number" id="edit-project-current" class="modal-input" placeholder="当前进度" min="0" value="0">
+                            
+                            <div class="modal-buttons">
+                                <button class="modal-btn modal-btn-secondary" onclick="closeEditProjectModal()">取消</button>
+                                <button class="modal-btn modal-btn-primary" onclick="saveProjectEdit()">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             return modals;
         }
 
-        // 渲染应用
         function render() {
             const app = document.getElementById('app');
-            
             if (currentPage === 'home') {
                 app.innerHTML = renderHome() + renderModals();
-            } else if (currentPage === 'project') {
+            } else {
                 app.innerHTML = renderMonthlyView() + renderModals();
             }
         }
 
-        // 导航函数
         window.goToHome = function() {
             currentPage = 'home';
             currentProjectId = null;
@@ -804,14 +1045,10 @@
             render();
         };
 
-        // 修改主目标弹窗
         window.openEditGoalModal = function() {
             showEditGoalModal = true;
             render();
-            setTimeout(() => {
-                const input = document.getElementById('goal-input');
-                if (input) input.focus();
-            }, 100);
+            setTimeout(() => document.getElementById('goal-input')?.focus(), 100);
         };
 
         window.closeEditGoalModal = function() {
@@ -821,7 +1058,7 @@
 
         window.saveGoalEdit = function() {
             const input = document.getElementById('goal-input');
-            if (input && input.value.trim()) {
+            if (input?.value.trim()) {
                 mainGoal = input.value.trim();
                 saveData();
             }
@@ -829,14 +1066,10 @@
             render();
         };
 
-        // 添加项目弹窗
         window.openAddProjectModal = function() {
             showAddProjectModal = true;
             render();
-            setTimeout(() => {
-                const input = document.getElementById('project-name-input');
-                if (input) input.focus();
-            }, 100);
+            setTimeout(() => document.getElementById('project-name-input')?.focus(), 100);
         };
 
         window.closeAddProjectModal = function() {
@@ -847,30 +1080,98 @@
         window.saveProjectAdd = function() {
             const nameInput = document.getElementById('project-name-input');
             const targetInput = document.getElementById('project-target-input');
+            const targetNumber = document.getElementById('project-target-number');
+            const unitInput = document.getElementById('project-unit');
             
-            if (nameInput && nameInput.value.trim()) {
-                const newProject = {
+            if (nameInput?.value.trim()) {
+                const targetNum = parseInt(targetNumber?.value) || 10;
+                projects.push({
                     id: Date.now(),
                     name: nameInput.value.trim(),
-                    icon: getRandomIcon(),
-                    target: targetInput?.value?.trim() || '待定目标'
-                };
-                projects.push(newProject);
+                    target: targetInput?.value.trim() || `达到${targetNum}${unitInput?.value || '件'}`,
+                    progressTarget: targetNum,
+                    progressCurrent: 0,
+                    progressUnit: unitInput?.value || '件'
+                });
                 saveData();
             }
-            
             showAddProjectModal = false;
             render();
         };
 
-        // 删除项目
+        window.editProject = function(event, projectId) {
+            event.stopPropagation();
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            currentEditProjectId = projectId;
+            showEditProjectModal = true;
+            render();
+            
+            setTimeout(() => {
+                document.getElementById('edit-project-name').value = project.name || '';
+                document.getElementById('edit-project-target').value = project.target || '';
+                document.getElementById('edit-project-target-number').value = project.progressTarget || 10;
+                document.getElementById('edit-project-unit').value = project.progressUnit || '件';
+                document.getElementById('edit-project-current').value = project.progressCurrent || 0;
+            }, 100);
+        };
+
+        window.closeEditProjectModal = function() {
+            showEditProjectModal = false;
+            currentEditProjectId = null;
+            render();
+        };
+
+        window.saveProjectEdit = function() {
+            if (!currentEditProjectId) return;
+            
+            const project = projects.find(p => p.id === currentEditProjectId);
+            if (!project) return;
+            
+            const nameInput = document.getElementById('edit-project-name');
+            const targetInput = document.getElementById('edit-project-target');
+            const targetNumberInput = document.getElementById('edit-project-target-number');
+            const unitInput = document.getElementById('edit-project-unit');
+            const currentInput = document.getElementById('edit-project-current');
+            
+            if (nameInput?.value.trim()) {
+                project.name = nameInput.value.trim();
+            }
+            
+            if (targetInput?.value.trim()) {
+                project.target = targetInput.value.trim();
+            }
+            
+            if (targetNumberInput?.value) {
+                const num = parseInt(targetNumberInput.value);
+                if (!isNaN(num) && num > 0) {
+                    project.progressTarget = num;
+                }
+            }
+            
+            if (unitInput?.value.trim()) {
+                project.progressUnit = unitInput.value.trim();
+            }
+            
+            if (currentInput?.value) {
+                const num = parseInt(currentInput.value);
+                if (!isNaN(num) && num >= 0) {
+                    project.progressCurrent = Math.min(num, project.progressTarget);
+                }
+            }
+            
+            saveData();
+            showEditProjectModal = false;
+            currentEditProjectId = null;
+            render();
+        };
+
         window.deleteProject = function(event, projectId) {
             event.stopPropagation();
             if (confirm('确定删除这个项目吗？')) {
                 projects = projects.filter(p => p.id !== projectId);
                 saveData();
-                
-                // 如果当前在项目页面且删除的是当前项目，返回首页
                 if (currentPage === 'project' && currentProjectId === projectId) {
                     goToHome();
                 } else {
@@ -879,33 +1180,20 @@
             }
         };
 
-        // 切换月份
+        window.updateProgress = updateProgress;
+
         window.changeMonth = function(delta) {
             const [year, month] = currentMonth.split('-').map(Number);
             const newDate = new Date(year, month - 1 + delta, 1);
-            const newYear = newDate.getFullYear();
-            const newMonth = String(newDate.getMonth() + 1).padStart(2, '0');
-            currentMonth = `${newYear}-${newMonth}`;
+            currentMonth = newDate.getFullYear() + '-' + String(newDate.getMonth() + 1).padStart(2, '0');
             render();
         };
 
-        // 保存每日记录
-        window.saveDailyRecord = function(projectId, day, content) {
-            const key = `${projectId}_${currentMonth}`;
-            if (!dailyRecords[key]) {
-                dailyRecords[key] = {};
-            }
-            dailyRecords[key][day] = content;
-            saveData();
-        };
-
-        // 初始化
         function init() {
             loadData();
             render();
         }
 
-        // 启动应用
         init();
     </script>
 </body>
