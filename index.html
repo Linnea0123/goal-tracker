@@ -196,7 +196,6 @@
             transition: width 0.3s ease;
         }
 
-        /* 进度数值和按钮放在同一行，左右布局 */
         .progress-controls {
             display: flex;
             justify-content: space-between;
@@ -204,14 +203,12 @@
             margin-top: 4px;
         }
 
-        /* 左边的进度数值 */
         .progress-value {
             font-size: 12px;
             color: #5a7a9a;
             font-weight: 400;
         }
 
-        /* 右边的按钮组 */
         .button-group {
             display: flex;
             align-items: center;
@@ -380,6 +377,130 @@
             border-radius: 2px;
         }
 
+        /* 待办事项区域 - 新增 */
+        .todo-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #eaeaea;
+        }
+
+        .todo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .todo-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .todo-title {
+            font-size: 14px;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .todo-count {
+            font-size: 12px;
+            color: #5a7a9a;
+            background-color: #f0f4fa;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .todo-add-btn {
+            width: 28px;
+            height: 28px;
+            background-color: #5a7a9a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .todo-add-btn:hover {
+            background-color: #4a6b8a;
+        }
+
+        .todo-list {
+            margin-top: 16px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+
+        .todo-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            background-color: white;
+            transition: all 0.2s;
+        }
+
+        .todo-checkbox.checked {
+            background-color: #5a7a9a;
+            border-color: #5a7a9a;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 13px;
+            color: #333;
+            padding: 2px 4px;
+        }
+
+        .todo-text.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .todo-delete {
+            width: 22px;
+            height: 22px;
+            background: none;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            color: #999;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+
+        .todo-delete:hover {
+            opacity: 1;
+            color: #666;
+        }
+
+        .collapsed {
+            display: none;
+        }
+
         .daily-records {
             background-color: white;
             border-radius: 8px;
@@ -467,28 +588,17 @@
         }
 
         .record-text {
-    font-size: 14px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
-    line-height: 1.5;
-    color: #333;
-    white-space: pre-wrap;
-    word-break: break-word;
-    width: 100%;
-    font-weight: 400;  /* 正常粗细 */
-    -webkit-font-smoothing: antialiased;  /* 字体抗锯齿，让文字更平滑 */
-    -moz-osx-font-smoothing: grayscale;
-}.record-text {
-    font-size: 14px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
-    line-height: 1.5;
-    color: #333;
-    white-space: pre-wrap;
-    word-break: break-word;
-    width: 100%;
-    font-weight: 400;  /* 正常粗细 */
-    -webkit-font-smoothing: antialiased;  /* 字体抗锯齿，让文字更平滑 */
-    -moz-osx-font-smoothing: grayscale;
-}
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+            line-height: 1.5;
+            color: #333;
+            white-space: pre-wrap;
+            word-break: break-word;
+            width: 100%;
+            font-weight: 400;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
         .today-content .record-text-wrapper {
             background-color: #f0f4fa;
@@ -557,21 +667,21 @@
             text-align: center;
         }
 
-       .modal-input,
-.modal-textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;  /* 修改这里 */
-    margin-bottom: 16px;
-    color: #555;
-    font-weight: 400;  /* 从300改成400，让输入的文字更清晰 */
-    background-color: #fafafa;
-    -webkit-font-smoothing: antialiased;  /* 添加抗锯齿 */
-    -moz-osx-font-smoothing: grayscale;
-}
+        .modal-input,
+        .modal-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+            margin-bottom: 16px;
+            color: #555;
+            font-weight: 400;
+            background-color: #fafafa;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
         .modal-textarea {
             min-height: 100px;
@@ -628,18 +738,16 @@
     <div id="app"></div>
 
     <script>
-        const STORAGE_KEY = 'goal_tracker_v7';
+        const STORAGE_KEY = 'goal_tracker_v9_todo';
         
         let mainGoal = '赚钱1000元';
         
-        // 项目列表 - 进度条直接显示
-        let projects = [
-            { id: 1, name: '淘宝开店', target: '月入500元', progressTarget: 10, progressCurrent: 3, progressUnit: '件' },
-            { id: 2, name: '闲鱼卖东西', target: '卖出10件', progressTarget: 10, progressCurrent: 5, progressUnit: '件' },
-            { id: 3, name: '抖音带货', target: '涨粉1000', progressTarget: 1000, progressCurrent: 230, progressUnit: '粉' }
-        ];
+        let projects = [];  // 默认为空数组，没有预设项目
         
         let dailyRecords = {};
+        
+        // 新增：待办事项数据
+        let todoItems = {};
 
         let currentPage = 'home';
         let currentProjectId = null;
@@ -649,9 +757,13 @@
         let showEditGoalModal = false;
         let showEditRecordModal = false;
         let showEditProjectModal = false;
+        let showAddTodoModal = false; // 新增：添加待办弹窗
         let currentEditDay = null;
         let currentEditContent = '';
         let currentEditProjectId = null;
+        
+        // 新增：待办区域展开/收缩状态
+        let todoExpanded = {};
 
         function loadData() {
             try {
@@ -661,6 +773,7 @@
                     mainGoal = data.mainGoal || mainGoal;
                     projects = data.projects || projects;
                     dailyRecords = data.dailyRecords || {};
+                    todoItems = data.todoItems || {}; // 加载待办数据
                 }
             } catch (error) {
                 console.error('加载数据失败:', error);
@@ -669,14 +782,14 @@
 
         function saveData() {
             try {
-                const data = { mainGoal, projects, dailyRecords };
+                const data = { mainGoal, projects, dailyRecords, todoItems };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             } catch (error) {
                 console.error('保存数据失败:', error);
             }
         }
 
-        function safeString(value) {
+        function toSafeString(value) {
             if (value === null || value === undefined) return '';
             if (typeof value === 'object') {
                 try {
@@ -701,18 +814,11 @@
             };
         }
 
-        function getSafeString(value) {
-            if (value === null || value === undefined) return '';
-            if (typeof value === 'string') return value;
-            return String(value);
-        }
-
         function hasContent(value) {
-            const str = getSafeString(value);
+            const str = toSafeString(value);
             return str.trim() !== '';
         }
 
-        // 计算总体进度
         function getOverallProgress() {
             if (projects.length === 0) return 0;
             
@@ -727,7 +833,6 @@
             return Math.round(totalProgress / projects.length);
         }
 
-        // 获取已完成项目数量
         function getCompletedProjectsCount() {
             let count = 0;
             for (let i = 0; i < projects.length; i++) {
@@ -759,7 +864,7 @@
 
         function openRecordModal(day, content) {
             currentEditDay = day;
-            currentEditContent = getSafeString(content);
+            currentEditContent = toSafeString(content);
             showEditRecordModal = true;
             render();
             setTimeout(() => {
@@ -790,6 +895,66 @@
             closeRecordModal();
         }
 
+        // 新增：待办事项相关函数
+        function openAddTodoModal() {
+            showAddTodoModal = true;
+            render();
+            setTimeout(() => {
+                const input = document.getElementById('todo-input');
+                if (input) input.focus();
+            }, 100);
+        }
+
+        function closeAddTodoModal() {
+            showAddTodoModal = false;
+            render();
+        }
+
+        function saveTodo() {
+            const input = document.getElementById('todo-input');
+            if (input && input.value.trim() && currentProjectId) {
+                const key = currentProjectId.toString();
+                if (!todoItems[key]) {
+                    todoItems[key] = [];
+                }
+                todoItems[key].push({
+                    id: Date.now() + Math.random(),
+                    text: input.value.trim(),
+                    completed: false
+                });
+                saveData();
+            }
+            closeAddTodoModal();
+        }
+
+        function toggleTodoComplete(projectId, todoId) {
+            const key = projectId.toString();
+            const todos = todoItems[key];
+            if (todos) {
+                const todo = todos.find(t => t.id === todoId);
+                if (todo) {
+                    todo.completed = !todo.completed;
+                    saveData();
+                    render();
+                }
+            }
+        }
+
+        function deleteTodo(projectId, todoId) {
+            const key = projectId.toString();
+            const todos = todoItems[key];
+            if (todos) {
+                todoItems[key] = todos.filter(t => t.id !== todoId);
+                saveData();
+                render();
+            }
+        }
+
+        function toggleTodoSection(projectId) {
+            todoExpanded[projectId] = !todoExpanded[projectId];
+            render();
+        }
+
         function renderHome() {
             const overallProgress = getOverallProgress();
             const completedProjects = getCompletedProjectsCount();
@@ -797,8 +962,8 @@
             let projectsHtml = '';
             for (let i = 0; i < projects.length; i++) {
                 const project = projects[i];
-                const projectName = safeString(project.name);
-                const projectTarget = safeString(project.target);
+                const projectName = toSafeString(project.name);
+                const projectTarget = toSafeString(project.target);
                 const progressPercent = project.progressTarget > 0 
                     ? Math.round((project.progressCurrent || 0) / project.progressTarget * 100) 
                     : 0;
@@ -817,12 +982,10 @@
         </div>
         
         <div class="progress-section" onclick="event.stopPropagation()">
-            <!-- 进度条 -->
             <div class="progress-bar-container">
                 <div class="progress-bar-fill" style="width: ${progressPercent}%;"></div>
             </div>
             
-            <!-- 进度数值和加减按钮放在同一行：数值在左，按钮在右 -->
             <div class="progress-controls">
                 <span class="progress-value">${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}</span>
                 <div class="button-group">
@@ -841,14 +1004,16 @@
                     <div class="main-goal-card">
                         <div class="goal-display" onclick="openEditGoalModal()">
                             <span class="goal-icon">🎯</span>
-                            <span class="goal-text">${safeString(mainGoal)}</span>
+                            <span class="goal-text">${toSafeString(mainGoal)}</span>
                             <span class="edit-hint">点击修改</span>
                         </div>
                     </div>
 
                     <div class="projects-header">
                         <h3 class="section-title">我的项目</h3>
+                        
                         <button class="add-project-btn" onclick="openAddProjectModal()">+ 新建</button>
+                        
                     </div>
 
                     <div class="projects-list">
@@ -890,7 +1055,7 @@
             let daysRows = '';
             for (let day = 1; day <= daysInMonth; day++) {
                 const isToday = currentMonth === todayStr && day === todayDay;
-                const content = getSafeString(records[day]);
+                const content = toSafeString(records[day]);
                 const weekday = getWeekday(year, month, day);
                 
                 const todayClass = isToday ? 'today-date' : '';
@@ -914,11 +1079,35 @@
                 `;
             }
 
+            // 待办事项渲染
+            const todoKey = currentProjectId.toString();
+            const todos = todoItems[todoKey] || [];
+            const incompleteCount = todos.filter(t => !t.completed).length;
+            const expanded = todoExpanded[currentProjectId] !== false; // 默认展开
+            
+            let todoItemsHtml = '';
+            if (todos.length > 0) {
+                for (let i = 0; i < todos.length; i++) {
+                    const todo = todos[i];
+                    todoItemsHtml += `
+                        <div class="todo-item">
+                            <div class="todo-checkbox ${todo.completed ? 'checked' : ''}" onclick="toggleTodoComplete(${currentProjectId}, ${todo.id})">
+                                ${todo.completed ? '✓' : ''}
+                            </div>
+                            <div class="todo-text ${todo.completed ? 'completed' : ''}">${toSafeString(todo.text)}</div>
+                            <button class="todo-delete" onclick="deleteTodo(${currentProjectId}, ${todo.id})">✕</button>
+                        </div>
+                    `;
+                }
+            } else {
+                todoItemsHtml = '<div style="color: #999; font-size: 13px; padding: 8px 0;">暂无待办，点击右侧+号添加</div>';
+            }
+
             return `
                 <div class="page">
                     <div class="month-header">
                         <button class="nav-btn" onclick="goToHome()">← 返回</button>
-                        <h2 class="project-title">${safeString(project.name)}</h2>
+                        <h2 class="project-title">${toSafeString(project.name)}</h2>
                     </div>
 
                     <div class="stats-card">
@@ -933,6 +1122,20 @@
                         </div>
                         <div class="month-progress-bar">
                             <div class="month-progress-fill" style="width: ${progress}%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- 新增：待办事项区域 -->
+                    <div class="todo-section">
+                        <div class="todo-header" onclick="toggleTodoSection(${currentProjectId})">
+                            <div class="todo-title-wrapper">
+                                <span class="todo-title">待办事项</span>
+                                <span class="todo-count">${incompleteCount}/${todos.length}</span>
+                            </div>
+                            <button class="todo-add-btn" onclick="event.stopPropagation(); openAddTodoModal()">+</button>
+                        </div>
+                        <div class="todo-list ${expanded ? '' : 'collapsed'}">
+                            ${todoItemsHtml}
                         </div>
                     </div>
 
@@ -952,7 +1155,7 @@
                     <div class="modal-overlay" onclick="closeEditGoalModal()">
                         <div class="modal-content" onclick="event.stopPropagation()">
                             <div class="modal-title">修改主要目标</div>
-                            <input type="text" id="goal-input" class="modal-input" value="${safeString(mainGoal).replace(/"/g, '&quot;')}" placeholder="输入主要目标">
+                            <input type="text" id="goal-input" class="modal-input" value="${toSafeString(mainGoal).replace(/"/g, '&quot;')}" placeholder="输入主要目标">
                             <div class="modal-buttons">
                                 <button class="modal-btn modal-btn-secondary" onclick="closeEditGoalModal()">取消</button>
                                 <button class="modal-btn modal-btn-primary" onclick="saveGoalEdit()">保存</button>
@@ -1020,6 +1223,22 @@
                 `;
             }
 
+            // 新增：添加待办弹窗
+            if (showAddTodoModal) {
+                modals += `
+                    <div class="modal-overlay" onclick="closeAddTodoModal()">
+                        <div class="modal-content" onclick="event.stopPropagation()">
+                            <div class="modal-title">添加待办事项</div>
+                            <input type="text" id="todo-input" class="modal-input" placeholder="输入具体方法...">
+                            <div class="modal-buttons">
+                                <button class="modal-btn modal-btn-secondary" onclick="closeAddTodoModal()">取消</button>
+                                <button class="modal-btn modal-btn-primary" onclick="saveTodo()">添加</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             return modals;
         }
 
@@ -1032,6 +1251,7 @@
             }
         }
 
+        // 全局函数声明
         window.goToHome = function() {
             currentPage = 'home';
             currentProjectId = null;
@@ -1171,6 +1391,8 @@
             event.stopPropagation();
             if (confirm('确定删除这个项目吗？')) {
                 projects = projects.filter(p => p.id !== projectId);
+                // 同时删除该项目相关的待办数据
+                delete todoItems[projectId.toString()];
                 saveData();
                 if (currentPage === 'project' && currentProjectId === projectId) {
                     goToHome();
@@ -1188,6 +1410,14 @@
             currentMonth = newDate.getFullYear() + '-' + String(newDate.getMonth() + 1).padStart(2, '0');
             render();
         };
+
+        // 新增：待办相关全局函数
+        window.openAddTodoModal = openAddTodoModal;
+        window.closeAddTodoModal = closeAddTodoModal;
+        window.saveTodo = saveTodo;
+        window.toggleTodoComplete = toggleTodoComplete;
+        window.deleteTodo = deleteTodo;
+        window.toggleTodoSection = toggleTodoSection;
 
         function init() {
             loadData();
