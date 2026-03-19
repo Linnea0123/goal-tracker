@@ -2290,29 +2290,33 @@ window.toggleProjectComplete = toggleProjectComplete;
             render();
         };
 
-        window.saveProjectAdd = function() {
-            const nameInput = document.getElementById('project-name-input');
-            const targetInput = document.getElementById('project-target-input');
-            const targetNumber = document.getElementById('project-target-number');
-            const unitInput = document.getElementById('project-unit');
-            const deadlineInput = document.getElementById('project-deadline-input');
-            
-            if (nameInput?.value.trim()) {
-                const targetNum = parseInt(targetNumber?.value) || 10;
-                projects.push({
-                    id: Date.now(),
-                    name: nameInput.value.trim(),
-                    target: targetInput?.value.trim() || '',
-                    progressTarget: targetNum,
-                    progressCurrent: 0,
-                    progressUnit: unitInput?.value || '件',
-                    deadline: deadlineInput?.value || null
-                });
-                saveData();
-            }
-            showAddProjectModal = false;
-            render();
-        };
+       
+// 修改 saveProjectAdd 函数
+window.saveProjectAdd = function() {
+    const nameInput = document.getElementById('project-name-input');
+    const targetInput = document.getElementById('project-target-input');
+    const targetNumber = document.getElementById('project-target-number');
+    const unitInput = document.getElementById('project-unit');
+    const deadlineInput = document.getElementById('project-deadline-input');
+    
+    if (nameInput?.value.trim()) {
+        const targetNum = parseInt(targetNumber?.value) || 10;
+        projects.push({
+            id: Date.now(),
+            name: nameInput.value.trim(),
+            target: targetInput?.value.trim() || '',
+            progressTarget: targetNum,
+            progressCurrent: 0,
+            progressUnit: unitInput?.value || '件',
+            deadline: deadlineInput?.value || null
+        });
+        saveData();  // 这里会调用 localStorage 保存
+        console.log('项目已保存到本地', projects); // 添加日志方便调试
+    }
+    showAddProjectModal = false;
+    render();
+};
+
 
         window.editProject = function(event, projectId) {
             event.stopPropagation();
