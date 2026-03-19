@@ -119,7 +119,7 @@
             border-radius: 10px;
             border: 1px solid #eaeaea;
             overflow: hidden;
-            padding: 16px 12px;
+            padding: 12px 12px 16px 12px;
             cursor: pointer;
         }
 
@@ -127,21 +127,27 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 12px;
+            margin-bottom: 4px;
+            padding: 0;
             cursor: pointer;
         }
 
         .project-info {
             flex: 1;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .project-name {
             font-size: 16px;
-            font-weight: 400;
+            font-weight: 500;
             margin-bottom: 2px;
             color: #333;
             cursor: pointer;
+            display: flex;
+            align-items: center;
         }
 
         .project-target {
@@ -215,10 +221,25 @@
     align-items: center;
 }
 
+        /* 备注行 - 靠左，无图标，紧凑 */
+        .project-remark-row {
+            font-size: 12px;
+            padding: 0 0 4px 0;
+            margin-bottom: 2px;
+            color: #888;
+            text-align: left;
+        }
+
+        .remark-text {
+            font-style: italic;
+            word-break: break-word;
+            line-height: 1.3;
+            color: #888;
+        }
 
         /* 进度条区域 */
         .progress-section {
-            margin-top: 8px;
+            margin-top: 4px;
             cursor: default;
         }
 
@@ -248,6 +269,9 @@
             font-size: 12px;
             color: #5a7a9a;
             font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .button-group {
@@ -289,6 +313,53 @@
             color: #333;
             min-width: 24px;
             text-align: center;
+        }
+
+        /* 截止日期标签 - 放在进度条左边 */
+        .deadline-chip {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f5f5f5;
+            border-radius: 12px;
+            padding: 2px 8px;
+            gap: 4px;
+            font-size: 11px;
+            color: #666;
+            border: 1px solid #eaeaea;
+            margin-right: 6px;
+        }
+
+        .deadline-chip-date {
+            font-weight: 500;
+            color: #5a7a9a;
+        }
+
+        .deadline-chip-text {
+            opacity: 0.8;
+        }
+
+        /* 紧急状态 */
+        .deadline-chip.deadline-urgent {
+            background-color: #fff1f0;
+            border-color: #ffccc7;
+            color: #d32f2f;
+        }
+
+        .deadline-chip.deadline-urgent .deadline-chip-date {
+            color: #d32f2f;
+        }
+
+        /* 逾期状态 */
+        .deadline-chip.deadline-overdue {
+            background-color: #f5f5f5;
+            border-color: #d9d9d9;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .deadline-chip.deadline-overdue .deadline-chip-date {
+            color: #999;
+            text-decoration: line-through;
         }
 
         /* 进度卡片 */
@@ -468,11 +539,6 @@
             background: #5a7a9a;
             border-radius: 2px;
         }
-
-        
-
-
-
 
         /* ========== 待办事项区域（紧凑版，无外框） ========== */
 .todo-section {
@@ -764,9 +830,6 @@
 .collapsed {
     display: none;
 }
-
-
-
 
         /* ========== 每日记录区域 ========== */
         .daily-records {
@@ -1060,6 +1123,26 @@
 
         .sync-status.success {
             color: #2e7d32;
+        }
+
+        /* 截止日期快捷按钮 */
+        .deadline-quick-btn {
+            flex: 1;
+            padding: 6px 0;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .deadline-quick-btn:hover {
+            background-color: #f5f5f5;
+            border-color: #5a7a9a;
+            color: #5a7a9a;
         }
     </style>
   
@@ -1599,19 +1682,51 @@ for (let i = 0; i < projects.length; i++) {
     // 判断项目是否完成
     const isCompleted = project.progressCurrent >= project.progressTarget;
     
+    // 计算截止日期和剩余天数
+    let deadlineHtml = '';
+    let deadlineClass = '';
+    let deadlineText = '';
+    let formattedDate = '';
+    
+    if (project.deadline) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const deadlineDate = new Date(project.deadline);
+        deadlineDate.setHours(0, 0, 0, 0);
+        
+        const diffTime = deadlineDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 0) {
+            deadlineText = `剩${diffDays}天`;
+            deadlineClass = diffDays <= 3 ? 'deadline-urgent' : '';
+        } else if (diffDays === 0) {
+            deadlineText = '今天截止';
+            deadlineClass = 'deadline-urgent';
+        } else {
+            deadlineText = `逾期${Math.abs(diffDays)}天`;
+            deadlineClass = 'deadline-overdue';
+        }
+        
+        // 格式化显示日期（月/日）
+        const dateObj = new Date(project.deadline);
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        formattedDate = `${month}/${day}`;
+    }
+    
     projectsHtml += `
     <div class="project-card">
+        <!-- 第一行：项目名称 + 编辑/删除按钮（同一行） -->
         <div class="project-header" onclick="goToProject(${project.id})">
             <div class="project-info">
                 <div class="project-name">
-                    <!-- 项目复选框（新增） -->
                     <span class="project-checkbox ${isCompleted ? 'checked' : ''}" 
                           onclick="event.stopPropagation(); toggleProjectComplete(${project.id})">
                         ${isCompleted ? '✓' : ''}
                     </span>
                     ${projectName}
                 </div>
-                <div class="project-target">${projectTarget || ''}</div>
             </div>
             <div class="project-actions" onclick="event.stopPropagation()">
                 <button class="project-edit-btn" onclick="editProject(event, ${project.id})">✎</button>
@@ -1619,13 +1734,27 @@ for (let i = 0; i < projects.length; i++) {
             </div>
         </div>
         
+        <!-- 第二行：备注（靠左，无图标，紧凑） -->
+        <div class="project-remark-row">
+            <span class="remark-text">${projectTarget || ''}</span>
+        </div>
+        
+        <!-- 进度条区域 -->
         <div class="progress-section" onclick="event.stopPropagation()">
             <div class="progress-bar-container">
                 <div class="progress-bar-fill" style="width: ${progressPercent}%;"></div>
             </div>
             
             <div class="progress-controls">
-                <span class="progress-value">${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}</span>
+                <div class="progress-value">
+                    ${project.deadline ? `
+                    <span class="deadline-chip ${deadlineClass}">
+                        <span class="deadline-chip-date">${formattedDate}</span>
+                        <span class="deadline-chip-text">${deadlineText}</span>
+                    </span>
+                    ` : ''}
+                    ${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}
+                </div>
                 <div class="button-group">
                     <button class="control-btn" onclick="updateProgress(${project.id}, -1); event.stopPropagation();" ${project.progressCurrent <= 0 ? 'disabled' : ''}>−</button>
                     <span class="current-count">${project.progressCurrent || 0}</span>
@@ -1634,8 +1763,8 @@ for (let i = 0; i < projects.length; i++) {
             </div>
         </div>
     </div>
-`;
-} 
+    `;
+}
             
             return `
                 <div class="page">
@@ -1731,9 +1860,6 @@ for (let i = 0; i < projects.length; i++) {
                 `;
             }
 
-
-
-
 // 待办事项渲染
 const todoKey = currentProjectId.toString();
 let todos = todoItems[todoKey] || [];  // 改为 let，因为可能要修改
@@ -1822,8 +1948,6 @@ if (todos.length > 0) {
     todoItemsHtml = '<div style="text-align: center; color: #999; padding: 16px 0;">暂无待办，点击"+"添加</div>';
 }
 
-
-
             return `
                 <div class="page">
                     <div class="month-header">
@@ -1868,9 +1992,45 @@ if (todos.length > 0) {
             `;
         }
 
+        // 快捷设置截止日期的函数
+        window.setQuickDeadline = function(option) {
+            const deadlineInput = document.getElementById('project-deadline-input') || document.getElementById('edit-project-deadline');
+            if (!deadlineInput) return;
+            
+            const today = new Date();
+            let targetDate = new Date();
+            
+            switch(option) {
+                case 'today':
+                    // 保持今天
+                    break;
+                case 'tomorrow':
+                    targetDate.setDate(today.getDate() + 1);
+                    break;
+                case 'week':
+                    targetDate.setDate(today.getDate() + 7);
+                    break;
+                case 'month':
+                    targetDate.setDate(today.getDate() + 30);
+                    break;
+            }
+            
+            const year = targetDate.getFullYear();
+            const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const day = String(targetDate.getDate()).padStart(2, '0');
+            deadlineInput.value = `${year}-${month}-${day}`;
+        };
+
+        // 清除截止日期
+        window.clearDeadline = function() {
+            const deadlineInput = document.getElementById('edit-project-deadline');
+            if (deadlineInput) {
+                deadlineInput.value = '';
+            }
+        };
+
         function renderModals() {
             let modals = '';
-
 
 if (showEditTodoModal) {
     modals += `
@@ -1934,12 +2094,27 @@ if (showEditTodoModal) {
             }
 
             if (showAddProjectModal) {
+                const today = new Date().toISOString().split('T')[0];
+                
                 modals += `
                     <div class="modal-overlay" onclick="closeAddProjectModal()">
                         <div class="modal-content" onclick="event.stopPropagation()">
                             <div class="modal-title">新建项目</div>
                             <input type="text" id="project-name-input" class="modal-input" placeholder="项目名称">
-                            <input type="text" id="project-target-input" class="modal-input" placeholder="项目目标（如：卖出10件）">
+                            <input type="text" id="project-target-input" class="modal-input" placeholder="备注（如：每天跑步3公里）">
+                            
+                            <!-- 截止日期 -->
+                            <div style="margin-bottom: 16px;">
+                                <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
+                                <input type="date" id="project-deadline-input" class="modal-input" style="margin-bottom: 8px;" value="${today}">
+                                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                    <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('today')">今天</button>
+                                    <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('tomorrow')">明天</button>
+                                    <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('week')">7天后</button>
+                                    <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('month')">30天后</button>
+                                </div>
+                            </div>
+                            
                             <input type="number" id="project-target-number" class="modal-input" placeholder="目标数量" value="10">
                             <input type="text" id="project-unit" class="modal-input" placeholder="单位（件/个/粉）" value="件">
                             <div class="modal-buttons">
@@ -1967,20 +2142,52 @@ if (showEditTodoModal) {
             }
 
             if (showEditProjectModal) {
+                const project = projects.find(p => p.id === currentEditProjectId);
+                const today = new Date().toISOString().split('T')[0];
+                
                 modals += `
                     <div class="modal-overlay" onclick="closeEditProjectModal()">
                         <div class="modal-content" onclick="event.stopPropagation()">
                             <div class="modal-title">编辑项目</div>
                             
-                            <input type="text" id="edit-project-name" class="modal-input" placeholder="项目名称" value="">
+                            <!-- 项目名称 -->
+                            <input type="text" id="edit-project-name" class="modal-input" placeholder="项目名称" value="${project ? toSafeString(project.name).replace(/"/g, '&quot;') : ''}">
                             
-                            <input type="text" id="edit-project-target" class="modal-input" placeholder="项目目标描述" value="">
+                            <!-- 备注 -->
+                            <input type="text" id="edit-project-target" class="modal-input" placeholder="备注（如：每天跑步3公里）" value="${project ? toSafeString(project.target).replace(/"/g, '&quot;') : ''}">
                             
-                            <input type="number" id="edit-project-target-number" class="modal-input" placeholder="目标数量" min="1" value="10">
+                            <!-- 截止日期 -->
+                            <div style="margin-bottom: 16px;">
+                                <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
+                                <input type="date" id="edit-project-deadline" class="modal-input" style="margin-bottom: 8px;" value="${project && project.deadline ? project.deadline : today}">
+                                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                    <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('today')">今天</button>
+                                    <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('tomorrow')">明天</button>
+                                    <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('week')">7天后</button>
+                                    <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('month')">30天后</button>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button type="button" class="deadline-quick-btn" style="flex: 1;" onclick="clearDeadline()">清除截止日期</button>
+                                </div>
+                            </div>
                             
-                            <input type="text" id="edit-project-unit" class="modal-input" placeholder="单位（件/个/粉）" value="件">
+                            <!-- 进度设置 -->
+                            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                                <div style="flex: 1;">
+                                    <label class="gist-label">目标数量</label>
+                                    <input type="number" id="edit-project-target-number" class="modal-input" placeholder="目标数量" min="1" value="${project ? project.progressTarget || 10 : 10}">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label class="gist-label">单位</label>
+                                    <input type="text" id="edit-project-unit" class="modal-input" placeholder="单位" value="${project ? project.progressUnit || '件' : '件'}">
+                                </div>
+                            </div>
                             
-                            <input type="number" id="edit-project-current" class="modal-input" placeholder="当前进度" min="0" value="0">
+                            <!-- 当前进度 -->
+                            <div style="margin-bottom: 16px;">
+                                <label class="gist-label">当前进度</label>
+                                <input type="number" id="edit-project-current" class="modal-input" placeholder="当前进度" min="0" value="${project ? project.progressCurrent || 0 : 0}">
+                            </div>
                             
                             <div class="modal-buttons">
                                 <button class="modal-btn modal-btn-secondary" onclick="closeEditProjectModal()">取消</button>
@@ -1990,8 +2197,6 @@ if (showEditTodoModal) {
                     </div>
                 `;
             }
-
-
 
             if (showSettingsModal) {
                 modals += `
@@ -2050,7 +2255,7 @@ if (showEditTodoModal) {
             currentMonth = getCurrentYearMonth().monthStr;
             render();
         };
-// 在全局函数声明部分添加
+
 window.toggleProjectComplete = toggleProjectComplete;
 
         window.openEditGoalModal = function() {
@@ -2090,16 +2295,18 @@ window.toggleProjectComplete = toggleProjectComplete;
             const targetInput = document.getElementById('project-target-input');
             const targetNumber = document.getElementById('project-target-number');
             const unitInput = document.getElementById('project-unit');
+            const deadlineInput = document.getElementById('project-deadline-input');
             
             if (nameInput?.value.trim()) {
                 const targetNum = parseInt(targetNumber?.value) || 10;
                 projects.push({
                     id: Date.now(),
                     name: nameInput.value.trim(),
-                    target: targetInput?.value.trim() || `达到${targetNum}${unitInput?.value || '件'}`,
+                    target: targetInput?.value.trim() || '',
                     progressTarget: targetNum,
                     progressCurrent: 0,
-                    progressUnit: unitInput?.value || '件'
+                    progressUnit: unitInput?.value || '件',
+                    deadline: deadlineInput?.value || null
                 });
                 saveData();
             }
@@ -2122,6 +2329,7 @@ window.toggleProjectComplete = toggleProjectComplete;
                 document.getElementById('edit-project-target-number').value = project.progressTarget || 10;
                 document.getElementById('edit-project-unit').value = project.progressUnit || '件';
                 document.getElementById('edit-project-current').value = project.progressCurrent || 0;
+                document.getElementById('edit-project-deadline').value = project.deadline || new Date().toISOString().split('T')[0];
             }, 100);
         };
 
@@ -2142,6 +2350,7 @@ window.toggleProjectComplete = toggleProjectComplete;
             const targetNumberInput = document.getElementById('edit-project-target-number');
             const unitInput = document.getElementById('edit-project-unit');
             const currentInput = document.getElementById('edit-project-current');
+            const deadlineInput = document.getElementById('edit-project-deadline');
             
             if (nameInput?.value.trim()) {
                 project.name = nameInput.value.trim();
@@ -2149,6 +2358,11 @@ window.toggleProjectComplete = toggleProjectComplete;
             
             if (targetInput) {
                 project.target = targetInput.value.trim() || '';
+            }
+            
+            // 保存截止日期
+            if (deadlineInput) {
+                project.deadline = deadlineInput.value || null;
             }
             
             if (targetNumberInput?.value) {
@@ -2198,18 +2412,14 @@ window.toggleProjectComplete = toggleProjectComplete;
             render();
         };
 
-    
-// 待办相关全局函数（删除旧的，保留新的）
+// 待办相关全局函数
 window.openAddTodoModal = openAddTodoModal;
 window.openEditTodoModal = openEditTodoModal;
-
 window.saveEditTodo = saveEditTodo;
 window.updateTodoProgress = updateTodoProgress;
 window.toggleTodoComplete = toggleTodoComplete;
 window.deleteTodo = deleteTodo;
 window.toggleTodoSection = toggleTodoSection;
-
-
 
         // 同步相关全局函数
         window.openSettingsModal = openSettingsModal;
@@ -2225,3 +2435,5 @@ window.toggleTodoSection = toggleTodoSection;
 
         init();
     </script>
+</body>
+</html>
