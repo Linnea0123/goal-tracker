@@ -1151,6 +1151,7 @@
     <div id="app"></div>
 
     <script>
+        // 修正：统一使用同一个存储键名
         const STORAGE_KEY = 'goal_tracker_v10_cloud';
         
         let mainGoal = '赚钱1000元';
@@ -1209,6 +1210,10 @@ let currentEditTodoUnit = '个';
                     dailyRecords = data.dailyRecords || {};
                     todoItems = data.todoItems || {};
                     gistConfig = data.gistConfig || { token: '', gistId: '' };
+                    
+                    console.log('数据加载成功', projects); // 添加日志方便调试
+                } else {
+                    console.log('首次使用，没有已保存的数据');
                 }
             } catch (error) {
                 console.error('加载数据失败:', error);
@@ -1219,6 +1224,7 @@ let currentEditTodoUnit = '个';
             try {
                 const data = { mainGoal, projects, dailyRecords, todoItems, gistConfig };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                console.log('数据已保存', projects); // 添加日志方便调试
             } catch (error) {
                 console.error('保存数据失败:', error);
             }
