@@ -1528,7 +1528,21 @@ const COMMON_EMOJIS = [
     '📱', '💻', '🖥️', '🖨️', '📷', '📹', '☎️', '📞', '📟', '📠'
 ];
 
+let projects = [];
+let dailyRecords = {};
+let todoItems = {};
+let gistConfig = { token: '', gistId: '' };
 let currentCategoryId = null;
+// 弹窗控制
+let showViewTypeModal = false;
+// UI 状态
+let currentPage = 'home'; // 'home', 'project', 'finance'
+let currentProjectId = null;
+let currentMonth = new Date().toISOString().slice(0, 7);
+let currentWeekStart = getWeekStart(new Date());
+let categories = [];
+// 财政专用记录
+let financeRecords = {}; // 格式: { "2024-03_15": "35" }
         let goals = [];
 let currentGoalId = null;
         let showCategoryModal = false;
@@ -1537,20 +1551,9 @@ let currentGoalId = null;
         // 日历视图类型
         let calendarViewType = 'month'; // 'month' 或 'week'
         // 当前选中的周（周一日期）
-        let currentWeekStart = getWeekStart(new Date());
-        // 视图选择弹窗
-        let showViewTypeModal = false;
-        
-        let projects = [];
-        let dailyRecords = {};
-        let todoItems = {};
-        let gistConfig = { token: '', gistId: '' };
-
-        // UI 状态
-        let currentPage = 'home';
-        let currentProjectId = null;
-        let currentMonth = new Date().toISOString().slice(0, 7);
-        let categories = [];
+       
+    
+    
         // 弹窗控制
         let showEditGoalModal = false;
         let showSwitchGoalModal = false;
@@ -1586,6 +1589,182 @@ let currentGoalId = null;
         // 行内编辑状态
         window._editingGoalId = null;
         window._showAddGoalInput = false;
+
+        function switchToFinance() {
+    if (currentPage === 'finance') {
+        // 如果已经在财政视图，就返回主页
+        goToHome();
+    } else {
+        currentPage = 'finance';
+        currentMonth = getCurrentYearMonth().monthStr;
+        currentWeekStart = getWeekStart(new Date());
+        render();
+    }
+}
+
+
+
+function renderFinance() {
+    const [year, month] = currentMonth.split('-').map(Number);
+    const daysInMonth = getDaysInMonth(year, month - 1);
+    const key = currentMonth;
+    const records = financeRecords[key] || {};
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 7);
+    const todayDay = today.getDate();
+    
+
+    // 添加 getWeekNumber 函数
+    function getWeekNumber(dateStr) {
+        const date = new Date(dateStr);
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+        return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    }
+    
+    // 计算当月总支出
+    let totalExpense = 0;
+    let expenseDays = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const val = records[d];
+        if (val && !isNaN(parseFloat(val))) {
+            totalExpense += parseFloat(val);
+            expenseDays++;
+        }
+    }
+    
+    // 进度文本
+    const progressText = `¥${totalExpense.toFixed(2)}`;
+    const progress = Math.min(100, Math.round((totalExpense / 3000) * 100)); // 假设月预算3000
+    
+    // 生成每日记录行
+    let daysRows = '';
+    
+    if (calendarViewType === 'month') {
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isToday = currentMonth === todayStr && day === todayDay;
+            const content = toSafeString(records[day] || '');
+            const weekday = getWeekday(year, month, day);
+            const todayClass = isToday ? 'today-date' : '';
+            const contentClass = isToday ? 'today-content' : '';
+            
+            daysRows += `
+                <div class="date-row">
+                    <div class="date-column ${todayClass}">
+                        <span class="date-day">${day}</span>
+                        <span class="date-week">${weekday}</span>
+                    </div>
+                    <div class="content-wrapper">
+                        <div class="content-column ${contentClass}">
+                            <div class="record-text-wrapper">
+                                <input type="number" step="0.01" class="record-input-field" 
+                                    value="${content}"
+                                    onchange="updateFinanceRecord('${currentMonth}', ${day}, this.value)"
+                                    placeholder="0.00"
+                                    style="text-align: right;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    } else {
+        const weekDays = getWeekDays(currentWeekStart);
+        for (let i = 0; i < weekDays.length; i++) {
+            const d = weekDays[i];
+            const day = d.day;
+            const month = d.month;
+            const year = d.year;
+            const dateStr = d.date;
+            const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+            
+            const isToday = dateStr === today.toISOString().split('T')[0];
+            const dayRecords = financeRecords[monthStr] || {};
+            const content = toSafeString(dayRecords[day] || '');
+            const weekday = d.weekday;
+            const todayClass = isToday ? 'today-date' : '';
+            const contentClass = isToday ? 'today-content' : '';
+            
+            daysRows += `
+                <div class="date-row">
+                    <div class="date-column ${todayClass}">
+                        <span class="date-day">${day}</span>
+                        <span class="date-week">${weekday}</span>
+                    </div>
+                    <div class="content-wrapper">
+                        <div class="content-column ${contentClass}">
+                            <div class="record-text-wrapper">
+                                <input type="number" step="0.01" class="record-input-field" 
+                                    value="${content}"
+                                    onchange="updateFinanceRecord('${monthStr}', ${day}, this.value)"
+                                    placeholder="0.00"
+                                    style="text-align: right;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // 周视图的导航文字
+    const weekDisplay = calendarViewType === 'week' 
+        ? `第${getWeekNumber(currentWeekStart)}周` 
+        : '';
+    
+    return `
+    <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
+        <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="nav-btn" onclick="goToHome()">← 返回</button>
+    </div>
+    <h2 class="project-title" style="margin: 0; font-size: 16px;">每日支出</h2>
+    <div style="display: flex; align-items: center; gap: 8px;">
+       
+        <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
+    </div>
+</div>
+
+
+        <div class="stats-card" style="width: 100%; box-sizing: border-box;">
+           <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 36px; width: 100%; box-sizing: border-box;">
+    ${calendarViewType === 'month' 
+        ? `<button class="month-btn" onclick="changeMonth(-1)">◀ 上月</button>
+           <span class="current-month">${currentMonth}</span>
+           <button class="month-btn" onclick="changeMonth(1)">下月 ▶</button>`
+        : `<button class="month-btn" onclick="changeWeek(-1)">◀ 上周</button>
+           <span class="current-month">${weekDisplay}</span>
+           <button class="month-btn" onclick="changeWeek(1)">下周 ▶</button>`
+    }
+</div>
+
+            
+            <div class="progress-info" style="width: 100%; box-sizing: border-box;">
+                <span>本月支出</span>
+                <span>${progressText} / ¥3000</span>
+            </div>
+            <div class="month-progress-bar" style="width: 100%; box-sizing: border-box;">
+                <div class="month-progress-fill" style="width: ${progress}%;"></div>
+            </div>
+            <div style="font-size: 11px; color: #999; margin-top: 4px; text-align: right;">
+                已消费 ${expenseDays} 天
+            </div>
+        </div>
+
+        <div class="daily-records" style="width: 100%; box-sizing: border-box;">
+            <div class="records-header" style="width: 100%; box-sizing: border-box;">
+                <h3 class="records-title">每日支出</h3>
+                <button class="view-type-btn" onclick="openViewTypeModal()">
+                    <span>📊</span>
+                    <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
+                </button>
+            </div>
+            ${daysRows}
+        </div>
+    </div>
+    `;
+}
+
 
         // ==================== 辅助函数 ====================
         function toSafeString(value) {
@@ -1893,11 +2072,11 @@ function openEditGoalModal(goalId) {
         }
 
         function changeWeek(delta) {
-            const date = new Date(currentWeekStart);
-            date.setDate(date.getDate() + delta * 7);
-            currentWeekStart = getWeekStart(date);
-            render();
-        }
+    const date = new Date(currentWeekStart);
+    date.setDate(date.getDate() + delta * 7);
+    currentWeekStart = getWeekStart(date);
+    render();
+}
 
         // ==================== 项目相关 ====================
         function getOverallProgress() {
@@ -1943,26 +2122,36 @@ function saveProjectAdd() {
     const targetNumber = document.getElementById('project-target-number');
     const unitInput = document.getElementById('project-unit');
     const deadlineInput = document.getElementById('project-deadline-input');
-    const categorySelect = document.getElementById('project-category-select'); // 确保这一行存在
+    const categorySelect = document.getElementById('project-category-select');
     
     if (nameInput?.value.trim()) {
-        const targetNum = parseInt(targetNumber?.value) || 10;
-        projects.push({
+        const targetNum = parseInt(targetNumber?.value);
+        // 只有填了有效数字才设置进度目标
+        const hasProgress = targetNum && !isNaN(targetNum) && targetNum > 0;
+        
+        const newProject = {
             id: Date.now(),
             goalId: currentGoalId,
             name: nameInput.value.trim(),
             target: targetInput?.value.trim() || '',
-            progressTarget: targetNum,
-            progressCurrent: 0,
-            progressUnit: unitInput?.value || '件',
             deadline: deadlineInput?.value || null,
-            categoryId: categorySelect?.value || null // 确保这一行存在
-        });
+            categoryId: categorySelect?.value || null
+        };
+        
+        // 只有填了有效目标值才添加进度相关字段
+        if (hasProgress) {
+            newProject.progressTarget = targetNum;
+            newProject.progressCurrent = 0;
+            newProject.progressUnit = unitInput?.value || '件';
+        }
+        
+        projects.push(newProject);
         saveData();
     }
     showAddProjectModal = false;
     render();
 }
+
 
         
 function editProject(event, projectId) {
@@ -2041,7 +2230,19 @@ function saveProjectEdit() {
             saveData();
         }
 
-   
+   function updateFinanceRecord(monthStr, day, value) {
+    const key = monthStr;
+    if (!financeRecords[key]) financeRecords[key] = {};
+    
+    if (value.trim() === '') {
+        delete financeRecords[key][day];
+    } else {
+        financeRecords[key][day] = value;
+    }
+    
+    saveData();
+    render();
+}
 
 function toggleRecordCheck(projectId, monthStr, day) {
     const checkKey = `${projectId}_${monthStr}_${day}`;
@@ -2194,12 +2395,11 @@ function toggleRecordCheck(projectId, monthStr, day) {
         }
 
         function changeMonth(delta) {
-            const [year, month] = currentMonth.split('-').map(Number);
-            const newDate = new Date(year, month - 1 + delta, 1);
-            currentMonth = newDate.getFullYear() + '-' + String(newDate.getMonth() + 1).padStart(2, '0');
-            render();
-        }
-
+    const [year, month] = currentMonth.split('-').map(Number);
+    const newDate = new Date(year, month - 1 + delta, 1);
+    currentMonth = newDate.getFullYear() + '-' + String(newDate.getMonth() + 1).padStart(2, '0');
+    render();
+}
         // ==================== 设置与同步 ====================
         function openSettingsModal() {
             showSettingsModal = true;
@@ -2363,59 +2563,71 @@ function renderHome() {
     const currentProjects = projects.filter(p => p.goalId === currentGoalId);
     
     // 项目卡片渲染函数
-    function renderProjectCard(project) {
-        const projectName = toSafeString(project.name);
-        const projectTarget = toSafeString(project.target);
-        const progressPercent = project.progressTarget > 0 ? Math.round((project.progressCurrent || 0) / project.progressTarget * 100) : 0;
-        const isCompleted = project.progressCurrent >= project.progressTarget;
-        
-        let deadlineHtml = '', deadlineClass = '', deadlineText = '', formattedDate = '';
-        if (project.deadline) {
-            const today = new Date(); today.setHours(0,0,0,0);
-            const deadlineDate = new Date(project.deadline); deadlineDate.setHours(0,0,0,0);
-            const diffTime = deadlineDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays > 0) { deadlineText = `剩${diffDays}天`; deadlineClass = diffDays <= 3 ? 'deadline-urgent' : ''; }
-            else if (diffDays === 0) { deadlineText = '今天截止'; deadlineClass = 'deadline-urgent'; }
-            else { deadlineText = `逾期${Math.abs(diffDays)}天`; deadlineClass = 'deadline-overdue'; }
-            const dateObj = new Date(project.deadline);
-            formattedDate = `${String(dateObj.getMonth()+1).padStart(2,'0')}/${String(dateObj.getDate()).padStart(2,'0')}`;
-        }
-        
-        
-return `
-<div class="project-card">
-    <div class="project-header" onclick="goToProject(${project.id})">
-        <div class="project-info">
-            <div class="project-name">
-                <span class="project-checkbox ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleProjectComplete(${project.id})">${isCompleted ? '✓' : ''}</span>
-                ${projectName}
-            </div>
-        </div>
-        <div class="project-actions" onclick="event.stopPropagation()">
-            <button class="project-edit-btn" onclick="editProject(event, ${project.id})">✎</button>
-            <button class="project-delete-btn" onclick="deleteProject(event, ${project.id})">✕</button>
-        </div>
-    </div>
-    <div class="project-remark-row" style="padding-left: 26px;"><span class="remark-text">${projectTarget || ''}</span></div>
-    <div class="progress-section" onclick="event.stopPropagation()" style="padding-left: 26px;">
-        <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPercent}%;"></div></div>
-        <div class="progress-controls">
-            <div class="progress-value">
-                ${project.deadline ? `<span class="deadline-chip ${deadlineClass}"><span class="deadline-chip-date">${formattedDate}</span><span class="deadline-chip-text">${deadlineText}</span></span>` : ''}
-                ${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}
-            </div>
-            <div class="button-group">
-                <button class="control-btn" onclick="updateProgress(${project.id}, -1); event.stopPropagation();" ${project.progressCurrent <= 0 ? 'disabled' : ''}>−</button>
-                <span class="current-count">${project.progressCurrent || 0}</span>
-                <button class="control-btn" onclick="updateProgress(${project.id}, 1); event.stopPropagation();" ${project.progressCurrent >= project.progressTarget ? 'disabled' : ''}>+</button>
-            </div>
-        </div>
-    </div>
-</div>`;
-
+function renderProjectCard(project) {
+    const projectName = toSafeString(project.name);
+    const projectTarget = toSafeString(project.target);
+    // 判断是否有进度目标：progressTarget 存在且大于 0
+    const hasProgress = project.progressTarget && project.progressTarget > 0;
+    const progressPercent = hasProgress ? Math.round((project.progressCurrent || 0) / project.progressTarget * 100) : 0;
+    const isCompleted = hasProgress && project.progressCurrent >= project.progressTarget;
+    
+    let deadlineHtml = '', deadlineClass = '', deadlineText = '', formattedDate = '';
+    // 只在有截止日期时生成
+    if (project.deadline) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const deadlineDate = new Date(project.deadline); deadlineDate.setHours(0,0,0,0);
+        const diffTime = deadlineDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > 0) { deadlineText = `剩${diffDays}天`; deadlineClass = diffDays <= 3 ? 'deadline-urgent' : ''; }
+        else if (diffDays === 0) { deadlineText = '今天截止'; deadlineClass = 'deadline-urgent'; }
+        else { deadlineText = `逾期${Math.abs(diffDays)}天`; deadlineClass = 'deadline-overdue'; }
+        const dateObj = new Date(project.deadline);
+        formattedDate = `${String(dateObj.getMonth()+1).padStart(2,'0')}/${String(dateObj.getDate()).padStart(2,'0')}`;
     }
     
+    return `
+    <div class="project-card">
+        <div class="project-header" onclick="goToProject(${project.id})">
+            <div class="project-info">
+                <div class="project-name">
+                    <span class="project-checkbox ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleProjectComplete(${project.id})">${isCompleted ? '✓' : ''}</span>
+                    ${projectName}
+                </div>
+            </div>
+            <div class="project-actions" onclick="event.stopPropagation()">
+                <button class="project-edit-btn" onclick="editProject(event, ${project.id})">✎</button>
+                <button class="project-delete-btn" onclick="deleteProject(event, ${project.id})">✕</button>
+            </div>
+        </div>
+        ${projectTarget ? `<div class="project-remark-row" style="padding-left: 26px;"><span class="remark-text">${projectTarget}</span></div>` : ''}
+        ${hasProgress ? `
+        <div class="progress-section" onclick="event.stopPropagation()" style="padding-left: 26px;">
+            <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPercent}%;"></div></div>
+            <div class="progress-controls">
+                <div class="progress-value">
+                    ${project.deadline ? `<span class="deadline-chip ${deadlineClass}"><span class="deadline-chip-date">${formattedDate}</span><span class="deadline-chip-text">${deadlineText}</span></span>` : ''}
+                    ${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}
+                </div>
+                <div class="button-group">
+                    <button class="control-btn" onclick="updateProgress(${project.id}, -1); event.stopPropagation();" ${project.progressCurrent <= 0 ? 'disabled' : ''}>−</button>
+                    <span class="current-count">${project.progressCurrent || 0}</span>
+                    <button class="control-btn" onclick="updateProgress(${project.id}, 1); event.stopPropagation();" ${project.progressCurrent >= project.progressTarget ? 'disabled' : ''}>+</button>
+                </div>
+            </div>
+        </div>
+        ` : project.deadline ? `
+        <div class="progress-section" onclick="event.stopPropagation()" style="padding-left: 26px; margin-top: 4px;">
+            <div class="progress-controls" style="justify-content: flex-start;">
+                <div class="progress-value">
+                    <span class="deadline-chip ${deadlineClass}"><span class="deadline-chip-date">${formattedDate}</span><span class="deadline-chip-text">${deadlineText}</span></span>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+    </div>`;
+}
+
+
 
     // 添加分类样式
 const categoryStyle = `
@@ -2620,10 +2832,10 @@ return categoryStyle + `
         </div>
 
         <div class="bottom-actions">
-            <button class="bottom-btn" onclick="openSettingsModal()"><span class="btn-icon"></span><span class="btn-text">设置</span></button>
-             <button class="bottom-btn" onclick="openCategoryModal()"><span class="btn-icon"></span><span class="btn-text">分类</span></button>
-            <button class="bottom-btn ${isSyncing ? 'syncing' : ''}" onclick="syncToGist()"><span class="btn-icon"></span><span class="btn-text">同步</span></button>
-            <button class="bottom-btn" onclick="restoreFromGist()"><span class="btn-icon"></span><span class="btn-text">恢复</span></button>
+            <button class="bottom-btn" onclick="openSettingsModal()"><span class="btn-icon">⚙️</span><span class="btn-text">设置</span></button>
+<button class="bottom-btn" onclick="openCategoryModal()"><span class="btn-icon">📁</span><span class="btn-text">分类</span></button>
+<button class="bottom-btn ${isSyncing ? 'syncing' : ''}" onclick="syncToGist()"><span class="btn-icon">↻</span><span class="btn-text">同步</span></button>
+<button class="bottom-btn" onclick="restoreFromGist()"><span class="btn-icon">↺</span><span class="btn-text">恢复</span></button>
         </div>
         ${syncStatus ? `<div class="sync-status ${syncStatus.includes('失败') ? 'error' : syncStatus.includes('成功') ? 'success' : ''}">${syncStatus}</div>` : ''}
     </div>
@@ -2823,38 +3035,43 @@ return categoryStyle + `
 
     return `
         <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
-            <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; position: relative; width: 100%; box-sizing: border-box;">
-                <button class="nav-btn" onclick="goToHome()">← 返回</button>
-                <h2 class="project-title" style="position: absolute; left: 50%; transform: translateX(-50%); margin: 0; white-space: nowrap;">${toSafeString(project.name)}</h2>
-                <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center; margin-left: auto;">📅</div>
-            </div>
+            <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="nav-btn" onclick="goToHome()">← 返回</button>
+        
+    </div>
+    <h2 class="project-title" style="margin: 0; font-size: 16px;">${currentPage === 'finance' ? '每日支出' : toSafeString(project.name)}</h2>
+    <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
+</div>
+            <div class="stats-card" style="width: 100%; box-sizing: border-box; padding: 14px 16px;">
+    <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; min-height: 34px; width: 100%; box-sizing: border-box;">
+        ${calendarViewType === 'month' 
+            ? `<button class="month-btn" onclick="changeMonth(-1)" style="padding: 4px 12px;">◀ 上月</button>
+               <span class="current-month" style="font-size: 15px;">${currentMonth}</span>
+               <button class="month-btn" onclick="changeMonth(1)" style="padding: 4px 12px;">下月 ▶</button>`
+            : `<button class="month-btn" onclick="changeWeek(-1)" style="padding: 4px 12px;">◀ 上周</button>
+               <span class="current-month" style="font-size: 15px;">${weekDisplay}</span>
+               <button class="month-btn" onclick="changeWeek(1)" style="padding: 4px 12px;">下周 ▶</button>`
+        }
+    </div>
 
-            <div class="stats-card" style="width: 100%; box-sizing: border-box;">
-                <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 36px; width: 100%; box-sizing: border-box;">
-                    ${calendarViewType === 'month' 
-                        ? `<button class="month-btn" onclick="changeMonth(-1)">◀ 上月</button>
-                           <span class="current-month">${currentMonth}</span>
-                           <button class="month-btn" onclick="changeMonth(1)">下月 ▶</button>`
-                        : `<button class="month-btn" onclick="changeWeek(-1)">◀ 上周</button>
-                           <span class="current-month">${weekDisplay}</span>
-                           <button class="month-btn" onclick="changeWeek(1)">下周 ▶</button>`
-                    }
-                </div>
-
-                <!-- 进度类型切换 -->
-                <div class="progress-type-selector" style="width: 100%; box-sizing: border-box;">
-                    <button class="progress-type-btn ${progressType === 'monthly' ? 'active' : ''}" onclick="setProgressType('monthly')">按月进度</button>
-                    <button class="progress-type-btn ${progressType === 'project' ? 'active' : ''}" onclick="setProgressType('project')">按项目目标</button>
-                </div>
-                
-                <div class="progress-info" style="width: 100%; box-sizing: border-box;">
-                    <span>${progressType === 'monthly' ? '本月打卡' : '项目进度'}</span>
-                    <span>${progressText}</span>
-                </div>
-                <div class="month-progress-bar" style="width: 100%; box-sizing: border-box;">
-                    <div class="month-progress-fill" style="width: ${progress}%;"></div>
-                </div>
-            </div>
+    ${project.progressTarget && project.progressTarget > 0 ? `
+    <!-- 进度类型切换 -->
+    <div class="progress-type-selector" style="width: 100%; box-sizing: border-box; margin: 6px 0 8px 0; padding: 3px;">
+        <button class="progress-type-btn ${progressType === 'monthly' ? 'active' : ''}" onclick="setProgressType('monthly')" style="padding: 5px 0; font-size: 12px;">按月进度</button>
+        <button class="progress-type-btn ${progressType === 'project' ? 'active' : ''}" onclick="setProgressType('project')" style="padding: 5px 0; font-size: 12px;">按项目目标</button>
+    </div>
+    ` : ''}
+    
+    <div class="progress-info" style="width: 100%; box-sizing: border-box; margin-bottom: 4px; font-size: 12px;">
+        <span>${progressType === 'monthly' ? '本月打卡' : '项目进度'}</span>
+        <span>${progressText}</span>
+    </div>
+    <div class="month-progress-bar" style="width: 100%; box-sizing: border-box; height: 5px;">
+        <div class="month-progress-fill" style="width: ${progress}%; height: 5px;"></div>
+    </div>
+</div>
+            
 
             <div class="todo-section" style="width: 100%; box-sizing: border-box;">
                 <div class="todo-header" onclick="toggleTodoSection(${currentProjectId})">
@@ -2871,12 +3088,16 @@ return categoryStyle + `
 
             <div class="daily-records" style="width: 100%; box-sizing: border-box;">
                 <div class="records-header" style="width: 100%; box-sizing: border-box;">
-                    <h3 class="records-title">每日记录</h3>
-                    <button class="view-type-btn" onclick="openViewTypeModal()">
-                        <span>📊</span>
-                        <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
-                    </button>
-                </div>
+    <h3 class="records-title">每日记录</h3>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="nav-btn" onclick="switchToFinance()" style="padding: 4px 8px;">💰 财政</button>
+        <button class="view-type-btn" onclick="openViewTypeModal()">
+            <span>📊</span>
+            <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
+        </button>
+    </div>
+</div>
+
                 ${daysRows}
             </div>
         </div>
@@ -3140,19 +3361,19 @@ if (showAddProjectModal) {
 </select>
                 </div>
                 
-                <!-- 截止日期区域 -->
-                <div style="margin-bottom: 16px;">
-                    <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
-                    <input type="date" id="project-deadline-input" class="modal-input" style="margin-bottom: 8px;" value="${today}">
-                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('today')">今天</button>
-                        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('tomorrow')">明天</button>
-                        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('week')">7天后</button>
-                        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('month')">30天后</button>
-                    </div>
-                </div>
+                <!-- 截止日期区域 - 去掉默认值 -->
+<div style="margin-bottom: 16px;">
+    <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
+    <input type="date" id="project-deadline-input" class="modal-input" style="margin-bottom: 8px;">
+    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('today')">今天</button>
+        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('tomorrow')">明天</button>
+        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('week')">7天后</button>
+        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('month')">30天后</button>
+    </div>
+</div>
                 
-                <input type="number" id="project-target-number" class="modal-input" placeholder="目标数量" value="10">
+                <input type="number" id="project-target-number" class="modal-input" placeholder="目标数量">
                 <input type="text" id="project-unit" class="modal-input" placeholder="单位（件/个/粉）" value="件">
                 <div class="modal-buttons">
                     <button class="modal-btn modal-btn-secondary" onclick="closeAddProjectModal()">取消</button>
@@ -3223,17 +3444,17 @@ if (showEditProjectModal) {
                     <div style="display: flex; gap: 8px;"><button type="button" class="deadline-quick-btn" style="flex: 1;" onclick="clearDeadline()">清除截止日期</button></div>
                 </div>
                 
-                <!-- 目标数量和单位 -->
-                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-                    <div style="flex: 1;">
-                        <label class="gist-label">目标数量</label>
-                        <input type="number" id="edit-project-target-number" class="modal-input" placeholder="目标数量" min="1" value="${project ? project.progressTarget || 10 : 10}">
-                    </div>
-                    <div style="flex: 1;">
-                        <label class="gist-label">单位</label>
-                        <input type="text" id="edit-project-unit" class="modal-input" placeholder="单位" value="${project ? project.progressUnit || '件' : '件'}">
-                    </div>
-                </div>
+                <!-- 目标数量和单位 - 去掉默认值 -->
+<div style="display: flex; gap: 8px; margin-bottom: 16px;">
+    <div style="flex: 1;">
+        <label class="gist-label">目标数量（选填）</label>
+        <input type="number" id="edit-project-target-number" class="modal-input" placeholder="不填则无进度条" value="${project?.progressTarget || ''}">
+    </div>
+    <div style="flex: 1;">
+        <label class="gist-label">单位</label>
+        <input type="text" id="edit-project-unit" class="modal-input" placeholder="件/个/次" value="${project?.progressUnit || ''}">
+    </div>
+</div>
                 
                 <!-- 当前进度 -->
                 <div style="margin-bottom: 16px;">
@@ -3544,13 +3765,15 @@ function quickAddCategory() {
         }
 
         function render() {
-            const app = document.getElementById('app');
-            if (currentPage === 'home') {
-                app.innerHTML = renderHome() + renderModals();
-            } else {
-                app.innerHTML = renderMonthlyView() + renderModals();
-            }
-        }
+    const app = document.getElementById('app');
+    if (currentPage === 'home') {
+        app.innerHTML = renderHome() + renderModals();
+    } else if (currentPage === 'finance') {
+        app.innerHTML = renderFinance() + renderModals();
+    } else {
+        app.innerHTML = renderMonthlyView() + renderModals();
+    }
+}
 
         // ==================== 全局导出 ====================
         window.switchCategory = switchCategory;
