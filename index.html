@@ -1572,7 +1572,7 @@ let currentGoalId = null;
         let currentEditTodoTags = '';
         let currentEditProjectId = null;
         let currentEditGoalId = null;
-        
+        let showViewSelectModal = false;
         // 待办折叠
         let todoExpanded = {};
         
@@ -1613,7 +1613,8 @@ function renderFinance() {
     const todayStr = today.toISOString().slice(0, 7);
     const todayDay = today.getDate();
     
-     // 添加 getWeekNumber 函数
+
+    // 添加 getWeekNumber 函数
     function getWeekNumber(dateStr) {
         const date = new Date(dateStr);
         const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
@@ -1711,19 +1712,21 @@ function renderFinance() {
         ? `第${getWeekNumber(currentWeekStart)}周` 
         : '';
     
-    return `
+ return `
     <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
-        <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
-    <div style="display: flex; align-items: center; gap: 8px;">
+    <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 8px; width: 70px;">
         <button class="nav-btn" onclick="goToHome()">← 返回</button>
     </div>
-    <h2 class="project-title" style="margin: 0; font-size: 16px;">每日支出</h2>
-    <div style="display: flex; align-items: center; gap: 8px;">
-       
+    <h2 class="project-title" style="margin: 0; font-size: 16px; text-align: center; flex: 1;">每日支出</h2>
+    <div style="display: flex; align-items: center; gap: 8px; width: 70px; justify-content: flex-end;">
+        <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
+            <span>📊</span>
+            <span>视图</span>
+        </button>
         <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
     </div>
 </div>
-
 
         <div class="stats-card" style="width: 100%; box-sizing: border-box;">
            <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 36px; width: 100%; box-sizing: border-box;">
@@ -1762,6 +1765,10 @@ function renderFinance() {
         </div>
     </div>
     `;
+
+
+
+    
 }
 
 
@@ -2053,6 +2060,31 @@ function openEditGoalModal(goalId) {
             }
         }
 
+
+function openViewSelectModal() {
+    showViewSelectModal = true;
+    render();
+}
+
+function closeViewSelectModal() {
+    showViewSelectModal = false;
+    render();
+}
+
+function switchToRegularView() {
+    currentPage = 'project';
+    closeViewSelectModal();
+    render();
+}
+
+function switchToFinanceView() {
+    currentPage = 'finance';
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
+    closeViewSelectModal();
+    render();
+}
+
         // ==================== 视图切换 ====================
         function openViewTypeModal() {
             showViewTypeModal = true;
@@ -2152,8 +2184,7 @@ function saveProjectAdd() {
 }
 
 
-        
-function editProject(event, projectId) {
+   function editProject(event, projectId) {
     event.stopPropagation();
     const project = projects.find(p => p.id === projectId);
     if (!project) return;
@@ -2163,14 +2194,14 @@ function editProject(event, projectId) {
     setTimeout(() => {
         document.getElementById('edit-project-name').value = project.name || '';
         document.getElementById('edit-project-target').value = project.target || '';
-        document.getElementById('edit-project-target-number').value = project.progressTarget || 10;
-        document.getElementById('edit-project-unit').value = project.progressUnit || '件';
-        document.getElementById('edit-project-current').value = project.progressCurrent || 0;
-        document.getElementById('edit-project-deadline').value = project.deadline || new Date().toISOString().split('T')[0];
+        // 只有项目有进度目标时才显示数值，否则显示空
+        document.getElementById('edit-project-target-number').value = (project.progressTarget && project.progressTarget > 0) ? project.progressTarget : '';
+        document.getElementById('edit-project-unit').value = project.progressUnit || '';
+        document.getElementById('edit-project-current').value = (project.progressCurrent && project.progressCurrent > 0) ? project.progressCurrent : 0;
+        document.getElementById('edit-project-deadline').value = project.deadline || '';
         document.getElementById('edit-project-category').value = project.categoryId || '';
     }, 100);
-}
-
+}     
 
 
 function saveProjectEdit() {
@@ -2768,9 +2799,9 @@ return categoryStyle + `
                     <span class="goal-text">${toSafeString(currentGoal.name)}</span>
                 </div>
                 <div class="goal-actions-vertical">
-                    <span class="goal-edit-hint" onclick="openEditGoalModal('${currentGoal.id}')">✎ 修改</span>
-                    <span class="goal-switch-hint" onclick="openSwitchGoalModal()">⇄ 切换</span>
-                </div>
+    <span class="goal-edit-hint" onclick="openEditGoalModal('${currentGoal.id}')" style="font-size: 13px;">✎ 修改</span>
+    <span class="goal-switch-hint" onclick="openSwitchGoalModal()" style="font-size: 13px;">⇄ 切换</span>
+</div>
             </div>
         </div>
 
@@ -3032,17 +3063,25 @@ return categoryStyle + `
         return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
     }
 
-    return `
-        <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
-            <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
-    <div style="display: flex; align-items: center; gap: 8px;">
+    
+return `
+    <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
+        <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 8px; width: 70px;">
         <button class="nav-btn" onclick="goToHome()">← 返回</button>
-        
     </div>
-    <h2 class="project-title" style="margin: 0; font-size: 16px;">${currentPage === 'finance' ? '每日支出' : toSafeString(project.name)}</h2>
-    <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
+    <h2 class="project-title" style="margin: 0; font-size: 16px; text-align: center; flex: 1;">${toSafeString(project.name)}</h2>
+    <div style="display: flex; align-items: center; gap: 8px; width: 70px; justify-content: flex-end;">
+        <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
+            <span>📊</span>
+            <span>视图</span>
+        </button>
+        <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
+    </div>
 </div>
-            <div class="stats-card" style="width: 100%; box-sizing: border-box; padding: 14px 16px;">
+
+        <div class="stats-card" style="width: 100%; box-sizing: border-box; padding: 14px 16px;">
+
     <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; min-height: 34px; width: 100%; box-sizing: border-box;">
         ${calendarViewType === 'month' 
             ? `<button class="month-btn" onclick="changeMonth(-1)" style="padding: 4px 12px;">◀ 上月</button>
@@ -3089,7 +3128,7 @@ return categoryStyle + `
                 <div class="records-header" style="width: 100%; box-sizing: border-box;">
     <h3 class="records-title">每日记录</h3>
     <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="nav-btn" onclick="switchToFinance()" style="padding: 4px 8px;">💰 财政</button>
+  
         <button class="view-type-btn" onclick="openViewTypeModal()">
             <span>📊</span>
             <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
@@ -3167,8 +3206,38 @@ function deleteCategory(categoryId) {
         function renderModals() {
             let modals = '';
 
-            // 修改/添加目标弹窗
-            
+           
+           // 视图选择弹窗
+       // 修改/添加目标弹窗
+     // 视图选择弹窗
+
+     
+
+// 视图选择弹窗
+if (showViewSelectModal) {
+    modals += `
+        <div class="modal-overlay" onclick="closeViewSelectModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-title">选择视图</div>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                    <button class="modal-btn ${currentPage === 'project' ? 'modal-btn-primary' : ''}" 
+                            onclick="switchToRegularView()" 
+                            style="width: 100%; text-align: center; display: flex; align-items: center; gap: 8px; justify-content: center;">
+                        <span>📋</span>
+                        <span>常规视图</span>
+                    </button>
+                    <button class="modal-btn ${currentPage === 'finance' ? 'modal-btn-primary' : ''}" 
+                            onclick="switchToFinanceView()" 
+                            style="width: 100%; text-align: center; display: flex; align-items: center; gap: 8px; justify-content: center;">
+                        <span>💰</span>
+                        <span>财政视图</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 // 修改/添加目标弹窗
 if (showEditGoalModal) {
     const isEdit = currentEditGoalId !== null;
@@ -3447,7 +3516,7 @@ if (showEditProjectModal) {
 <div style="display: flex; gap: 8px; margin-bottom: 16px;">
     <div style="flex: 1;">
         <label class="gist-label">目标数量（选填）</label>
-        <input type="number" id="edit-project-target-number" class="modal-input" placeholder="不填则无进度条" value="${project?.progressTarget || ''}">
+        <input type="number" id="edit-project-target-number" class="modal-input" placeholder="不填则无进度条" value="">
     </div>
     <div style="flex: 1;">
         <label class="gist-label">单位</label>
@@ -3763,7 +3832,7 @@ function quickAddCategory() {
             render();
         }
 
-        function render() {
+     function render() {
     const app = document.getElementById('app');
     if (currentPage === 'home') {
         app.innerHTML = renderHome() + renderModals();
@@ -3775,7 +3844,10 @@ function quickAddCategory() {
 }
 
         // ==================== 全局导出 ====================
-        window.switchCategory = switchCategory;
+        window.openViewSelectModal = openViewSelectModal;
+window.closeViewSelectModal = closeViewSelectModal;
+window.switchToRegularView = switchToRegularView;
+window.switchToFinanceView = switchToFinanceView;switchCategory = switchCategory;
 window.quickAddCategory = quickAddCategory;
         window.openCategoryModal = openCategoryModal;
 window.closeCategoryModal = closeCategoryModal;
