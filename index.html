@@ -2382,36 +2382,38 @@ function renderHome() {
             formattedDate = `${String(dateObj.getMonth()+1).padStart(2,'0')}/${String(dateObj.getDate()).padStart(2,'0')}`;
         }
         
-        return `
-        <div class="project-card">
-            <div class="project-header" onclick="goToProject(${project.id})">
-                <div class="project-info">
-                    <div class="project-name">
-                        <span class="project-checkbox ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleProjectComplete(${project.id})">${isCompleted ? '✓' : ''}</span>
-                        ${projectName}
-                    </div>
-                </div>
-                <div class="project-actions" onclick="event.stopPropagation()">
-                    <button class="project-edit-btn" onclick="editProject(event, ${project.id})">✎</button>
-                    <button class="project-delete-btn" onclick="deleteProject(event, ${project.id})">✕</button>
-                </div>
+        
+return `
+<div class="project-card">
+    <div class="project-header" onclick="goToProject(${project.id})">
+        <div class="project-info">
+            <div class="project-name">
+                <span class="project-checkbox ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleProjectComplete(${project.id})">${isCompleted ? '✓' : ''}</span>
+                ${projectName}
             </div>
-            <div class="project-remark-row"><span class="remark-text">${projectTarget || ''}</span></div>
-            <div class="progress-section" onclick="event.stopPropagation()">
-                <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPercent}%;"></div></div>
-                <div class="progress-controls">
-                    <div class="progress-value">
-                        ${project.deadline ? `<span class="deadline-chip ${deadlineClass}"><span class="deadline-chip-date">${formattedDate}</span><span class="deadline-chip-text">${deadlineText}</span></span>` : ''}
-                        ${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}
-                    </div>
-                    <div class="button-group">
-                        <button class="control-btn" onclick="updateProgress(${project.id}, -1); event.stopPropagation();" ${project.progressCurrent <= 0 ? 'disabled' : ''}>−</button>
-                        <span class="current-count">${project.progressCurrent || 0}</span>
-                        <button class="control-btn" onclick="updateProgress(${project.id}, 1); event.stopPropagation();" ${project.progressCurrent >= project.progressTarget ? 'disabled' : ''}>+</button>
-                    </div>
-                </div>
+        </div>
+        <div class="project-actions" onclick="event.stopPropagation()">
+            <button class="project-edit-btn" onclick="editProject(event, ${project.id})">✎</button>
+            <button class="project-delete-btn" onclick="deleteProject(event, ${project.id})">✕</button>
+        </div>
+    </div>
+    <div class="project-remark-row" style="padding-left: 26px;"><span class="remark-text">${projectTarget || ''}</span></div>
+    <div class="progress-section" onclick="event.stopPropagation()" style="padding-left: 26px;">
+        <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPercent}%;"></div></div>
+        <div class="progress-controls">
+            <div class="progress-value">
+                ${project.deadline ? `<span class="deadline-chip ${deadlineClass}"><span class="deadline-chip-date">${formattedDate}</span><span class="deadline-chip-text">${deadlineText}</span></span>` : ''}
+                ${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}
             </div>
-        </div>`;
+            <div class="button-group">
+                <button class="control-btn" onclick="updateProgress(${project.id}, -1); event.stopPropagation();" ${project.progressCurrent <= 0 ? 'disabled' : ''}>−</button>
+                <span class="current-count">${project.progressCurrent || 0}</span>
+                <button class="control-btn" onclick="updateProgress(${project.id}, 1); event.stopPropagation();" ${project.progressCurrent >= project.progressTarget ? 'disabled' : ''}>+</button>
+            </div>
+        </div>
+    </div>
+</div>`;
+
     }
     
 
