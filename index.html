@@ -1613,8 +1613,7 @@ function renderFinance() {
     const todayStr = today.toISOString().slice(0, 7);
     const todayDay = today.getDate();
     
-
-    // 添加 getWeekNumber 函数
+     // 添加 getWeekNumber 函数
     function getWeekNumber(dateStr) {
         const date = new Date(dateStr);
         const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
