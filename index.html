@@ -1553,7 +1553,7 @@ let currentGoalId = null;
         // 日历视图类型
         let calendarViewType = 'month'; // 'month' 或 'week'
         // 当前选中的周（周一日期）
-       
+       let englishRecords = {}; // 格式: { "2024-03": { "15": { text: "书名", books: 1 } } }
     
     
         // 弹窗控制
@@ -1601,6 +1601,16 @@ function switchToDurationView() {
     closeViewSelectModal();
     render();
 }
+
+
+function switchToEnglishView() {
+    currentPage = 'english';
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
+    closeViewSelectModal();
+    render();
+}
+
 
         function switchToFinance() {
     if (currentPage === 'finance') {
@@ -1906,7 +1916,7 @@ function toggleFinanceCheck(monthStr, day) {
             progressType = data.progressType || 'monthly';
             financeRecords = data.financeRecords || {};
             durationRecords = data.durationRecords || {};
-            
+            englishRecords = data.englishRecords || {};
             todoExpanded = data.todoExpanded || {};
             categories = data.categories || [];  // 添加分类数据
             console.log('数据加载成功');
@@ -1936,6 +1946,7 @@ function saveData() {
             dailyRecords, 
             todoItems, 
             gistConfig, 
+            englishRecords, 
             recordChecked, 
             progressType,
             todoExpanded,
@@ -2419,6 +2430,194 @@ function renderDurationView() {
     `;
 }
 
+
+function renderEnglishView() {
+    const [year, month] = currentMonth.split('-').map(Number);
+    const daysInMonth = getDaysInMonth(year, month - 1);
+    const key = currentMonth;
+    const records = englishRecords[key] || {};
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 7);
+    const todayDay = today.getDate();
+    
+    // 计算当月总本数和平均本数
+    let totalBooks = 0;
+    let bookDays = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const record = records[d];
+        if (record && record.books && !isNaN(parseFloat(record.books))) {
+            totalBooks += parseFloat(record.books);
+            bookDays++;
+        }
+    }
+    const avgBooks = bookDays > 0 ? (totalBooks / bookDays).toFixed(1) : 0;
+    
+    // 生成每日记录行
+    let daysRows = '';
+    
+    if (calendarViewType === 'month') {
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isToday = currentMonth === todayStr && day === todayDay;
+            const record = records[day] || { text: '', books: '' };
+            const weekday = getWeekday(year, month, day);
+            const todayClass = isToday ? 'today-date' : '';
+            const contentClass = isToday ? 'today-content' : '';
+            const isChecked = record.books && parseFloat(record.books) > 0;
+            
+            daysRows += `
+                <div class="date-row">
+                    <div class="date-column ${todayClass}">
+                        <span class="date-day">${day}</span>
+                        <span class="date-week">${weekday}</span>
+                    </div>
+                    <div class="content-wrapper" style="gap: 4px;">
+                        <div class="record-checkbox ${isChecked ? 'checked' : ''}" 
+                             onclick="toggleEnglishCheck('${currentMonth}', ${day})">
+                        </div>
+                        <div class="content-column ${contentClass}" style="display: flex; gap: 4px;">
+                            <div class="record-text-wrapper" style="flex: 2;">
+                                <input type="text" class="record-input-field" 
+                                    value="${toSafeString(record.text)}"
+                                    onchange="updateEnglishText('${currentMonth}', ${day}, this.value)"
+                                    placeholder="书名/内容">
+                            </div>
+                            <div class="record-text-wrapper" style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 2px;">
+                                    <input type="number" step="1" class="record-input-field" 
+                                        value="${record.books || ''}"
+                                        onchange="updateEnglishBooks('${currentMonth}', ${day}, this.value)"
+                                        placeholder="0"
+                                        style="text-align: right; flex: 1;">
+                                    <span style="font-size: 12px; color: #999;">本</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    } else {
+        const weekDays = getWeekDays(currentWeekStart);
+        for (let i = 0; i < weekDays.length; i++) {
+            const d = weekDays[i];
+            const day = d.day;
+            const month = d.month;
+            const year = d.year;
+            const dateStr = d.date;
+            const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+            
+            const isToday = dateStr === today.toISOString().split('T')[0];
+            const dayRecords = englishRecords[monthStr] || {};
+            const record = dayRecords[day] || { text: '', books: '' };
+            const weekday = d.weekday;
+            const todayClass = isToday ? 'today-date' : '';
+            const contentClass = isToday ? 'today-content' : '';
+            const isChecked = record.books && parseFloat(record.books) > 0;
+            
+            daysRows += `
+                <div class="date-row">
+                    <div class="date-column ${todayClass}">
+                        <span class="date-day">${day}</span>
+                        <span class="date-week">${weekday}</span>
+                    </div>
+                    <div class="content-wrapper" style="gap: 4px;">
+                        <div class="record-checkbox ${isChecked ? 'checked' : ''}" 
+                             onclick="toggleEnglishCheck('${monthStr}', ${day})">
+                        </div>
+                        <div class="content-column ${contentClass}" style="display: flex; gap: 4px;">
+                            <div class="record-text-wrapper" style="flex: 2;">
+                                <input type="text" class="record-input-field" 
+                                    value="${toSafeString(record.text)}"
+                                    onchange="updateEnglishText('${monthStr}', ${day}, this.value)"
+                                    placeholder="书名/内容">
+                            </div>
+                            <div class="record-text-wrapper" style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 2px;">
+                                    <input type="number" step="1" class="record-input-field" 
+                                        value="${record.books || ''}"
+                                        onchange="updateEnglishBooks('${monthStr}', ${day}, this.value)"
+                                        placeholder="0"
+                                        style="text-align: right; flex: 1;">
+                                    <span style="font-size: 12px; color: #999;">本</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // 周视图的导航文字
+    const weekDisplay = calendarViewType === 'week' 
+        ? `第${getWeekNumber(currentWeekStart)}周` 
+        : '';
+    
+    function getWeekNumber(dateStr) {
+        const date = new Date(dateStr);
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+        return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    }
+    
+    return `
+        <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
+            <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box; position: relative;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="nav-btn" onclick="goToHome()">← 返回</button>
+                </div>
+                <h2 class="project-title" style="margin: 0; font-size: 16px; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap;">📖 每日阅读</h2>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
+                        <span>📊</span>
+                        <span>视图</span>
+                    </button>
+                    <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
+                </div>
+            </div>
+
+            <div class="stats-card" style="width: 100%; box-sizing: border-box;">
+                <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 36px; width: 100%; box-sizing: border-box;">
+                    ${calendarViewType === 'month' 
+                        ? `<button class="month-btn" onclick="changeMonth(-1)">◀ 上月</button>
+                           <span class="current-month">${currentMonth}</span>
+                           <button class="month-btn" onclick="changeMonth(1)">下月 ▶</button>`
+                        : `<button class="month-btn" onclick="changeWeek(-1)">◀ 上周</button>
+                           <span class="current-month">${weekDisplay}</span>
+                           <button class="month-btn" onclick="changeWeek(1)">下周 ▶</button>`
+                    }
+                </div>
+                
+                <div class="progress-info" style="width: 100%; box-sizing: border-box;">
+                    <span>本月总阅读</span>
+                    <span>${totalBooks} 本</span>
+                </div>
+                <div class="progress-info" style="width: 100%; box-sizing: border-box; margin-top: 4px;">
+                    <span>平均每天</span>
+                    <span>${avgBooks} 本</span>
+                </div>
+                <div class="month-progress-bar" style="width: 100%; box-sizing: border-box;">
+                    <div class="month-progress-fill" style="width: ${Math.min(100, (totalBooks / 30) * 100)}%;"></div>
+                </div>
+                <div style="font-size: 11px; color: #999; margin-top: 4px; text-align: right;">
+                    已记录 ${bookDays} 天
+                </div>
+            </div>
+
+            <div class="daily-records" style="width: 100%; box-sizing: border-box;">
+                <div class="records-header" style="width: 100%; box-sizing: border-box;">
+                    <h3 class="records-title">每日阅读记录</h3>
+                    <button class="view-type-btn" onclick="openViewTypeModal()">
+                        <span>📊</span>
+                        <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
+                    </button>
+                </div>
+                ${daysRows}
+            </div>
+        </div>
+    `;
+}
+
 function updateDurationText(monthStr, day, value) {
     const key = monthStr;
     if (!durationRecords[key]) durationRecords[key] = {};
@@ -2450,6 +2649,64 @@ function updateDurationTime(monthStr, day, value) {
     // 如果文字和时长都为空，删除整个记录
     if (!durationRecords[key][day].text && !durationRecords[key][day].duration) {
         delete durationRecords[key][day];
+    }
+    
+    saveData();
+    render();
+}
+
+
+function updateEnglishText(monthStr, day, value) {
+    const key = monthStr;
+    if (!englishRecords[key]) englishRecords[key] = {};
+    if (!englishRecords[key][day]) englishRecords[key][day] = { text: '', books: '' };
+    
+    englishRecords[key][day].text = value.trim();
+    
+    // 如果文字和本数都为空，删除整个记录
+    if (!englishRecords[key][day].text && !englishRecords[key][day].books) {
+        delete englishRecords[key][day];
+    }
+    
+    saveData();
+    render();
+}
+
+function updateEnglishBooks(monthStr, day, value) {
+    const key = monthStr;
+    if (!englishRecords[key]) englishRecords[key] = {};
+    if (!englishRecords[key][day]) englishRecords[key][day] = { text: '', books: '' };
+    
+    const num = parseFloat(value);
+    if (!isNaN(num) && num > 0) {
+        englishRecords[key][day].books = num;
+    } else {
+        englishRecords[key][day].books = '';
+    }
+    
+    // 如果文字和本数都为空，删除整个记录
+    if (!englishRecords[key][day].text && !englishRecords[key][day].books) {
+        delete englishRecords[key][day];
+    }
+    
+    saveData();
+    render();
+}
+
+function toggleEnglishCheck(monthStr, day) {
+    const key = monthStr;
+    if (!englishRecords[key]) englishRecords[key] = {};
+    if (!englishRecords[key][day]) englishRecords[key][day] = { text: '', books: '' };
+    
+    if (englishRecords[key][day].books && englishRecords[key][day].books > 0) {
+        // 如果有本数，清空本数
+        englishRecords[key][day].books = '';
+        if (!englishRecords[key][day].text) {
+            delete englishRecords[key][day];
+        }
+    } else {
+        // 如果没有本数，设置默认值 1 本
+        englishRecords[key][day].books = 1;
     }
     
     saveData();
@@ -2493,6 +2750,7 @@ function toggleDurationCheck(monthStr, day) {
     render();
 }
 
+
 function render() {
     const app = document.getElementById('app');
     if (currentPage === 'home') {
@@ -2501,10 +2759,14 @@ function render() {
         app.innerHTML = renderFinance() + renderModals();
     } else if (currentPage === 'duration') {
         app.innerHTML = renderDurationView() + renderModals();
+    } else if (currentPage === 'english') {
+        app.innerHTML = renderEnglishView() + renderModals();
     } else {
         app.innerHTML = renderMonthlyView() + renderModals();
     }
 }
+
+
 
         function updateProgress(projectId, delta) {
             const project = projects.find(p => p.id === projectId);
@@ -3177,13 +3439,12 @@ return categoryStyle + `
     <div class="page">
         <div class="main-goal-card" style="background: ${currentGoal.color};">
             <div class="goal-header">
-                <div class="goal-title-group">
-                    <span class="goal-icon">${currentGoal.icon}</span>
-                    <span class="goal-text">${toSafeString(currentGoal.name)}</span>
-                </div>
-                <div class="goal-actions-vertical">
-    <span class="goal-edit-hint" onclick="openEditGoalModal('${currentGoal.id}')" style="font-size: 13px;">✎ 修改</span>
-    <span class="goal-switch-hint" onclick="openSwitchGoalModal()" style="font-size: 13px;">⇄ 切换</span>
+                <div class="goal-title-group" onclick="openSwitchGoalModal()" style="cursor: pointer;">
+    <span class="goal-icon">${currentGoal.icon}</span>
+    <span class="goal-text">${toSafeString(currentGoal.name)}</span>
+</div>
+            <div class="goal-actions-vertical">
+    <span class="goal-edit-hint" onclick="openEditGoalModal('${currentGoal.id}')" style="font-size: 13px;">✎ 编辑</span>
 </div>
             </div>
         </div>
@@ -3318,7 +3579,7 @@ return categoryStyle + `
                                 <textarea class="record-input-field" rows="1" 
                                     oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px';"
                                     onchange="updateRecord(${currentProjectId}, '${currentMonth}', ${day}, this.value)"
-                                    placeholder="写点什么...">${content.replace(/</g, '&lt;')}</textarea>
+                                    placeholder="">${content.replace(/</g, '&lt;')}</textarea>
                             </div>
                         </div>
                     </div>
@@ -3365,7 +3626,7 @@ return categoryStyle + `
                                 <textarea class="record-input-field" rows="1" 
                                     oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px';"
                                     onchange="updateRecord(${currentProjectId}, '${monthStr}', ${dayStr}, this.value)"
-                                    placeholder="写点什么...">${content.replace(/</g, '&lt;')}</textarea>
+                                    placeholder="">${content.replace(/</g, '&lt;')}</textarea>
                             </div>
                         </div>
                     </div>
@@ -3622,6 +3883,12 @@ if (showViewSelectModal) {
                         <span>⏱️</span>
                         <span>时长视图</span>
                     </button>
+                    <button class="modal-btn ${currentPage === 'english' ? 'modal-btn-primary' : ''}" 
+        onclick="switchToEnglishView()" 
+        style="width: 100%; text-align: center; display: flex; align-items: center; gap: 8px; justify-content: center;">
+    <span>📖</span>
+    <span>英语视图</span>
+</button>
                 </div>
             </div>
         </div>
@@ -3710,17 +3977,19 @@ if (showEditGoalModal) {
                     goalsList += `
                         <div class="goal-item-modal" style="background: ${g.color}20;">
                             <span class="goal-item-icon">${g.icon}</span>
-                            ${isEditing ? 
-                                `<input type="text" id="edit-goal-input-${g.id}" class="modal-input" style="flex: 1; margin: 0;" value="${toSafeString(g.name)}" 
-                                    onblur="saveGoalInline('${g.id}', this.value)"
-                                    onkeypress="if(event.key==='Enter') this.blur()" autofocus>` :
-                                `<span class="goal-item-name" onclick="switchGoal('${g.id}')">${toSafeString(g.name)}</span>
-                                 <div class="goal-item-actions">
-                                    ${g.id === currentGoalId ? '<span class="goal-item-check">✓</span>' : ''}
-                                    <button class="goal-item-edit" onclick="event.stopPropagation(); startEditGoalInline('${g.id}')">✎</button>
-                                    <button class="goal-item-delete" onclick="event.stopPropagation(); deleteGoal('${g.id}')">✕</button>
-                                </div>`
-                            }
+                            
+${isEditing ? 
+    `<input type="text" id="edit-goal-input-${g.id}" class="modal-input" style="flex: 1; margin: 0;" value="${toSafeString(g.name)}" 
+        onblur="saveGoalInline('${g.id}', this.value)"
+        onkeypress="if(event.key==='Enter') this.blur()" autofocus>` :
+    `<div class="goal-item-name" onclick="switchGoal('${g.id}')" style="flex: 1; cursor: pointer;">${toSafeString(g.name)}</div>
+     <div class="goal-item-actions">
+        ${g.id === currentGoalId ? '<span class="goal-item-check">✓</span>' : ''}
+        <button class="goal-item-edit" onclick="event.stopPropagation(); startEditGoalInline('${g.id}')">✎</button>
+        <button class="goal-item-delete" onclick="event.stopPropagation(); deleteGoal('${g.id}')">✕</button>
+    </div>`
+}
+
                         </div>
                     `;
                 }
@@ -4225,7 +4494,10 @@ function quickAddCategory() {
         }
 
 
-
+window.switchToEnglishView = switchToEnglishView;
+window.updateEnglishText = updateEnglishText;
+window.updateEnglishBooks = updateEnglishBooks;
+window.toggleEnglishCheck = toggleEnglishCheck;
 window.switchToDurationView = switchToDurationView;
         // ==================== 全局导出 ====================
         window.openViewSelectModal = openViewSelectModal;
