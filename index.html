@@ -1541,8 +1541,10 @@ let currentProjectId = null;
 let currentMonth = new Date().toISOString().slice(0, 7);
 let currentWeekStart = getWeekStart(new Date());
 let categories = [];
+let durationRecords = {}; 
 // 财政专用记录
-let financeRecords = {}; // 格式: { "2024-03_15": "35" }
+// 财政专用记录 - 修改为支持 { text: '', amount: '' } 格式
+let financeRecords = {}; // 格式: { "2024-03": { "15": { text: "买菜", amount: "35.5" } } }
         let goals = [];
 let currentGoalId = null;
         let showCategoryModal = false;
@@ -1590,6 +1592,16 @@ let currentGoalId = null;
         window._editingGoalId = null;
         window._showAddGoalInput = false;
 
+
+
+function switchToDurationView() {
+    currentPage = 'duration';
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
+    closeViewSelectModal();
+    render();
+}
+
         function switchToFinance() {
     if (currentPage === 'finance') {
         // 如果已经在财政视图，就返回主页
@@ -1602,8 +1614,6 @@ let currentGoalId = null;
     }
 }
 
-
-
 function renderFinance() {
     const [year, month] = currentMonth.split('-').map(Number);
     const daysInMonth = getDaysInMonth(year, month - 1);
@@ -1613,7 +1623,6 @@ function renderFinance() {
     const todayStr = today.toISOString().slice(0, 7);
     const todayDay = today.getDate();
     
-
     // 添加 getWeekNumber 函数
     function getWeekNumber(dateStr) {
         const date = new Date(dateStr);
@@ -1626,9 +1635,9 @@ function renderFinance() {
     let totalExpense = 0;
     let expenseDays = 0;
     for (let d = 1; d <= daysInMonth; d++) {
-        const val = records[d];
-        if (val && !isNaN(parseFloat(val))) {
-            totalExpense += parseFloat(val);
+        const record = records[d];
+        if (record && record.amount && !isNaN(parseFloat(record.amount))) {
+            totalExpense += parseFloat(record.amount);
             expenseDays++;
         }
     }
@@ -1643,10 +1652,11 @@ function renderFinance() {
     if (calendarViewType === 'month') {
         for (let day = 1; day <= daysInMonth; day++) {
             const isToday = currentMonth === todayStr && day === todayDay;
-            const content = toSafeString(records[day] || '');
+            const record = records[day] || { text: '', amount: '' };
             const weekday = getWeekday(year, month, day);
             const todayClass = isToday ? 'today-date' : '';
             const contentClass = isToday ? 'today-content' : '';
+            const hasAmount = record.amount && parseFloat(record.amount) > 0;
             
             daysRows += `
                 <div class="date-row">
@@ -1654,14 +1664,26 @@ function renderFinance() {
                         <span class="date-day">${day}</span>
                         <span class="date-week">${weekday}</span>
                     </div>
-                    <div class="content-wrapper">
-                        <div class="content-column ${contentClass}">
-                            <div class="record-text-wrapper">
-                                <input type="number" step="0.01" class="record-input-field" 
-                                    value="${content}"
-                                    onchange="updateFinanceRecord('${currentMonth}', ${day}, this.value)"
-                                    placeholder="0.00"
-                                    style="text-align: right;">
+                    <div class="content-wrapper" style="gap: 4px;">
+                        <div class="record-checkbox ${hasAmount ? 'checked' : ''}" 
+                             onclick="toggleFinanceCheck('${currentMonth}', ${day})">
+                        </div>
+                        <div class="content-column ${contentClass}" style="display: flex; gap: 4px;">
+                            <div class="record-text-wrapper" style="flex: 2;">
+                                <input type="text" class="record-input-field" 
+                                    value="${toSafeString(record.text)}"
+                                    onchange="updateFinanceRecord('${currentMonth}', ${day}, 'text', this.value)"
+                                    placeholder="">
+                            </div>
+                            <div class="record-text-wrapper" style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 2px; width: 100%;">
+                                    <input type="number" step="0.01" class="record-input-field" 
+                                        value="${record.amount || ''}"
+                                        onchange="updateFinanceRecord('${currentMonth}', ${day}, 'amount', this.value)"
+                                        placeholder="0.00"
+                                        style="text-align: right; flex: 1;">
+                                    <span style="font-size: 12px; color: #999;">元</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1680,10 +1702,11 @@ function renderFinance() {
             
             const isToday = dateStr === today.toISOString().split('T')[0];
             const dayRecords = financeRecords[monthStr] || {};
-            const content = toSafeString(dayRecords[day] || '');
+            const record = dayRecords[day] || { text: '', amount: '' };
             const weekday = d.weekday;
             const todayClass = isToday ? 'today-date' : '';
             const contentClass = isToday ? 'today-content' : '';
+            const hasAmount = record.amount && parseFloat(record.amount) > 0;
             
             daysRows += `
                 <div class="date-row">
@@ -1691,14 +1714,26 @@ function renderFinance() {
                         <span class="date-day">${day}</span>
                         <span class="date-week">${weekday}</span>
                     </div>
-                    <div class="content-wrapper">
-                        <div class="content-column ${contentClass}">
-                            <div class="record-text-wrapper">
-                                <input type="number" step="0.01" class="record-input-field" 
-                                    value="${content}"
-                                    onchange="updateFinanceRecord('${monthStr}', ${day}, this.value)"
-                                    placeholder="0.00"
-                                    style="text-align: right;">
+                    <div class="content-wrapper" style="gap: 4px;">
+                        <div class="record-checkbox ${hasAmount ? 'checked' : ''}" 
+                             onclick="toggleFinanceCheck('${monthStr}', ${day})">
+                        </div>
+                        <div class="content-column ${contentClass}" style="display: flex; gap: 4px;">
+                            <div class="record-text-wrapper" style="flex: 2;">
+                                <input type="text" class="record-input-field" 
+                                    value="${toSafeString(record.text)}"
+                                    onchange="updateFinanceRecord('${monthStr}', ${day}, 'text', this.value)"
+                                    placeholder="">
+                            </div>
+                            <div class="record-text-wrapper" style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 2px; width: 100%;">
+                                    <input type="number" step="0.01" class="record-input-field" 
+                                        value="${record.amount || ''}"
+                                        onchange="updateFinanceRecord('${monthStr}', ${day}, 'amount', this.value)"
+                                        placeholder="0.00"
+                                        style="text-align: right; flex: 1;">
+                                    <span style="font-size: 12px; color: #999;">元</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1712,63 +1747,82 @@ function renderFinance() {
         ? `第${getWeekNumber(currentWeekStart)}周` 
         : '';
     
- return `
-    <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
-    <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
-    <div style="display: flex; align-items: center; gap: 8px; width: 70px;">
-        <button class="nav-btn" onclick="goToHome()">← 返回</button>
-    </div>
-    <h2 class="project-title" style="margin: 0; font-size: 16px; text-align: center; flex: 1;">每日支出</h2>
-    <div style="display: flex; align-items: center; gap: 8px; width: 70px; justify-content: flex-end;">
-        <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
-            <span>📊</span>
-            <span>视图</span>
-        </button>
-        <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
-    </div>
-</div>
-
-        <div class="stats-card" style="width: 100%; box-sizing: border-box;">
-           <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 36px; width: 100%; box-sizing: border-box;">
-    ${calendarViewType === 'month' 
-        ? `<button class="month-btn" onclick="changeMonth(-1)">◀ 上月</button>
-           <span class="current-month">${currentMonth}</span>
-           <button class="month-btn" onclick="changeMonth(1)">下月 ▶</button>`
-        : `<button class="month-btn" onclick="changeWeek(-1)">◀ 上周</button>
-           <span class="current-month">${weekDisplay}</span>
-           <button class="month-btn" onclick="changeWeek(1)">下周 ▶</button>`
-    }
-</div>
-
-            
-            <div class="progress-info" style="width: 100%; box-sizing: border-box;">
-                <span>本月支出</span>
-                <span>${progressText} / ¥3000</span>
+    return `
+        <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
+            <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; gap: 8px; width: 70px;">
+                    <button class="nav-btn" onclick="goToHome()">← 返回</button>
+                </div>
+                <h2 class="project-title" style="margin: 0; font-size: 16px; text-align: center; flex: 1;">每日支出</h2>
+                <div style="display: flex; align-items: center; gap: 8px; width: 70px; justify-content: flex-end;">
+                    <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
+                        <span>📊</span>
+                        <span>视图</span>
+                    </button>
+                    <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
+                </div>
             </div>
-            <div class="month-progress-bar" style="width: 100%; box-sizing: border-box;">
-                <div class="month-progress-fill" style="width: ${progress}%;"></div>
+
+            <div class="stats-card" style="width: 100%; box-sizing: border-box;">
+                <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 36px; width: 100%; box-sizing: border-box;">
+                    ${calendarViewType === 'month' 
+                        ? `<button class="month-btn" onclick="changeMonth(-1)">◀ 上月</button>
+                           <span class="current-month">${currentMonth}</span>
+                           <button class="month-btn" onclick="changeMonth(1)">下月 ▶</button>`
+                        : `<button class="month-btn" onclick="changeWeek(-1)">◀ 上周</button>
+                           <span class="current-month">${weekDisplay}</span>
+                           <button class="month-btn" onclick="changeWeek(1)">下周 ▶</button>`
+                    }
+                </div>
+                
+                <div class="progress-info" style="width: 100%; box-sizing: border-box;">
+                    <span>本月支出</span>
+                    <span>${progressText} / ¥3000</span>
+                </div>
+                <div class="month-progress-bar" style="width: 100%; box-sizing: border-box;">
+                    <div class="month-progress-fill" style="width: ${progress}%;"></div>
+                </div>
+                <div style="font-size: 11px; color: #999; margin-top: 4px; text-align: right;">
+                    已消费 ${expenseDays} 天
+                </div>
             </div>
-            <div style="font-size: 11px; color: #999; margin-top: 4px; text-align: right;">
-                已消费 ${expenseDays} 天
+
+            <div class="daily-records" style="width: 100%; box-sizing: border-box;">
+                <div class="records-header" style="width: 100%; box-sizing: border-box;">
+                    <h3 class="records-title">每日支出</h3>
+                    <button class="view-type-btn" onclick="openViewTypeModal()">
+                        <span>📊</span>
+                        <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
+                    </button>
+                </div>
+                ${daysRows}
             </div>
         </div>
-
-        <div class="daily-records" style="width: 100%; box-sizing: border-box;">
-            <div class="records-header" style="width: 100%; box-sizing: border-box;">
-                <h3 class="records-title">每日支出</h3>
-                <button class="view-type-btn" onclick="openViewTypeModal()">
-                    <span>📊</span>
-                    <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
-                </button>
-            </div>
-            ${daysRows}
-        </div>
-    </div>
     `;
+}
 
-
-
+// 财政视图的复选框切换（有金额时打钩）
+function toggleFinanceCheck(monthStr, day) {
+    const key = monthStr;
+    if (!financeRecords[key]) financeRecords[key] = {};
+    if (!financeRecords[key][day]) financeRecords[key][day] = { text: '', amount: '' };
     
+    if (financeRecords[key][day].amount && parseFloat(financeRecords[key][day].amount) > 0) {
+        // 如果有金额，清空金额
+        financeRecords[key][day].amount = '';
+        if (!financeRecords[key][day].text) {
+            delete financeRecords[key][day];
+            if (Object.keys(financeRecords[key]).length === 0) {
+                delete financeRecords[key];
+            }
+        }
+    } else {
+        // 如果没有金额，设置默认值
+        financeRecords[key][day].amount = '30';
+    }
+    
+    saveData();
+    render();
 }
 
 
@@ -1850,9 +1904,15 @@ function renderFinance() {
             gistConfig = data.gistConfig || { token: '', gistId: '' };
             recordChecked = data.recordChecked || {};
             progressType = data.progressType || 'monthly';
+            financeRecords = data.financeRecords || {};
+            durationRecords = data.durationRecords || {};
+            
             todoExpanded = data.todoExpanded || {};
             categories = data.categories || [];  // 添加分类数据
             console.log('数据加载成功');
+
+
+            
         } else {
             goals = [];
             currentGoalId = null;
@@ -1879,7 +1939,8 @@ function saveData() {
             recordChecked, 
             progressType,
             todoExpanded,
-            categories  // 添加分类数据
+            categories,
+            durationRecords  // 添加分类数据
         };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
                 console.log('数据已保存');
@@ -1941,6 +2002,8 @@ function saveGoalEdit() {
             showSwitchGoalModal = true;
             render();
         }
+
+
 
 
 // 更新 Emoji 预览
@@ -2135,6 +2198,314 @@ function switchToFinanceView() {
             }
         }
 
+
+
+function updateDurationRecord(monthStr, day, value) {
+    const key = monthStr;
+    if (!durationRecords[key]) durationRecords[key] = {};
+    
+    if (value.trim() === '') {
+        delete durationRecords[key][day];
+    } else {
+        // 直接保存文字内容，不限制格式
+        durationRecords[key][day] = value.trim();
+    }
+    
+    saveData();
+    render();
+}
+
+function renderDurationView() {
+    const [year, month] = currentMonth.split('-').map(Number);
+    const daysInMonth = getDaysInMonth(year, month - 1);
+    const key = currentMonth;
+    const records = durationRecords[key] || {};
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 7);
+    const todayDay = today.getDate();
+    
+    // 计算当月总时长和平均时长
+    let totalDuration = 0;
+    let durationDays = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+        const val = records[d];
+        if (val && typeof val === 'object' && val.duration) {
+            const num = parseFloat(val.duration);
+            if (!isNaN(num)) {
+                totalDuration += num;
+                durationDays++;
+            }
+        }
+    }
+    const avgDuration = durationDays > 0 ? (totalDuration / durationDays).toFixed(0) : 0;
+    
+    // 格式化时长显示
+    const formatDuration = (minutes) => {
+        if (minutes >= 60) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return mins > 0 ? `${hours}h${mins}m` : `${hours}h`;
+        }
+        return `${minutes}m`;
+    };
+    
+    const totalDisplay = formatDuration(totalDuration);
+    const avgDisplay = formatDuration(avgDuration);
+    
+    // 生成每日记录行
+    let daysRows = '';
+    
+    if (calendarViewType === 'month') {
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isToday = currentMonth === todayStr && day === todayDay;
+            const record = records[day] || { text: '', duration: '' };
+            const weekday = getWeekday(year, month, day);
+            const todayClass = isToday ? 'today-date' : '';
+            const contentClass = isToday ? 'today-content' : '';
+            const isChecked = record.duration && parseFloat(record.duration) > 0;
+            
+            
+            daysRows += `
+    <div class="date-row">
+        <div class="date-column ${todayClass}">
+            <span class="date-day">${day}</span>
+            <span class="date-week">${weekday}</span>
+        </div>
+        <div class="content-wrapper" style="gap: 4px;">
+            <div class="record-checkbox ${isChecked ? 'checked' : ''}" 
+                 onclick="toggleDurationCheck('${currentMonth}', ${day})">
+            </div>
+            <div class="content-column ${contentClass}" style="display: flex; gap: 4px;">
+                <div class="record-text-wrapper" style="flex: 2;">
+                    <input type="text" class="record-input-field" 
+                        value="${toSafeString(record.text)}"
+                        onchange="updateDurationText('${currentMonth}', ${day}, this.value)"
+                        placeholder="">
+                </div>
+                <div class="record-text-wrapper" style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="number" step="1" class="record-input-field" 
+                            value="${record.duration || ''}"
+                            onchange="updateDurationTime('${currentMonth}', ${day}, this.value)"
+                            placeholder="0"
+                            style="text-align: right; flex: 1;">
+                        <span style="font-size: 12px; color: #999;">分钟</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+`;
+        }
+    } else {
+        const weekDays = getWeekDays(currentWeekStart);
+        for (let i = 0; i < weekDays.length; i++) {
+            const d = weekDays[i];
+            const day = d.day;
+            const month = d.month;
+            const year = d.year;
+            const dateStr = d.date;
+            const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+            
+            const isToday = dateStr === today.toISOString().split('T')[0];
+            const dayRecords = durationRecords[monthStr] || {};
+            const record = dayRecords[day] || { text: '', duration: '' };
+            const weekday = d.weekday;
+            const todayClass = isToday ? 'today-date' : '';
+            const contentClass = isToday ? 'today-content' : '';
+            const isChecked = record.duration && parseFloat(record.duration) > 0;
+            
+            daysRows += `
+    <div class="date-row">
+        <div class="date-column ${todayClass}">
+            <span class="date-day">${day}</span>
+            <span class="date-week">${weekday}</span>
+        </div>
+        <div class="content-wrapper" style="gap: 4px;">
+            <div class="record-checkbox ${isChecked ? 'checked' : ''}" 
+                 onclick="toggleDurationCheck('${monthStr}', ${day})">
+            </div>
+            <div class="content-column ${contentClass}" style="display: flex; gap: 4px;">
+                <div class="record-text-wrapper" style="flex: 2;">
+                    <input type="text" class="record-input-field" 
+                        value="${toSafeString(record.text)}"
+                        onchange="updateDurationText('${monthStr}', ${day}, this.value)"
+                        placeholder="">
+                </div>
+                <div class="record-text-wrapper" style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 2px;">
+                        <input type="number" step="1" class="record-input-field" 
+                            value="${record.duration || ''}"
+                            onchange="updateDurationTime('${monthStr}', ${day}, this.value)"
+                            placeholder="0"
+                            style="text-align: right; flex: 1;">
+                        <span style="font-size: 12px; color: #999;">分钟</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+`;
+        }
+    }
+    
+    // 周视图的导航文字
+    const weekDisplay = calendarViewType === 'week' 
+        ? `第${getWeekNumber(currentWeekStart)}周` 
+        : '';
+    
+    function getWeekNumber(dateStr) {
+        const date = new Date(dateStr);
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+        return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    }
+    
+    return `
+        <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
+            <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box; position: relative;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="nav-btn" onclick="goToHome()">← 返回</button>
+                </div>
+                <h2 class="project-title" style="margin: 0; font-size: 16px; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap;">每日时长</h2>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
+                        <span>📊</span>
+                        <span>视图</span>
+                    </button>
+                    <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
+                </div>
+            </div>
+
+            <div class="stats-card" style="width: 100%; box-sizing: border-box;">
+                <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 36px; width: 100%; box-sizing: border-box;">
+                    ${calendarViewType === 'month' 
+                        ? `<button class="month-btn" onclick="changeMonth(-1)">◀ 上月</button>
+                           <span class="current-month">${currentMonth}</span>
+                           <button class="month-btn" onclick="changeMonth(1)">下月 ▶</button>`
+                        : `<button class="month-btn" onclick="changeWeek(-1)">◀ 上周</button>
+                           <span class="current-month">${weekDisplay}</span>
+                           <button class="month-btn" onclick="changeWeek(1)">下周 ▶</button>`
+                    }
+                </div>
+                
+                <div class="progress-info" style="width: 100%; box-sizing: border-box;">
+                    <span>本月总时长</span>
+                    <span>${totalDisplay}</span>
+                </div>
+                <div class="progress-info" style="width: 100%; box-sizing: border-box; margin-top: 4px;">
+                    <span>平均每天</span>
+                    <span>${avgDisplay}</span>
+                </div>
+                <div class="month-progress-bar" style="width: 100%; box-sizing: border-box;">
+                    <div class="month-progress-fill" style="width: ${Math.min(100, (totalDuration / (30 * 60) * 100))}%;"></div>
+                </div>
+                <div style="font-size: 11px; color: #999; margin-top: 4px; text-align: right;">
+                    已记录 ${durationDays} 天
+                </div>
+            </div>
+
+            <div class="daily-records" style="width: 100%; box-sizing: border-box;">
+                <div class="records-header" style="width: 100%; box-sizing: border-box;">
+                    <h3 class="records-title">每日时长</h3>
+                    <button class="view-type-btn" onclick="openViewTypeModal()">
+                        <span>📊</span>
+                        <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
+                    </button>
+                </div>
+                ${daysRows}
+            </div>
+        </div>
+    `;
+}
+
+function updateDurationText(monthStr, day, value) {
+    const key = monthStr;
+    if (!durationRecords[key]) durationRecords[key] = {};
+    if (!durationRecords[key][day]) durationRecords[key][day] = { text: '', duration: '' };
+    
+    durationRecords[key][day].text = value.trim();
+    
+    // 如果文字和时长都为空，删除整个记录
+    if (!durationRecords[key][day].text && !durationRecords[key][day].duration) {
+        delete durationRecords[key][day];
+    }
+    
+    saveData();
+    render();
+}
+
+function updateDurationTime(monthStr, day, value) {
+    const key = monthStr;
+    if (!durationRecords[key]) durationRecords[key] = {};
+    if (!durationRecords[key][day]) durationRecords[key][day] = { text: '', duration: '' };
+    
+    const num = parseFloat(value);
+    if (!isNaN(num) && num > 0) {
+        durationRecords[key][day].duration = num;
+    } else {
+        durationRecords[key][day].duration = '';
+    }
+    
+    // 如果文字和时长都为空，删除整个记录
+    if (!durationRecords[key][day].text && !durationRecords[key][day].duration) {
+        delete durationRecords[key][day];
+    }
+    
+    saveData();
+    render();
+}
+
+function toggleDurationCheck(monthStr, day) {
+    const key = monthStr;
+    if (!durationRecords[key]) durationRecords[key] = {};
+    if (!durationRecords[key][day]) durationRecords[key][day] = { text: '', duration: '' };
+    
+    if (durationRecords[key][day].duration && durationRecords[key][day].duration > 0) {
+        // 如果有时长，清空时长
+        durationRecords[key][day].duration = '';
+        if (!durationRecords[key][day].text) {
+            delete durationRecords[key][day];
+        }
+    } else {
+        // 如果没有时长，设置默认值 30 分钟
+        durationRecords[key][day].duration = 30;
+    }
+    
+    saveData();
+    render();
+}
+
+function toggleDurationCheck(monthStr, day) {
+    const key = monthStr;
+    if (!durationRecords[key]) durationRecords[key] = {};
+    
+    const currentValue = durationRecords[key][day];
+    if (currentValue && currentValue > 0) {
+        // 如果有值，清空
+        delete durationRecords[key][day];
+    } else {
+        // 如果没有值，设置默认值 30 分钟
+        durationRecords[key][day] = 30;
+    }
+    
+    saveData();
+    render();
+}
+
+function render() {
+    const app = document.getElementById('app');
+    if (currentPage === 'home') {
+        app.innerHTML = renderHome() + renderModals();
+    } else if (currentPage === 'finance') {
+        app.innerHTML = renderFinance() + renderModals();
+    } else if (currentPage === 'duration') {
+        app.innerHTML = renderDurationView() + renderModals();
+    } else {
+        app.innerHTML = renderMonthlyView() + renderModals();
+    }
+}
+
         function updateProgress(projectId, delta) {
             const project = projects.find(p => p.id === projectId);
             if (project) {
@@ -2260,19 +2631,31 @@ function saveProjectEdit() {
             saveData();
         }
 
-   function updateFinanceRecord(monthStr, day, value) {
+ 
+function updateFinanceRecord(monthStr, day, field, value) {
     const key = monthStr;
     if (!financeRecords[key]) financeRecords[key] = {};
+    if (!financeRecords[key][day]) financeRecords[key][day] = { text: '', amount: '' };
     
-    if (value.trim() === '') {
+    if (field === 'text') {
+        financeRecords[key][day].text = value.trim();
+    } else if (field === 'amount') {
+        financeRecords[key][day].amount = value.trim();
+    }
+    
+    // 如果文字和金额都为空，删除整个记录
+    if (!financeRecords[key][day].text && !financeRecords[key][day].amount) {
         delete financeRecords[key][day];
-    } else {
-        financeRecords[key][day] = value;
+        // 如果当月没有记录，也删除月份记录
+        if (Object.keys(financeRecords[key]).length === 0) {
+            delete financeRecords[key];
+        }
     }
     
     saveData();
     render();
 }
+
 
 function toggleRecordCheck(projectId, monthStr, day) {
     const checkKey = `${projectId}_${monthStr}_${day}`;
@@ -3214,6 +3597,7 @@ function deleteCategory(categoryId) {
      
 
 // 视图选择弹窗
+// 视图选择弹窗
 if (showViewSelectModal) {
     modals += `
         <div class="modal-overlay" onclick="closeViewSelectModal()">
@@ -3232,11 +3616,19 @@ if (showViewSelectModal) {
                         <span>💰</span>
                         <span>财政视图</span>
                     </button>
+                    <button class="modal-btn ${currentPage === 'duration' ? 'modal-btn-primary' : ''}" 
+                            onclick="switchToDurationView()" 
+                            style="width: 100%; text-align: center; display: flex; align-items: center; gap: 8px; justify-content: center;">
+                        <span>⏱️</span>
+                        <span>时长视图</span>
+                    </button>
                 </div>
             </div>
         </div>
     `;
 }
+
+
 
 // 修改/添加目标弹窗
 if (showEditGoalModal) {
@@ -3832,17 +4224,9 @@ function quickAddCategory() {
             render();
         }
 
-     function render() {
-    const app = document.getElementById('app');
-    if (currentPage === 'home') {
-        app.innerHTML = renderHome() + renderModals();
-    } else if (currentPage === 'finance') {
-        app.innerHTML = renderFinance() + renderModals();
-    } else {
-        app.innerHTML = renderMonthlyView() + renderModals();
-    }
-}
 
+
+window.switchToDurationView = switchToDurationView;
         // ==================== 全局导出 ====================
         window.openViewSelectModal = openViewSelectModal;
 window.closeViewSelectModal = closeViewSelectModal;
