@@ -1536,6 +1536,7 @@ let currentCategoryId = null;
 // 弹窗控制
 let showViewTypeModal = false;
 // UI 状态
+let lastPage = 'home'; // 新增：记住上次的视图
 let currentPage = 'home'; // 'home', 'project', 'finance'
 let currentProjectId = null;
 let currentMonth = new Date().toISOString().slice(0, 7);
@@ -1605,6 +1606,8 @@ function switchToDurationView() {
 
 function switchToEnglishView() {
     currentPage = 'english';
+    lastPage = currentPage;
+    saveData();  // 立即保存
     currentMonth = getCurrentYearMonth().monthStr;
     currentWeekStart = getWeekStart(new Date());
     closeViewSelectModal();
@@ -1920,7 +1923,8 @@ function toggleFinanceCheck(monthStr, day) {
             todoExpanded = data.todoExpanded || {};
             categories = data.categories || [];  // 添加分类数据
             console.log('数据加载成功');
-
+lastPage = data.lastPage || 'home';
+currentPage = lastPage; // 恢复上次的视图
 
             
         } else {
@@ -1951,7 +1955,8 @@ function saveData() {
             progressType,
             todoExpanded,
             categories,
-            durationRecords  // 添加分类数据
+            durationRecords,
+            lastPage: currentPage  // 添加分类数据
         };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
                 console.log('数据已保存');
@@ -2147,12 +2152,18 @@ function closeViewSelectModal() {
 
 function switchToRegularView() {
     currentPage = 'project';
+    lastPage = currentPage;
+    saveData();  // 立即保存
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
     closeViewSelectModal();
     render();
 }
 
 function switchToFinanceView() {
     currentPage = 'finance';
+    lastPage = currentPage;
+    saveData();  // 立即保存
     currentMonth = getCurrentYearMonth().monthStr;
     currentWeekStart = getWeekStart(new Date());
     closeViewSelectModal();
@@ -3056,10 +3067,12 @@ function toggleRecordCheck(projectId, monthStr, day) {
 
         // ==================== 页面导航 ====================
         function goToHome() {
-            currentPage = 'home';
-            currentProjectId = null;
-            render();
-        }
+    currentPage = 'home';
+    lastPage = currentPage;
+    saveData();  // 立即保存
+    currentProjectId = null;
+    render();
+}
 
         function goToProject(projectId) {
             currentProjectId = projectId;
