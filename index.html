@@ -16,6 +16,54 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+
+    /* 手机端统一所有表单元素高度 */
+.modal-input,
+.modal-input[type="date"],
+.modal-input[type="text"],
+.modal-input[type="number"],
+select.modal-input {
+    padding: 12px 12px !important;
+    height: 44px !important;
+    line-height: 20px !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+/* 针对 select 特别处理 */
+select.modal-input {
+    background-color: #fafafa;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+}
+
+/* 针对日期输入框 */
+.modal-input[type="date"] {
+    position: relative;
+    background-color: #fafafa;
+}
+
+/* 移除日期选择器的默认内边距 */
+.modal-input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+}
+
+.modal-input[type="date"]::-webkit-datetime-edit-text {
+    padding: 0 2px;
+}
+
+.modal-input[type="date"]::-webkit-datetime-edit-month-field,
+.modal-input[type="date"]::-webkit-datetime-edit-day-field,
+.modal-input[type="date"]::-webkit-datetime-edit-year-field {
+    padding: 0 2px;
+}
+
+    
     /* 强制日期输入框宽度为100% */
 .modal-input[type="date"] {
     width: 100% !important;
