@@ -1901,7 +1901,7 @@ function toggleFinanceCheck(monthStr, day) {
 
         // ==================== 数据持久化 ====================
     
-   function loadData() {
+function loadData() {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
@@ -1919,37 +1919,47 @@ function toggleFinanceCheck(monthStr, day) {
             recordChecked = data.recordChecked || {};
             financeRecords = data.financeRecords || {};
             progressType = data.progressType || 'monthly';
-            
             durationRecords = data.durationRecords || {};
             englishRecords = data.englishRecords || {};
             todoExpanded = data.todoExpanded || {};
-            // 改为
-categories = data.categories || {};
-// 确保每个目标都有分类数组
-if (goals.length > 0) {
-    goals.forEach(goal => {
-        if (!categories[goal.id]) {
-            categories[goal.id] = [];
-        }
-    });
-} // 添加分类数据
+            
+            // ✅ 关键修复：确保 categories 是对象
+            if (Array.isArray(data.categories)) {
+                // 如果 categories 是数组，转换为对象
+                categories = {};
+                // 如果数组中有旧数据，尝试迁移到当前目标
+                if (data.categories.length > 0 && goals.length > 0) {
+                    categories[goals[0].id] = data.categories;
+                }
+            } else {
+                categories = data.categories || {};
+            }
+            
+            // 确保每个目标都有分类数组
+            if (goals.length > 0) {
+                goals.forEach(goal => {
+                    if (!categories[goal.id]) {
+                        categories[goal.id] = [];
+                    }
+                });
+            }
+            
             console.log('数据加载成功');
-lastPage = data.lastPage || 'home';
-currentPage = lastPage; // 恢复上次的视图
-
+            lastPage = data.lastPage || 'home';
+            currentPage = lastPage;
             
         } else {
             goals = [];
             currentGoalId = null;
-            categories = [];  // 初始化空分类
+            categories = {};  // ✅ 改为对象
         }
     } catch (error) {
         console.error('加载数据失败:', error);
         goals = [];
         currentGoalId = null;
-        categories = [];
+        categories = {};  // ✅ 改为对象
     }
-}     
+}
 
 
 function getCurrentGoalCategories() {
@@ -3400,8 +3410,12 @@ categoryTabsHtml += `
 `;
 
 // 每个分类的选项卡
+// 每个分类的选项卡
 for (let catId in projectsByCategory) {
-    const category = categories.find(c => c.id === catId);
+    // 因为 categories 是按目标存储的，需要先获取当前目标的分类列表
+    const currentGoal = getCurrentGoal();
+    const goalCategories = currentGoal ? (categories[currentGoal.id] || []) : [];
+    const category = goalCategories.find(c => c.id === catId);
     if (!category) continue;
     
     categoryTabsHtml += `
@@ -3420,7 +3434,7 @@ for (let catId in projectsByCategory) {
                     gap: 4px;
                     transition: all 0.2s;
                 ">
-            <span>${category.icon}</span>
+            <span>${category.icon || '📁'}</span>
             <span>${category.name}</span>
             <span style="font-size: 11px; opacity: 0.8;">(${projectsByCategory[catId].length})</span>
         </button>
@@ -4127,17 +4141,20 @@ if (showAddProjectModal) {
 </select>
                 </div>
                 
-                <!-- 截止日期区域 - 去掉默认值 -->
+  
+<!-- 截止日期区域 -->
 <div style="margin-bottom: 16px;">
     <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
-    <input type="date" id="project-deadline-input" class="modal-input" style="margin-bottom: 8px;">
-    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('today')">今天</button>
-        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('tomorrow')">明天</button>
-        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('week')">7天后</button>
-        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('month')">30天后</button>
+    <input type="date" id="project-deadline-input" class="modal-input" style="margin-bottom: 8px; width: 100%; box-sizing: border-box;">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('today')">今天</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('tomorrow')">明天</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('week')">7天后</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('month')">30天后</button>
     </div>
 </div>
+
+
                 
                 <input type="number" id="project-target-number" class="modal-input" placeholder="目标数量">
                 <input type="text" id="project-unit" class="modal-input" placeholder="单位（件/个/粉）" value="件">
@@ -4201,17 +4218,19 @@ if (showEditProjectModal) {
                 </div>
                 
                 <!-- 截止日期区域 -->
-                <div style="margin-bottom: 16px;">
-                    <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
-                    <input type="date" id="edit-project-deadline" class="modal-input" style="margin-bottom: 8px;" value="${project && project.deadline ? project.deadline : today}">
-                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('today')">今天</button>
-                        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('tomorrow')">明天</button>
-                        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('week')">7天后</button>
-                        <button type="button" class="deadline-quick-btn" onclick="setQuickDeadline('month')">30天后</button>
-                    </div>
-                    <div style="display: flex; gap: 8px;"><button type="button" class="deadline-quick-btn" style="flex: 1;" onclick="clearDeadline()">清除截止日期</button></div>
-                </div>
+<div style="margin-bottom: 16px;">
+    <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
+    <input type="date" id="edit-project-deadline" class="modal-input" style="margin-bottom: 8px; width: 100%; box-sizing: border-box;" value="${project && project.deadline ? project.deadline : today}">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('today')">今天</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('tomorrow')">明天</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('week')">7天后</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('month')">30天后</button>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <button type="button" class="deadline-quick-btn" style="flex: 1; white-space: nowrap;" onclick="clearDeadline()">清除截止日期</button>
+    </div>
+</div>
                 
                 <!-- 目标数量和单位 - 去掉默认值 -->
 <div style="display: flex; gap: 8px; margin-bottom: 16px;">
