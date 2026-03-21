@@ -4145,12 +4145,12 @@ if (showAddProjectModal) {
 <!-- 截止日期区域 -->
 <div style="margin-bottom: 16px;">
     <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
-    <input type="date" id="project-deadline-input" class="modal-input" style="margin-bottom: 8px; width: 100%; box-sizing: border-box;">
-    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('today')">今天</button>
-        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('tomorrow')">明天</button>
-        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('week')">7天后</button>
-        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('month')">30天后</button>
+    <input type="date" id="project-deadline-input" class="modal-input" style="margin-bottom: 8px; width: 100%; box-sizing: border-box; display: block;">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('today')">今天</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('tomorrow')">明天</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('week')">7天后</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('month')">30天后</button>
     </div>
 </div>
 
@@ -4217,18 +4217,18 @@ if (showEditProjectModal) {
 </select>
                 </div>
                 
-                <!-- 截止日期区域 -->
+<!-- 截止日期区域 -->
 <div style="margin-bottom: 16px;">
     <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
-    <input type="date" id="edit-project-deadline" class="modal-input" style="margin-bottom: 8px; width: 100%; box-sizing: border-box;" value="${project && project.deadline ? project.deadline : today}">
+    <input type="date" id="edit-project-deadline" class="modal-input" style="margin-bottom: 8px; width: 100%; box-sizing: border-box; display: block;" value="${project && project.deadline ? project.deadline : ''}">
     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('today')">今天</button>
-        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('tomorrow')">明天</button>
-        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('week')">7天后</button>
-        <button type="button" class="deadline-quick-btn" style="flex: 1; min-width: 70px; white-space: nowrap;" onclick="setQuickDeadline('month')">30天后</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('today')">今天</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('tomorrow')">明天</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('week')">7天后</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('month')">30天后</button>
     </div>
     <div style="display: flex; gap: 8px;">
-        <button type="button" class="deadline-quick-btn" style="flex: 1; white-space: nowrap;" onclick="clearDeadline()">清除截止日期</button>
+        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="clearDeadline()">清除截止日期</button>
     </div>
 </div>
                 
