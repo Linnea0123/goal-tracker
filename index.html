@@ -1541,7 +1541,7 @@ let currentPage = 'home'; // 'home', 'project', 'finance'
 let currentProjectId = null;
 let currentMonth = new Date().toISOString().slice(0, 7);
 let currentWeekStart = getWeekStart(new Date());
-let categories = [];
+let categories = {}; // 格式: { "goalId1": [分类数组], "goalId2": [分类数组] }
 let durationRecords = {}; 
 // 财政专用记录
 // 财政专用记录 - 修改为支持 { text: '', amount: '' } 格式
@@ -1597,12 +1597,13 @@ let currentGoalId = null;
 
 function switchToDurationView() {
     currentPage = 'duration';
+    lastPage = currentPage;
+    saveData();  // 立即保存
     currentMonth = getCurrentYearMonth().monthStr;
     currentWeekStart = getWeekStart(new Date());
     closeViewSelectModal();
     render();
 }
-
 
 function switchToEnglishView() {
     currentPage = 'english';
@@ -1916,12 +1917,22 @@ function toggleFinanceCheck(monthStr, day) {
             todoItems = data.todoItems || {};
             gistConfig = data.gistConfig || { token: '', gistId: '' };
             recordChecked = data.recordChecked || {};
-            progressType = data.progressType || 'monthly';
             financeRecords = data.financeRecords || {};
+            progressType = data.progressType || 'monthly';
+            
             durationRecords = data.durationRecords || {};
             englishRecords = data.englishRecords || {};
             todoExpanded = data.todoExpanded || {};
-            categories = data.categories || [];  // 添加分类数据
+            // 改为
+categories = data.categories || {};
+// 确保每个目标都有分类数组
+if (goals.length > 0) {
+    goals.forEach(goal => {
+        if (!categories[goal.id]) {
+            categories[goal.id] = [];
+        }
+    });
+} // 添加分类数据
             console.log('数据加载成功');
 lastPage = data.lastPage || 'home';
 currentPage = lastPage; // 恢复上次的视图
@@ -1941,6 +1952,15 @@ currentPage = lastPage; // 恢复上次的视图
 }     
 
 
+function getCurrentGoalCategories() {
+    const currentGoal = getCurrentGoal();
+    if (!currentGoal) return [];
+    if (!categories[currentGoal.id]) {
+        categories[currentGoal.id] = [];
+    }
+    return categories[currentGoal.id];
+}
+
 function saveData() {
             try {
                 const data = { 
@@ -1955,6 +1975,7 @@ function saveData() {
             progressType,
             todoExpanded,
             categories,
+            financeRecords,
             durationRecords,
             lastPage: currentPage  // 添加分类数据
         };
@@ -2744,22 +2765,6 @@ function toggleDurationCheck(monthStr, day) {
     render();
 }
 
-function toggleDurationCheck(monthStr, day) {
-    const key = monthStr;
-    if (!durationRecords[key]) durationRecords[key] = {};
-    
-    const currentValue = durationRecords[key][day];
-    if (currentValue && currentValue > 0) {
-        // 如果有值，清空
-        delete durationRecords[key][day];
-    } else {
-        // 如果没有值，设置默认值 30 分钟
-        durationRecords[key][day] = 30;
-    }
-    
-    saveData();
-    render();
-}
 
 
 function render() {
@@ -3110,6 +3115,7 @@ function toggleRecordCheck(projectId, monthStr, day) {
         }
 
         
+
 async function syncToGist() {
     if (!gistConfig.token || !gistConfig.gistId) {
         syncStatus = '请先在设置中配置 Token 和 Gist ID'; render(); return;
@@ -3125,7 +3131,10 @@ async function syncToGist() {
             recordChecked, 
             progressType,
             todoExpanded,
-            categories  // 添加到同步数据
+            categories,
+            durationRecords,
+            financeRecords,
+            englishRecords  // 添加英语视图数据
         };
         const content = JSON.stringify(data, null, 2);
 
@@ -3142,8 +3151,9 @@ async function syncToGist() {
         syncStatus = `同步失败: ${error.message}`; isSyncing = false; render();
     }
 }
-  
 
+
+  
 
 async function restoreFromGist() {
     if (!gistConfig.token || !gistConfig.gistId) {
@@ -3172,7 +3182,20 @@ async function restoreFromGist() {
         todoExpanded = data.todoExpanded || {};
         recordChecked = data.recordChecked || {};
         progressType = data.progressType || 'monthly';
-        categories = data.categories || [];  // 添加分类数据
+        categories = data.categories || {};
+        durationRecords = data.durationRecords || {};
+        financeRecords = data.financeRecords || {};
+        englishRecords = data.englishRecords || {};
+        
+        // 确保每个目标都有分类数组
+        if (goals.length > 0) {
+            goals.forEach(goal => {
+                if (!categories[goal.id]) {
+                    categories[goal.id] = [];
+                }
+            });
+        }
+        
         saveData();
         syncStatus = '恢复成功！'; isSyncing = false; render();
         setTimeout(() => { syncStatus = ''; render(); }, 3000);
@@ -3181,28 +3204,7 @@ async function restoreFromGist() {
         syncStatus = `恢复失败: ${error.message}`; isSyncing = false; render();
     }
 }
-        // ==================== 快速截止日期 ====================
-        window.setQuickDeadline = function(option) {
-            const deadlineInput = document.getElementById('project-deadline-input') || document.getElementById('edit-project-deadline');
-            if (!deadlineInput) return;
-            const today = new Date();
-            let targetDate = new Date();
-            switch(option) {
-                case 'today': break;
-                case 'tomorrow': targetDate.setDate(today.getDate() + 1); break;
-                case 'week': targetDate.setDate(today.getDate() + 7); break;
-                case 'month': targetDate.setDate(today.getDate() + 30); break;
-            }
-            const year = targetDate.getFullYear();
-            const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-            const day = String(targetDate.getDate()).padStart(2, '0');
-            deadlineInput.value = `${year}-${month}-${day}`;
-        };
 
-        window.clearDeadline = function() {
-            const deadlineInput = document.getElementById('edit-project-deadline');
-            if (deadlineInput) deadlineInput.value = '';
-        };
 
         // ==================== 渲染 ====================
   
@@ -3481,27 +3483,31 @@ return categoryStyle + `
             全部
         </button>
         
-        ${categories.map(cat => {
-            // 计算该分类下的项目数量
-            const catCount = projects.filter(p => p.goalId === currentGoalId && p.categoryId === cat.id).length;
-            if (catCount === 0) return ''; // 没有项目不显示
-            return `
-                <button class="category-tab ${currentCategoryId === cat.id ? 'active' : ''}" 
-                        onclick="switchCategory('${cat.id}')"
-                        style="
-                            padding: 4px 12px;
-                            border-radius: 16px;
-                            border: 1px solid #ddd;
-                            background: ${currentCategoryId === cat.id ? '#5a7a9a' : 'white'};
-                            color: ${currentCategoryId === cat.id ? 'white' : '#666'};
-                            font-size: 13px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">
-                    ${cat.name} (${catCount})
-                </button>
-            `;
-        }).join('')}
+        ${getCurrentGoalCategories().map(cat => {
+    const catCount = projects.filter(p => p.goalId === currentGoalId && p.categoryId === cat.id).length;
+    if (catCount === 0) return '';
+    return `
+        <button class="category-tab ${currentCategoryId === cat.id ? 'active' : ''}" 
+                onclick="switchCategory('${cat.id}')"
+                style="
+                    padding: 4px 12px;
+                    border-radius: 16px;
+                    border: 1px solid #ddd;
+                    background: ${currentCategoryId === cat.id ? '#5a7a9a' : 'white'};
+                    color: ${currentCategoryId === cat.id ? 'white' : '#666'};
+                    font-size: 13px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                ">
+            <span>${cat.icon || '📁'}</span>
+            <span>${cat.name}</span>
+            <span style="font-size: 11px; opacity: 0.8;">(${catCount})</span>
+        </button>
+    `;
+}).join('')}
     </div>
     <button class="add-project-btn" onclick="openAddProjectModal()">+ 新建</button>
 </div>
@@ -3819,22 +3825,51 @@ function closeCategoryModal() {
 
 function addCategory() {
     const nameInput = document.getElementById('new-category-name');
+    const currentGoal = getCurrentGoal();
+    if (!currentGoal) return;
     
     if (nameInput?.value.trim()) {
         const newCategory = {
             id: 'cat' + Date.now(),
             name: nameInput.value.trim(),
+            icon: '📁',
             color: BLUE_COLORS[Math.floor(Math.random() * BLUE_COLORS.length)]
         };
-        categories.push(newCategory);
+        
+        if (!categories[currentGoal.id]) {
+            categories[currentGoal.id] = [];
+        }
+        categories[currentGoal.id].push(newCategory);
         nameInput.value = '';
         saveData();
         render();
     }
 }
 
+function deleteCategory(categoryId) {
+    const currentGoal = getCurrentGoal();
+    if (!currentGoal) return;
+    
+    // 检查是否有项目在使用这个分类
+    const projectsUsing = projects.filter(p => p.goalId === currentGoal.id && p.categoryId === categoryId);
+    if (projectsUsing.length > 0) {
+        alert(`无法删除：还有 ${projectsUsing.length} 个项目使用此分类，请先修改这些项目的分类`);
+        return;
+    }
+    
+    if (confirm('确定删除这个分类吗？')) {
+        categories[currentGoal.id] = (categories[currentGoal.id] || []).filter(c => c.id !== categoryId);
+        saveData();
+        render();
+    }
+}
+
 function editCategory(categoryId) {
-    const category = categories.find(c => c.id === categoryId);
+    const currentGoal = getCurrentGoal();
+    if (!currentGoal) return;
+    
+    const goalCategories = categories[currentGoal.id] || [];
+    const category = goalCategories.find(c => c.id === categoryId);
     if (!category) return;
     
     const newName = prompt('输入新的分类名称', category.name);
@@ -3845,20 +3880,6 @@ function editCategory(categoryId) {
     }
 }
 
-function deleteCategory(categoryId) {
-    // 检查是否有项目在使用这个分类
-    const projectsUsing = projects.filter(p => p.categoryId === categoryId);
-    if (projectsUsing.length > 0) {
-        alert(`无法删除：还有 ${projectsUsing.length} 个项目使用此分类，请先修改这些项目的分类`);
-        return;
-    }
-    
-    if (confirm('确定删除这个分类吗？')) {
-        categories = categories.filter(c => c.id !== categoryId);
-        saveData();
-        render();
-    }
-}
 
         function renderModals() {
             let modals = '';
@@ -4093,13 +4114,16 @@ if (showAddProjectModal) {
                     </div>
                     <select id="project-category-select" class="modal-input" style="margin-bottom: 0;">
     <option value="">无分类</option>
-    ${categories.map(cat => {
-        // 确保 cat 对象完整，并转义特殊字符
-        const catId = String(cat.id || '').replace(/"/g, '&quot;');
-        const catName = String(cat.name || '未命名').replace(/"/g, '&quot;');
-        const bgColor = cat.color || '#f0f0f0';
-        return `<option value="${catId}" style="background: ${bgColor}20;">${catName}</option>`;
-    }).join('')}
+    ${(() => {
+        const currentGoal = getCurrentGoal();
+        const goalCategories = currentGoal ? (categories[currentGoal.id] || []) : [];
+        return goalCategories.map(cat => {
+            const catId = String(cat.id || '').replace(/"/g, '&quot;');
+            const catName = String(cat.name || '未命名').replace(/"/g, '&quot;');
+            const bgColor = cat.color || '#f0f0f0';
+            return `<option value="${catId}" style="background: ${bgColor}20;">${catName}</option>`;
+        }).join('');
+    })()}
 </select>
                 </div>
                 
@@ -4162,14 +4186,17 @@ if (showEditProjectModal) {
                     </div>
                     <select id="edit-project-category" class="modal-input" style="margin-bottom: 0;">
     <option value="">无分类</option>
-    ${categories.map(cat => {
-        const catId = String(cat.id || '').replace(/"/g, '&quot;');
-        const catName = String(cat.name || '未命名').replace(/"/g, '&quot;');
-        const bgColor = cat.color || '#f0f0f0';
-        // 添加 selected 逻辑，让当前分类默认选中
-        const isSelected = project && project.categoryId === cat.id ? 'selected' : '';
-        return `<option value="${catId}" style="background: ${bgColor}20;" ${isSelected}>${catName}</option>`;
-    }).join('')}
+    ${(() => {
+        const currentGoal = getCurrentGoal();
+        const goalCategories = currentGoal ? (categories[currentGoal.id] || []) : [];
+        return goalCategories.map(cat => {
+            const catId = String(cat.id || '').replace(/"/g, '&quot;');
+            const catName = String(cat.name || '未命名').replace(/"/g, '&quot;');
+            const bgColor = cat.color || '#f0f0f0';
+            const isSelected = project && project.categoryId === cat.id ? 'selected' : '';
+            return `<option value="${catId}" style="background: ${bgColor}20;" ${isSelected}>${catName}</option>`;
+        }).join('');
+    })()}
 </select>
                 </div>
                 
@@ -4248,13 +4275,17 @@ if (showEditProjectModal) {
 
             // 分类管理弹窗
 // 分类管理弹窗
+
 // 分类管理弹窗
 if (showCategoryModal) {
+    const currentGoal = getCurrentGoal();
+    const goalCategories = currentGoal ? (categories[currentGoal.id] || []) : [];
+    
     let categoriesList = '';
-    for (let i = 0; i < categories.length; i++) {
-        const cat = categories[i];
+    for (let i = 0; i < goalCategories.length; i++) {
+        const cat = goalCategories[i];
         // 检查这个分类下有多少项目
-        const projectsCount = projects.filter(p => p.categoryId === cat.id).length;
+        const projectsCount = projects.filter(p => p.goalId === currentGoalId && p.categoryId === cat.id).length;
         
         categoriesList += `
             <div class="category-item" style="
@@ -4271,7 +4302,6 @@ if (showCategoryModal) {
                     <span style="font-size: 14px; color: #333;">${cat.name}</span>
                     <span style="font-size: 12px; color: #999; background: #eaeaea; padding: 2px 8px; border-radius: 12px;">${projectsCount}个项目</span>
                 </div>
-                <!-- 添加删除按钮 -->
                 <button class="category-delete-btn" onclick="deleteCategory('${cat.id}')" style="
                     width: 28px;
                     height: 28px;
@@ -4294,10 +4324,10 @@ if (showCategoryModal) {
     modals += `
         <div class="modal-overlay" onclick="closeCategoryModal()">
             <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 400px;">
-                <div class="modal-title">分类管理</div>
+                <div class="modal-title">分类管理 - ${currentGoal ? currentGoal.name : ''}</div>
                 
                 <div style="max-height: 350px; overflow-y: auto; margin-bottom: 16px; padding: 4px;">
-                    ${categories.length > 0 ? categoriesList : '<div style="text-align: center; color: #999; padding: 30px 20px;">暂无分类，点击下方添加</div>'}
+                    ${goalCategories.length > 0 ? categoriesList : '<div style="text-align: center; color: #999; padding: 30px 20px;">暂无分类，点击下方添加</div>'}
                 </div>
                 
                 <div style="display: flex; gap: 8px; margin-bottom: 16px;">
@@ -4312,8 +4342,6 @@ if (showCategoryModal) {
         </div>
     `;
 }
- 
-
 
 
 
@@ -4468,6 +4496,9 @@ if (showCategoryModal) {
         }
 
 function quickAddCategory() {
+    const currentGoal = getCurrentGoal();
+    if (!currentGoal) return;
+    
     const categoryName = prompt('请输入分类名称', '新分类');
     if (categoryName && categoryName.trim()) {
         const newCategory = {
@@ -4476,18 +4507,22 @@ function quickAddCategory() {
             icon: '📁',
             color: BLUE_COLORS[Math.floor(Math.random() * BLUE_COLORS.length)]
         };
-        categories.push(newCategory);
+        
+        if (!categories[currentGoal.id]) {
+            categories[currentGoal.id] = [];
+        }
+        categories[currentGoal.id].push(newCategory);
         saveData();
         
         // 重新渲染弹窗并选中新建的分类
         render();
         setTimeout(() => {
-            // 新增：尝试设置新建项目弹窗的下拉框
+            // 设置新建项目弹窗的下拉框
             const select = document.getElementById('project-category-select');
             if (select) {
                 select.value = newCategory.id;
             }
-            // 新增：尝试设置编辑项目弹窗的下拉框
+            // 设置编辑项目弹窗的下拉框
             const editSelect = document.getElementById('edit-project-category');
             if (editSelect) {
                 editSelect.value = newCategory.id;
@@ -4495,6 +4530,8 @@ function quickAddCategory() {
         }, 100);
     }
 }
+
+
         // ==================== 日历弹窗 ====================
         function openCalendarModal() {
             showCalendarModal = true;
