@@ -1608,8 +1608,7 @@ let currentGoalId = null;
         // 日历弹窗
         let showCalendarModal = false;
         // 日历视图类型
-        let calendarViewType = 'month'; // 'month' 或 'week'
-        // 当前选中的周（周一日期）
+        let calendarViewType = 'week';    // 新值
        let englishRecords = {}; // 格式: { "2024-03": { "15": { text: "书名", books: 1 } } }
     
     
@@ -1651,25 +1650,6 @@ let currentGoalId = null;
 
 
 
-function switchToDurationView() {
-    currentPage = 'duration';
-    lastPage = currentPage;
-    saveData();  // 立即保存
-    currentMonth = getCurrentYearMonth().monthStr;
-    currentWeekStart = getWeekStart(new Date());
-    closeViewSelectModal();
-    render();
-}
-
-function switchToEnglishView() {
-    currentPage = 'english';
-    lastPage = currentPage;
-    saveData();  // 立即保存
-    currentMonth = getCurrentYearMonth().monthStr;
-    currentWeekStart = getWeekStart(new Date());
-    closeViewSelectModal();
-    render();
-}
 
 
         function switchToFinance() {
@@ -1895,69 +1875,101 @@ function toggleFinanceCheck(monthStr, day) {
     render();
 }
 
+// ==================== 辅助函数 ====================
+function toSafeString(value) {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') {
+        try { return JSON.stringify(value); } catch { return ''; }
+    }
+    return String(value);
+}
 
-        // ==================== 辅助函数 ====================
-        function toSafeString(value) {
-            if (value === null || value === undefined) return '';
-            if (typeof value === 'object') {
-                try { return JSON.stringify(value); } catch { return ''; }
-            }
-            return String(value);
+function getDaysInMonth(year, month) {
+    return new Date(year, month + 1, 0).getDate();
+}
+
+function getCurrentYearMonth() {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth(), monthStr: now.toISOString().slice(0, 7) };
+}
+
+function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff)).toISOString().split('T')[0];
+}
+
+function getWeekEnd(weekStart) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + 6);
+    return d.toISOString().split('T')[0];
+}
+
+function getWeekDays(weekStart) {
+    const days = [];
+    const start = new Date(weekStart);
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        days.push({
+            date: d.toISOString().split('T')[0],
+            day: d.getDate(),
+            month: d.getMonth() + 1,
+            year: d.getFullYear(),
+            weekday: getWeekday(d.getFullYear(), d.getMonth() + 1, d.getDate())
+        });
+    }
+    return days;
+}
+
+function hasContent(value) {
+    const str = toSafeString(value);
+    return str.trim() !== '';
+}
+
+function getWeekday(year, month, day) {
+    const date = new Date(year, month - 1, day);
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    return weekdays[date.getDay()];
+}
+
+// ==================== 核心函数（必须在所有渲染函数之前定义）====================
+function getCurrentGoal() {
+    if (goals.length === 0) return null;
+    return goals.find(g => g.id === currentGoalId) || goals[0];
+}
+
+function getCurrentGoalCategories() {
+    const currentGoal = getCurrentGoal();
+    if (!currentGoal) return [];
+    if (!categories[currentGoal.id]) {
+        categories[currentGoal.id] = [];
+    }
+    return categories[currentGoal.id];
+}
+
+function getOverallProgress() {
+    const currentProjects = projects.filter(p => p.goalId === currentGoalId);
+    if (currentProjects.length === 0) return 0;
+    let total = 0;
+    for (let p of currentProjects) {
+        if (p.progressTarget && p.progressTarget > 0) {
+            total += (p.progressCurrent || 0) / p.progressTarget * 100;
         }
+    }
+    return Math.round(total / currentProjects.length);
+}
 
-        function getDaysInMonth(year, month) {
-            return new Date(year, month + 1, 0).getDate();
-        }
-
-        function getCurrentYearMonth() {
-            const now = new Date();
-            return { year: now.getFullYear(), month: now.getMonth(), monthStr: now.toISOString().slice(0, 7) };
-        }
-
-        function getWeekStart(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-            return new Date(d.setDate(diff)).toISOString().split('T')[0];
-        }
-
-        function getWeekEnd(weekStart) {
-            const d = new Date(weekStart);
-            d.setDate(d.getDate() + 6);
-            return d.toISOString().split('T')[0];
-        }
-
-        function getWeekDays(weekStart) {
-            const days = [];
-            const start = new Date(weekStart);
-            for (let i = 0; i < 7; i++) {
-                const d = new Date(start);
-                d.setDate(start.getDate() + i);
-                days.push({
-                    date: d.toISOString().split('T')[0],
-                    day: d.getDate(),
-                    month: d.getMonth() + 1,
-                    year: d.getFullYear(),
-                    weekday: getWeekday(d.getFullYear(), d.getMonth() + 1, d.getDate())
-                });
-            }
-            return days;
-        }
-
-        function hasContent(value) {
-            const str = toSafeString(value);
-            return str.trim() !== '';
-        }
-
-        function getWeekday(year, month, day) {
-            const date = new Date(year, month - 1, day);
-            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-            return weekdays[date.getDay()];
-        }
-
+function getCompletedProjectsCount() {
+    const currentProjects = projects.filter(p => p.goalId === currentGoalId);
+    return currentProjects.filter(p => p.progressCurrent >= p.progressTarget).length;
+}
         // ==================== 数据持久化 ====================
     
-function loadData() {
+
+
+        function loadData() {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
@@ -1979,11 +1991,9 @@ function loadData() {
             englishRecords = data.englishRecords || {};
             todoExpanded = data.todoExpanded || {};
             
-            // ✅ 关键修复：确保 categories 是对象
+            // 分类数据迁移
             if (Array.isArray(data.categories)) {
-                // 如果 categories 是数组，转换为对象
                 categories = {};
-                // 如果数组中有旧数据，尝试迁移到当前目标
                 if (data.categories.length > 0 && goals.length > 0) {
                     categories[goals[0].id] = data.categories;
                 }
@@ -2000,36 +2010,49 @@ function loadData() {
                 });
             }
             
-            console.log('数据加载成功');
+            // 恢复上次的页面和视图类型
             lastPage = data.lastPage || 'home';
             currentPage = lastPage;
+            calendarViewType = 'week';
             
+            // 如果上次页面是 project 但没有保存 projectId，则回到 home
+            if (currentPage === 'project' && !data.currentProjectId) {
+                currentPage = 'home';
+                currentProjectId = null;
+            } else if (currentPage === 'project') {
+                currentProjectId = data.currentProjectId;
+            } else {
+                currentProjectId = null;
+            }
+            
+            console.log('数据加载成功，当前页面:', currentPage, '视图类型:', calendarViewType);
         } else {
             goals = [];
             currentGoalId = null;
-            categories = {};  // ✅ 改为对象
+            categories = {};
+            currentPage = 'home';
+            lastPage = 'home';
+            calendarViewType = 'month';
         }
     } catch (error) {
         console.error('加载数据失败:', error);
         goals = [];
         currentGoalId = null;
-        categories = {};  // ✅ 改为对象
+        categories = {};
+        currentPage = 'home';
+        lastPage = 'home';
+        calendarViewType = 'month';
     }
 }
 
 
-function getCurrentGoalCategories() {
-    const currentGoal = getCurrentGoal();
-    if (!currentGoal) return [];
-    if (!categories[currentGoal.id]) {
-        categories[currentGoal.id] = [];
-    }
-    return categories[currentGoal.id];
-}
+
+
+
 
 function saveData() {
-            try {
-                const data = { 
+    try {
+        const data = { 
             goals, 
             currentGoalId, 
             projects, 
@@ -2043,21 +2066,16 @@ function saveData() {
             categories,
             financeRecords,
             durationRecords,
-            lastPage: currentPage  // 添加分类数据
+            lastPage: currentPage,           // 保存当前页面
+            currentProjectId: currentProjectId,  // 👈 添加这一行，保存当前项目ID
+            savedCalendarViewType: calendarViewType
         };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-                console.log('数据已保存');
-            } catch (error) {
-                console.error('保存数据失败:', error);
-            }
-        }
-
-        function getCurrentGoal() {
-    if (goals.length === 0) return null;
-    return goals.find(g => g.id === currentGoalId) || goals[0];
-}
-
-        // ==================== 目标相关操作 ====================
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        console.log('数据已保存，当前页面:', currentPage);
+    } catch (error) {
+        console.error('保存数据失败:', error);
+    }
+}    // ==================== 目标相关操作 ====================
  
 
         function closeEditGoalModal() {
@@ -2237,10 +2255,14 @@ function closeViewSelectModal() {
     render();
 }
 
+
 function switchToRegularView() {
+    // 保存离开前的页面
+    if (currentPage !== 'project') {
+        lastPage = currentPage;
+    }
     currentPage = 'project';
-    lastPage = currentPage;
-    saveData();  // 立即保存
+    saveData();
     currentMonth = getCurrentYearMonth().monthStr;
     currentWeekStart = getWeekStart(new Date());
     closeViewSelectModal();
@@ -2248,9 +2270,35 @@ function switchToRegularView() {
 }
 
 function switchToFinanceView() {
+    if (currentPage !== 'finance') {
+        lastPage = currentPage;
+    }
     currentPage = 'finance';
-    lastPage = currentPage;
-    saveData();  // 立即保存
+    saveData();
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
+    closeViewSelectModal();
+    render();
+}
+
+function switchToDurationView() {
+    if (currentPage !== 'duration') {
+        lastPage = currentPage;
+    }
+    currentPage = 'duration';
+    saveData();
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
+    closeViewSelectModal();
+    render();
+}
+
+function switchToEnglishView() {
+    if (currentPage !== 'english') {
+        lastPage = currentPage;
+    }
+    currentPage = 'english';
+    saveData();
     currentMonth = getCurrentYearMonth().monthStr;
     currentWeekStart = getWeekStart(new Date());
     closeViewSelectModal();
@@ -2269,10 +2317,11 @@ function switchToFinanceView() {
         }
 
         function setCalendarViewType(type) {
-            calendarViewType = type;
-            closeViewTypeModal();
-            render();
-        }
+    calendarViewType = type;
+    closeViewTypeModal();
+    saveData();  // 👈 添加这一行，切换视图后立即保存
+    render();
+}
 
         function changeWeek(delta) {
     const date = new Date(currentWeekStart);
@@ -3137,21 +3186,30 @@ function toggleRecordCheck(projectId, monthStr, day) {
         }
 
         // ==================== 页面导航 ====================
-        function goToHome() {
+   function goToHome() {
+    // 保存当前页面到 lastPage，以便返回时恢复
+    if (currentPage !== 'home') {
+        lastPage = currentPage;
+    }
     currentPage = 'home';
-    lastPage = currentPage;
-    saveData();  // 立即保存
     currentProjectId = null;
+    saveData();
     render();
 }
 
-        function goToProject(projectId) {
-            currentProjectId = projectId;
-            currentPage = 'project';
-            currentMonth = getCurrentYearMonth().monthStr;
-            currentWeekStart = getWeekStart(new Date());
-            render();
-        }
+       function goToProject(projectId) {
+    // 保存当前页面到 lastPage
+    if (currentPage !== 'project') {
+        lastPage = currentPage;
+    }
+    currentProjectId = projectId;
+    currentPage = 'project';
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
+    // 使用保存的视图类型，如果没有则默认周历
+    // calendarViewType 已经在 loadData 中恢复，这里不需要重置
+    render();
+}
 
         function changeMonth(delta) {
     const [year, month] = currentMonth.split('-').map(Number);
