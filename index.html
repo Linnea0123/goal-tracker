@@ -1809,9 +1809,9 @@ function renderFinance() {
                 <h2 class="project-title" style="margin: 0; font-size: 16px; text-align: center; flex: 1;">每日支出</h2>
                 <div style="display: flex; align-items: center; gap: 8px; width: 70px; justify-content: flex-end;">
                     <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
-                        <span>📊</span>
-                        <span>视图</span>
-                    </button>
+    
+    <span>${getViewDisplayName()}</span>
+</button>
                     <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
                 </div>
             </div>
@@ -1876,6 +1876,27 @@ function toggleFinanceCheck(monthStr, day) {
     
     saveData();
     render();
+}
+
+
+// ==================== 获取当前视图显示名称 ====================
+function getViewDisplayName() {
+    // 如果在项目详情页，使用 currentProjectViewType
+    if (currentPage === 'project' && currentProjectId) {
+        const viewType = currentProjectViewType;
+        if (viewType === 'english') return '英语';
+        if (viewType === 'finance') return '财政';
+        if (viewType === 'duration') return '时长';
+        return '常规';
+    }
+    
+    // 如果在特殊视图页面，使用 currentPage
+    if (currentPage === 'english') return '英语';
+    if (currentPage === 'finance') return '财政';
+    if (currentPage === 'duration') return '时长';
+    if (currentPage === 'project') return '常规';
+    
+    return '视图';
 }
 
 // ==================== 辅助函数 ====================
@@ -1970,18 +1991,56 @@ function getCompletedProjectsCount() {
 }
         // ==================== 数据持久化 ====================
     
+// ==================== 修复 loadData 函数（添加数据迁移逻辑）====================
 function loadData() {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
             const data = JSON.parse(saved);
+            
+            // ========== 数据迁移和修复 ==========
+            
+            // 1. 修复 goals 数据
             goals = data.goals || [];
-            goals = goals.map((g, index) => ({
-                ...g,
-                color: g.color || BLUE_COLORS[index % BLUE_COLORS.length]
-            }));
-            currentGoalId = data.currentGoalId || (goals.length > 0 ? goals[0].id : null);
+            if (goals.length === 0) {
+                // 如果没有目标，创建一个默认目标
+                goals = [{
+                    id: 'g' + Date.now(),
+                    name: '我的目标',
+                    icon: '🎯',
+                    color: BLUE_COLORS[0]
+                }];
+                console.log('✅ 创建默认目标');
+            } else {
+                // 确保每个目标都有必要字段
+                goals = goals.map((g, index) => ({
+                    id: g.id || 'g' + Date.now() + index,
+                    name: g.name || '未命名目标',
+                    icon: g.icon || '🎯',
+                    color: g.color || BLUE_COLORS[index % BLUE_COLORS.length]
+                }));
+            }
+            
+            // 2. 修复 currentGoalId
+            currentGoalId = data.currentGoalId;
+            // 检查 currentGoalId 是否有效
+            const goalExists = goals.some(g => g.id === currentGoalId);
+            if (!currentGoalId || !goalExists) {
+                currentGoalId = goals[0].id;
+                console.log('✅ 修复 currentGoalId:', currentGoalId);
+            }
+            
+            // 3. 修复 projects 数据
             projects = data.projects || [];
+            // 确保每个项目都有 goalId
+            projects = projects.map(p => ({
+                ...p,
+                goalId: p.goalId || currentGoalId,
+                progressCurrent: p.progressCurrent || 0,
+                progressTarget: p.progressTarget || 0
+            }));
+            
+            // 4. 修复其他数据
             dailyRecords = data.dailyRecords || {};
             todoItems = data.todoItems || {};
             gistConfig = data.gistConfig || { token: '', gistId: '' };
@@ -1991,20 +2050,17 @@ function loadData() {
             durationRecords = data.durationRecords || {};
             englishRecords = data.englishRecords || {};
             todoExpanded = data.todoExpanded || {};
-            
-            // 加载视图偏好
             viewCalendarPreferences = data.viewCalendarPreferences || {};
-            
-            // 恢复上次使用的视图（用于从主页点击项目时使用）
             lastUsedView = data.lastUsedView || 'project';
             
-            // 恢复项目视图类型
+            // 5. 修复项目视图偏好
+            projectViewTypePreferences = data.projectViewTypePreferences || {};
             currentProjectViewType = data.currentProjectViewType || 'project';
             
-            // 分类数据迁移
+            // 6. 修复分类数据
             if (Array.isArray(data.categories)) {
                 categories = {};
-                if (data.categories.length > 0 && goals.length > 0) {
+                if (goals.length > 0) {
                     categories[goals[0].id] = data.categories;
                 }
             } else {
@@ -2012,51 +2068,96 @@ function loadData() {
             }
             
             // 确保每个目标都有分类数组
-            if (goals.length > 0) {
-                goals.forEach(goal => {
-                    if (!categories[goal.id]) {
-                        categories[goal.id] = [];
-                    }
-                });
-            }
+            goals.forEach(goal => {
+                if (!categories[goal.id]) {
+                    categories[goal.id] = [];
+                }
+            });
             
-            // ✅ 核心恢复逻辑：直接恢复保存的页面，不自动切换
+            // 7. 修复页面状态
             currentPage = data.currentPage || 'home';
             currentProjectId = data.currentProjectId || null;
             
-            // 如果恢复的是项目详情页，同时恢复项目视图类型
-            if (currentPage === 'project' && currentProjectId) {
-                // 使用保存的项目视图类型
-                calendarViewType = viewCalendarPreferences[currentProjectViewType] || 'week';
-            } else {
-                calendarViewType = viewCalendarPreferences[currentPage] || 'week';
+            // 如果恢复的是项目详情页，但项目不存在，则返回主页
+            if (currentPage !== 'home' && currentProjectId) {
+                const projectExists = projects.some(p => p.id === currentProjectId);
+                if (!projectExists) {
+                    currentPage = 'home';
+                    currentProjectId = null;
+                    console.log('⚠️ 项目不存在，返回主页');
+                } else {
+                    // 恢复项目视图类型
+                    const savedViewType = projectViewTypePreferences[currentProjectId];
+                    if (savedViewType && savedViewType !== 'project') {
+                        if (savedViewType === 'english') currentPage = 'english';
+                        else if (savedViewType === 'finance') currentPage = 'finance';
+                        else if (savedViewType === 'duration') currentPage = 'duration';
+                        currentProjectViewType = savedViewType;
+                    }
+                }
             }
             
-            console.log('数据加载成功，当前页面:', currentPage, '项目ID:', currentProjectId, '项目视图类型:', currentProjectViewType);
+            calendarViewType = viewCalendarPreferences[currentPage] || 'week';
+            
+            console.log('✅ 数据加载成功', {
+                goalsCount: goals.length,
+                currentGoalId: currentGoalId,
+                projectsCount: projects.length,
+                currentPage: currentPage
+            });
+            
         } else {
-            goals = [];
-            currentGoalId = null;
+            // 首次使用，创建默认数据
+            console.log('🆕 首次使用，创建默认数据');
+            goals = [{
+                id: 'g' + Date.now(),
+                name: '我的目标',
+                icon: '🎯',
+                color: BLUE_COLORS[0]
+            }];
+            currentGoalId = goals[0].id;
+            projects = [];
+            dailyRecords = {};
+            todoItems = {};
             categories = {};
+            financeRecords = {};
+            durationRecords = {};
+            englishRecords = {};
+            projectViewTypePreferences = {};
             currentPage = 'home';
-            lastPage = 'home';
-            lastUsedView = 'project';
-            currentProjectViewType = 'project';
             currentProjectId = null;
+            currentProjectViewType = 'project';
             calendarViewType = 'week';
+            
+            // 立即保存默认数据
+            saveData();
         }
     } catch (error) {
-        console.error('加载数据失败:', error);
-        goals = [];
-        currentGoalId = null;
+        console.error('❌ 加载数据失败:', error);
+        // 出错时使用完全默认的数据
+        goals = [{
+            id: 'g' + Date.now(),
+            name: '我的目标',
+            icon: '🎯',
+            color: BLUE_COLORS[0]
+        }];
+        currentGoalId = goals[0].id;
+        projects = [];
+        dailyRecords = {};
+        todoItems = {};
         categories = {};
+        financeRecords = {};
+        durationRecords = {};
+        englishRecords = {};
+        projectViewTypePreferences = {};
         currentPage = 'home';
-        lastPage = 'home';
-        lastUsedView = 'project';
-        currentProjectViewType = 'project';
         currentProjectId = null;
+        currentProjectViewType = 'project';
         calendarViewType = 'week';
+        saveData();
     }
 }
+
 
 function saveData() {
     try {
@@ -2574,9 +2675,9 @@ function renderDurationView() {
                 <h2 class="project-title" style="margin: 0; font-size: 16px; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap;">每日时长</h2>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
-                        <span>📊</span>
-                        <span>视图</span>
-                    </button>
+    
+    <span>${getViewDisplayName()}</span>
+</button>
                     <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
                 </div>
             </div>
@@ -2762,9 +2863,9 @@ function renderEnglishView() {
                 <h2 class="project-title" style="margin: 0; font-size: 16px; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap;">📖 每日阅读</h2>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
-                        <span>📊</span>
-                        <span>视图</span>
-                    </button>
+    
+    <span>${getViewDisplayName()}</span>
+</button>
                     <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
                 </div>
             </div>
@@ -2927,8 +3028,11 @@ function toggleDurationCheck(monthStr, day) {
 }
 
 
+// ==================== 简化 render 函数 ====================
 function render() {
     const app = document.getElementById('app');
+    
+    // 直接根据 currentPage 渲染，不再需要特殊处理
     if (currentPage === 'home') {
         app.innerHTML = renderHome() + renderModals();
     } else if (currentPage === 'finance') {
@@ -2938,21 +3042,13 @@ function render() {
     } else if (currentPage === 'english') {
         app.innerHTML = renderEnglishView() + renderModals();
     } else if (currentPage === 'project') {
-        // 项目详情页：根据当前项目的视图类型渲染
-        const viewType = currentProjectViewType;
-        if (viewType === 'finance') {
-            app.innerHTML = renderFinance() + renderModals();
-        } else if (viewType === 'duration') {
-            app.innerHTML = renderDurationView() + renderModals();
-        } else if (viewType === 'english') {
-            app.innerHTML = renderEnglishView() + renderModals();
-        } else {
-            app.innerHTML = renderMonthlyView() + renderModals();
-        }
-    } else {
         app.innerHTML = renderMonthlyView() + renderModals();
+    } else {
+        app.innerHTML = renderHome() + renderModals();
     }
 }
+
+
 
 
         function updateProgress(projectId, delta) {
@@ -3251,31 +3347,50 @@ function goToHome() {
     render();
 }
 
+
+// ==================== 修复 goToProject 函数 ====================
 function goToProject(projectId) {
     // 保存当前页面
     if (currentPage !== 'project') {
         lastPage = currentPage;
     }
-    currentProjectId = projectId;
-    currentPage = 'project';
     
-    // ✅ 恢复这个项目上次使用的视图类型
+    currentProjectId = projectId;
+    
+    // ✅ 关键修复：恢复这个项目上次使用的视图类型
     const savedViewType = projectViewTypePreferences[projectId];
+    
     if (savedViewType) {
         currentProjectViewType = savedViewType;
-        console.log('恢复项目视图类型:', savedViewType);
+        
+        // ✅ 根据保存的视图类型设置 currentPage
+        if (savedViewType === 'english') {
+            currentPage = 'english';
+        } else if (savedViewType === 'finance') {
+            currentPage = 'finance';
+        } else if (savedViewType === 'duration') {
+            currentPage = 'duration';
+        } else {
+            currentPage = 'project';
+        }
+        
+        console.log('✅ 恢复项目视图类型:', projectId, '->', savedViewType, '页面设置为:', currentPage);
     } else {
         currentProjectViewType = 'project';
-        console.log('使用默认视图类型: project');
+        currentPage = 'project';
+        console.log('⚠️ 项目无保存的视图类型，使用默认: project');
     }
     
     // 根据视图类型设置日历偏好
     calendarViewType = viewCalendarPreferences[currentProjectViewType] || 'week';
     currentMonth = getCurrentYearMonth().monthStr;
     currentWeekStart = getWeekStart(new Date());
+    
     saveData();
     render();
 }
+
+
         function changeMonth(delta) {
     const [year, month] = currentMonth.split('-').map(Number);
     const newDate = new Date(year, month - 1 + delta, 1);
@@ -3397,10 +3512,13 @@ async function restoreFromGist() {
 
         // ==================== 渲染 ====================
   
+
+
+
 function renderHome() {
     const currentGoal = getCurrentGoal();
     
-    // 如果没有目标，显示添加目标的提示
+    // 如果没有目标或目标列表为空，显示添加目标的提示
     if (!currentGoal || goals.length === 0) {
         return `
             <div class="page">
@@ -3427,7 +3545,7 @@ function renderHome() {
 
                 <div class="bottom-actions">
                     <button class="bottom-btn" onclick="openSettingsModal()"><span class="btn-icon">⚙️</span><span class="btn-text">设置</span></button>
-                     <button class="bottom-btn" onclick="openCategoryModal()"><span class="btn-icon">📁</span><span class="btn-text">分类</span></button>
+                    <button class="bottom-btn" onclick="openCategoryModal()"><span class="btn-icon">📁</span><span class="btn-text">分类</span></button>
                     <button class="bottom-btn ${isSyncing ? 'syncing' : ''}" onclick="syncToGist()"><span class="btn-icon">↻</span><span class="btn-text">同步</span></button>
                     <button class="bottom-btn" onclick="restoreFromGist()"><span class="btn-icon">↺</span><span class="btn-text">恢复</span></button>
                 </div>
@@ -3436,231 +3554,143 @@ function renderHome() {
         `;
     }
     
-    // 原有的渲染代码...
+    // 确保 currentGoal 存在且有正确的属性
+    const goalName = currentGoal.name || '未命名目标';
+    const goalIcon = currentGoal.icon || '🎯';
+    const goalColor = currentGoal.color || BLUE_COLORS[0];
+    const goalId = currentGoal.id;
+    
     const overallProgress = getOverallProgress();
     const completedProjects = getCompletedProjectsCount();
     const currentProjects = projects.filter(p => p.goalId === currentGoalId);
     
     // 项目卡片渲染函数
-function renderProjectCard(project) {
-    const projectName = toSafeString(project.name);
-    const projectTarget = toSafeString(project.target);
-    // 判断是否有进度目标：progressTarget 存在且大于 0
-    const hasProgress = project.progressTarget && project.progressTarget > 0;
-    const progressPercent = hasProgress ? Math.round((project.progressCurrent || 0) / project.progressTarget * 100) : 0;
-    const isCompleted = hasProgress && project.progressCurrent >= project.progressTarget;
-    
-    let deadlineHtml = '', deadlineClass = '', deadlineText = '', formattedDate = '';
-    // 只在有截止日期时生成
-    if (project.deadline) {
-        const today = new Date(); today.setHours(0,0,0,0);
-        const deadlineDate = new Date(project.deadline); deadlineDate.setHours(0,0,0,0);
-        const diffTime = deadlineDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays > 0) { deadlineText = `剩${diffDays}天`; deadlineClass = diffDays <= 3 ? 'deadline-urgent' : ''; }
-        else if (diffDays === 0) { deadlineText = '今天截止'; deadlineClass = 'deadline-urgent'; }
-        else { deadlineText = `逾期${Math.abs(diffDays)}天`; deadlineClass = 'deadline-overdue'; }
-        const dateObj = new Date(project.deadline);
-        formattedDate = `${String(dateObj.getMonth()+1).padStart(2,'0')}/${String(dateObj.getDate()).padStart(2,'0')}`;
+    function renderProjectCard(project) {
+        const projectName = toSafeString(project.name);
+        const projectTarget = toSafeString(project.target);
+        // 判断是否有进度目标：progressTarget 存在且大于 0
+        const hasProgress = project.progressTarget && project.progressTarget > 0;
+        const progressPercent = hasProgress ? Math.round((project.progressCurrent || 0) / project.progressTarget * 100) : 0;
+        const isCompleted = hasProgress && project.progressCurrent >= project.progressTarget;
+        
+        let deadlineHtml = '', deadlineClass = '', deadlineText = '', formattedDate = '';
+        // 只在有截止日期时生成
+        if (project.deadline) {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const deadlineDate = new Date(project.deadline); deadlineDate.setHours(0,0,0,0);
+            const diffTime = deadlineDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) { deadlineText = `剩${diffDays}天`; deadlineClass = diffDays <= 3 ? 'deadline-urgent' : ''; }
+            else if (diffDays === 0) { deadlineText = '今天截止'; deadlineClass = 'deadline-urgent'; }
+            else { deadlineText = `逾期${Math.abs(diffDays)}天`; deadlineClass = 'deadline-overdue'; }
+            const dateObj = new Date(project.deadline);
+            formattedDate = `${String(dateObj.getMonth()+1).padStart(2,'0')}/${String(dateObj.getDate()).padStart(2,'0')}`;
+        }
+        
+        return `
+        <div class="project-card">
+            <div class="project-header" onclick="goToProject(${project.id})">
+                <div class="project-info">
+                    <div class="project-name">
+                        <span class="project-checkbox ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleProjectComplete(${project.id})">${isCompleted ? '✓' : ''}</span>
+                        ${projectName}
+                    </div>
+                </div>
+                <div class="project-actions" onclick="event.stopPropagation()">
+                    <button class="project-edit-btn" onclick="editProject(event, ${project.id})">✎</button>
+                    <button class="project-delete-btn" onclick="deleteProject(event, ${project.id})">✕</button>
+                </div>
+            </div>
+            ${projectTarget ? `<div class="project-remark-row" style="padding-left: 26px;"><span class="remark-text">${projectTarget}</span></div>` : ''}
+            ${hasProgress ? `
+            <div class="progress-section" onclick="event.stopPropagation()" style="padding-left: 26px;">
+                <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPercent}%;"></div></div>
+                <div class="progress-controls">
+                    <div class="progress-value">
+                        ${project.deadline ? `<span class="deadline-chip ${deadlineClass}"><span class="deadline-chip-date">${formattedDate}</span><span class="deadline-chip-text">${deadlineText}</span></span>` : ''}
+                        ${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}
+                    </div>
+                    <div class="button-group">
+                        <button class="control-btn" onclick="updateProgress(${project.id}, -1); event.stopPropagation();" ${project.progressCurrent <= 0 ? 'disabled' : ''}>−</button>
+                        <span class="current-count">${project.progressCurrent || 0}</span>
+                        <button class="control-btn" onclick="updateProgress(${project.id}, 1); event.stopPropagation();" ${project.progressCurrent >= project.progressTarget ? 'disabled' : ''}>+</button>
+                    </div>
+                </div>
+            </div>
+            ` : project.deadline ? `
+            <div class="progress-section" onclick="event.stopPropagation()" style="padding-left: 26px; margin-top: 4px;">
+                <div class="progress-controls" style="justify-content: flex-start;">
+                    <div class="progress-value">
+                        <span class="deadline-chip ${deadlineClass}"><span class="deadline-chip-date">${formattedDate}</span><span class="deadline-chip-text">${deadlineText}</span></span>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+        </div>`;
     }
     
-    return `
-    <div class="project-card">
-        <div class="project-header" onclick="goToProject(${project.id})">
-            <div class="project-info">
-                <div class="project-name">
-                    <span class="project-checkbox ${isCompleted ? 'checked' : ''}" onclick="event.stopPropagation(); toggleProjectComplete(${project.id})">${isCompleted ? '✓' : ''}</span>
-                    ${projectName}
-                </div>
-            </div>
-            <div class="project-actions" onclick="event.stopPropagation()">
-                <button class="project-edit-btn" onclick="editProject(event, ${project.id})">✎</button>
-                <button class="project-delete-btn" onclick="deleteProject(event, ${project.id})">✕</button>
-            </div>
-        </div>
-        ${projectTarget ? `<div class="project-remark-row" style="padding-left: 26px;"><span class="remark-text">${projectTarget}</span></div>` : ''}
-        ${hasProgress ? `
-        <div class="progress-section" onclick="event.stopPropagation()" style="padding-left: 26px;">
-            <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPercent}%;"></div></div>
-            <div class="progress-controls">
-                <div class="progress-value">
-                    ${project.deadline ? `<span class="deadline-chip ${deadlineClass}"><span class="deadline-chip-date">${formattedDate}</span><span class="deadline-chip-text">${deadlineText}</span></span>` : ''}
-                    ${project.progressCurrent || 0}/${project.progressTarget} ${project.progressUnit || ''}
-                </div>
-                <div class="button-group">
-                    <button class="control-btn" onclick="updateProgress(${project.id}, -1); event.stopPropagation();" ${project.progressCurrent <= 0 ? 'disabled' : ''}>−</button>
-                    <span class="current-count">${project.progressCurrent || 0}</span>
-                    <button class="control-btn" onclick="updateProgress(${project.id}, 1); event.stopPropagation();" ${project.progressCurrent >= project.progressTarget ? 'disabled' : ''}>+</button>
-                </div>
-            </div>
-        </div>
-        ` : project.deadline ? `
-        <div class="progress-section" onclick="event.stopPropagation()" style="padding-left: 26px; margin-top: 4px;">
-            <div class="progress-controls" style="justify-content: flex-start;">
-                <div class="progress-value">
-                    <span class="deadline-chip ${deadlineClass}"><span class="deadline-chip-date">${formattedDate}</span><span class="deadline-chip-text">${deadlineText}</span></span>
-                </div>
-            </div>
-        </div>
-        ` : ''}
-    </div>`;
-}
-
-
-
     // 添加分类样式
-const categoryStyle = `
-    <style>
-        .category-btn {
-            padding: 4px 10px;
-            background-color: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 16px;
-            font-size: 12px;
-            color: #666;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.2s;
-        }
-        .category-btn:hover {
-            background-color: #e0e0e0;
-            border-color: #5a7a9a;
-            color: #5a7a9a;
-        }
-        .category-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border: 1px solid transparent;
-            transition: all 0.2s;
-        }
-        .category-item:hover {
-            border-color: #5a7a9a;
-        }
-        .category-tab.active {
-            background-color: #5a7a9a !important;
-            color: white !important;
-            border-color: #5a7a9a !important;
-        }
-    </style>
-`;
-
-
-
-
-// 按分类分组项目
-let projectsByCategory = {};
-let allProjects = []; // 所有项目
-for (let i = 0; i < currentProjects.length; i++) {
-    const project = currentProjects[i];
-    allProjects.push(project);
-    const catId = project.categoryId;
-    if (catId) {
-        if (!projectsByCategory[catId]) {
-            projectsByCategory[catId] = [];
-        }
-        projectsByCategory[catId].push(project);
-    }
-}
-
-// 生成分类选项卡
-let categoryTabsHtml = '<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">';
-
-// "全部" 选项
-categoryTabsHtml += `
-    <button class="category-tab ${currentCategoryId === null ? 'active' : ''}" 
-            onclick="switchCategory(null)"
-            style="
-                padding: 6px 12px;
-                border-radius: 20px;
+    const categoryStyle = `
+        <style>
+            .category-btn {
+                padding: 4px 10px;
+                background-color: #f0f0f0;
                 border: 1px solid #ddd;
-                background: ${currentCategoryId === null ? '#5a7a9a' : 'white'};
-                color: ${currentCategoryId === null ? 'white' : '#666'};
-                font-size: 13px;
+                border-radius: 16px;
+                font-size: 12px;
+                color: #666;
                 cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 4px;
                 transition: all 0.2s;
-            ">
-        全部 (${allProjects.length})
-    </button>
-`;
-
-// 每个分类的选项卡
-// 每个分类的选项卡
-for (let catId in projectsByCategory) {
-    // 因为 categories 是按目标存储的，需要先获取当前目标的分类列表
-    const currentGoal = getCurrentGoal();
-    const goalCategories = currentGoal ? (categories[currentGoal.id] || []) : [];
-    const category = goalCategories.find(c => c.id === catId);
-    if (!category) continue;
-    
-    categoryTabsHtml += `
-        <button class="category-tab ${currentCategoryId === catId ? 'active' : ''}" 
-                onclick="switchCategory('${catId}')"
-                style="
-                    padding: 6px 12px;
-                    border-radius: 20px;
-                    border: 1px solid #ddd;
-                    background: ${currentCategoryId === catId ? '#5a7a9a' : 'white'};
-                    color: ${currentCategoryId === catId ? 'white' : '#666'};
-                    font-size: 13px;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    transition: all 0.2s;
-                ">
-            <span>${category.icon || '📁'}</span>
-            <span>${category.name}</span>
-            <span style="font-size: 11px; opacity: 0.8;">(${projectsByCategory[catId].length})</span>
-        </button>
+            }
+            .category-btn:hover {
+                background-color: #e0e0e0;
+                border-color: #5a7a9a;
+                color: #5a7a9a;
+            }
+            .category-item {
+                display: flex;
+                align-items: center;
+                padding: 8px 12px;
+                border-radius: 8px;
+                margin-bottom: 8px;
+                border: 1px solid transparent;
+                transition: all 0.2s;
+            }
+            .category-item:hover {
+                border-color: #5a7a9a;
+            }
+            .category-tab.active {
+                background-color: #5a7a9a !important;
+                color: white !important;
+                border-color: #5a7a9a !important;
+            }
+        </style>
     `;
-}
-
-categoryTabsHtml += '</div>';
-
-// 根据当前选中的分类过滤项目
-let filteredProjects = [];
-if (currentCategoryId === null) {
-    // 显示所有项目
-    filteredProjects = allProjects;
-} else {
-    // 只显示选中分类的项目
-    filteredProjects = projectsByCategory[currentCategoryId] || [];
-}
-
-// 生成项目列表
-let projectsHtml = '';
-if (filteredProjects.length > 0) {
-    for (let i = 0; i < filteredProjects.length; i++) {
-        projectsHtml += renderProjectCard(filteredProjects[i]);
+    
+    // 按分类分组项目
+    let projectsByCategory = {};
+    let allProjects = [];
+    for (let i = 0; i < currentProjects.length; i++) {
+        const project = currentProjects[i];
+        allProjects.push(project);
+        const catId = project.categoryId;
+        if (catId) {
+            if (!projectsByCategory[catId]) {
+                projectsByCategory[catId] = [];
+            }
+            projectsByCategory[catId].push(project);
+        }
     }
-} else {
-    projectsHtml = '<div style="text-align: center; color: #999; padding: 40px 20px;">暂无项目，点击"新建"添加</div>';
-}
-
-// 在返回的HTML中替换原有的projects-header部分
-return categoryStyle + `
-    <div class="page">
-        <div class="main-goal-card" style="background: ${currentGoal.color};">
-            <div class="goal-header">
-                <div class="goal-title-group" onclick="openSwitchGoalModal()" style="cursor: pointer;">
-    <span class="goal-icon">${currentGoal.icon}</span>
-    <span class="goal-text">${toSafeString(currentGoal.name)}</span>
-</div>
-            <div class="goal-actions-vertical">
-    <span class="goal-edit-hint" onclick="openEditGoalModal('${currentGoal.id}')" style="font-size: 13px;">✎ 编辑</span>
-</div>
-            </div>
-        </div>
-
-       
-<div class="projects-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1;">
-        <!-- "全部" 按钮 -->
+    
+    // 生成分类选项卡
+    let categoryTabsHtml = '<div class="projects-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">';
+    categoryTabsHtml += '<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1;">';
+    
+    // "全部" 选项
+    categoryTabsHtml += `
         <button class="category-tab ${currentCategoryId === null ? 'active' : ''}" 
                 onclick="switchCategory(null)"
                 style="
@@ -3673,61 +3703,103 @@ return categoryStyle + `
                     cursor: pointer;
                     transition: all 0.2s;
                 ">
-            全部
-        </button>
-        
-        ${getCurrentGoalCategories().map(cat => {
-    const catCount = projects.filter(p => p.goalId === currentGoalId && p.categoryId === cat.id).length;
-    if (catCount === 0) return '';
-    return `
-        <button class="category-tab ${currentCategoryId === cat.id ? 'active' : ''}" 
-                onclick="switchCategory('${cat.id}')"
-                style="
-                    padding: 4px 12px;
-                    border-radius: 16px;
-                    border: 1px solid #ddd;
-                    background: ${currentCategoryId === cat.id ? '#5a7a9a' : 'white'};
-                    color: ${currentCategoryId === cat.id ? 'white' : '#666'};
-                    font-size: 13px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                ">
-            <span>${cat.icon || '📁'}</span>
-            <span>${cat.name}</span>
-            <span style="font-size: 11px; opacity: 0.8;">(${catCount})</span>
+            全部 (${allProjects.length})
         </button>
     `;
-}).join('')}
-    </div>
-    <button class="add-project-btn" onclick="openAddProjectModal()">+ 新建</button>
-</div>
+    
+    // 每个分类的选项卡
+    const goalCategories = getCurrentGoalCategories();
+    for (let i = 0; i < goalCategories.length; i++) {
+        const cat = goalCategories[i];
+        const catId = cat.id;
+        const catCount = projectsByCategory[catId] ? projectsByCategory[catId].length : 0;
+        if (catCount === 0) continue;
+        
+        categoryTabsHtml += `
+            <button class="category-tab ${currentCategoryId === catId ? 'active' : ''}" 
+                    onclick="switchCategory('${catId}')"
+                    style="
+                        padding: 4px 12px;
+                        border-radius: 16px;
+                        border: 1px solid #ddd;
+                        background: ${currentCategoryId === catId ? '#5a7a9a' : 'white'};
+                        color: ${currentCategoryId === catId ? 'white' : '#666'};
+                        font-size: 13px;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                    ">
+                <span>${cat.icon || '📁'}</span>
+                <span>${cat.name}</span>
+                <span style="font-size: 11px; opacity: 0.8;">(${catCount})</span>
+            </button>
+        `;
+    }
+    
+    categoryTabsHtml += '</div>';
+    categoryTabsHtml += '<button class="add-project-btn" onclick="openAddProjectModal()">+ 新建</button>';
+    categoryTabsHtml += '</div>';
+    
+    // 根据当前选中的分类过滤项目
+    let filteredProjects = [];
+    if (currentCategoryId === null) {
+        filteredProjects = allProjects;
+    } else {
+        filteredProjects = projectsByCategory[currentCategoryId] || [];
+    }
+    
+    // 生成项目列表
+    let projectsHtml = '';
+    if (filteredProjects.length > 0) {
+        for (let i = 0; i < filteredProjects.length; i++) {
+            projectsHtml += renderProjectCard(filteredProjects[i]);
+        }
+    } else {
+        projectsHtml = '<div style="text-align: center; color: #999; padding: 40px 20px;">暂无项目，点击"新建"添加</div>';
+    }
+    
+    return categoryStyle + `
+        <div class="page">
+            <div class="main-goal-card" style="background: ${goalColor};">
+                <div class="goal-header">
+                    <div class="goal-title-group" onclick="openSwitchGoalModal()" style="cursor: pointer;">
+                        <span class="goal-icon">${goalIcon}</span>
+                        <span class="goal-text">${toSafeString(goalName)}</span>
+                    </div>
+                    <div class="goal-actions-vertical">
+                        <span class="goal-edit-hint" onclick="openEditGoalModal('${goalId}')" style="font-size: 13px;">✎ 编辑</span>
+                    </div>
+                </div>
+            </div>
 
+            ${categoryTabsHtml}
 
+            <div class="projects-list">
+                ${projectsHtml}
+            </div>
 
-        <div class="projects-list">
-            ${projectsHtml}
+            <div class="summary-card">
+                <h4 class="summary-title">总体进度</h4>
+                <div class="progress-bar"><div class="progress-fill" style="width: ${overallProgress}%"></div></div>
+                <p class="summary-text">已完成 ${completedProjects}/${currentProjects.length} 个项目</p>
+            </div>
+
+            <div class="bottom-actions">
+                <button class="bottom-btn" onclick="openSettingsModal()"><span class="btn-icon">⚙️</span><span class="btn-text">设置</span></button>
+                <button class="bottom-btn" onclick="openCategoryModal()"><span class="btn-icon">📁</span><span class="btn-text">分类</span></button>
+                <button class="bottom-btn ${isSyncing ? 'syncing' : ''}" onclick="syncToGist()"><span class="btn-icon">↻</span><span class="btn-text">同步</span></button>
+                <button class="bottom-btn" onclick="restoreFromGist()"><span class="btn-icon">↺</span><span class="btn-text">恢复</span></button>
+            </div>
+            ${syncStatus ? `<div class="sync-status ${syncStatus.includes('失败') ? 'error' : syncStatus.includes('成功') ? 'success' : ''}">${syncStatus}</div>` : ''}
         </div>
-
-        <div class="summary-card">
-            <h4 class="summary-title">总体进度</h4>
-            <div class="progress-bar"><div class="progress-fill" style="width: ${overallProgress}%"></div></div>
-            <p class="summary-text">已完成 ${completedProjects}/${currentProjects.length} 个项目</p>
-        </div>
-
-        <div class="bottom-actions">
-            <button class="bottom-btn" onclick="openSettingsModal()"><span class="btn-icon">⚙️</span><span class="btn-text">设置</span></button>
-<button class="bottom-btn" onclick="openCategoryModal()"><span class="btn-icon">📁</span><span class="btn-text">分类</span></button>
-<button class="bottom-btn ${isSyncing ? 'syncing' : ''}" onclick="syncToGist()"><span class="btn-icon">↻</span><span class="btn-text">同步</span></button>
-<button class="bottom-btn" onclick="restoreFromGist()"><span class="btn-icon">↺</span><span class="btn-text">恢复</span></button>
-        </div>
-        ${syncStatus ? `<div class="sync-status ${syncStatus.includes('失败') ? 'error' : syncStatus.includes('成功') ? 'success' : ''}">${syncStatus}</div>` : ''}
-    </div>
-`;
+    `;
 }
 
+
+
+        
         function renderMonthlyView() {
     const project = projects.find(p => p.id === currentProjectId);
     if (!project) { currentPage = 'home'; return renderHome(); }
@@ -3929,9 +4001,9 @@ return `
     <h2 class="project-title" style="margin: 0; font-size: 16px; text-align: center; flex: 1;">${toSafeString(project.name)}</h2>
     <div style="display: flex; align-items: center; gap: 8px; width: 70px; justify-content: flex-end;">
         <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
-            <span>📊</span>
-            <span>视图</span>
-        </button>
+    
+    <span>${getViewDisplayName()}</span>
+</button>
         <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
     </div>
 </div>
@@ -3986,7 +4058,7 @@ return `
     <div style="display: flex; align-items: center; gap: 8px;">
   
         <button class="view-type-btn" onclick="openViewTypeModal()">
-            <span>📊</span>
+            
             <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
         </button>
     </div>
