@@ -1584,6 +1584,11 @@ const COMMON_EMOJIS = [
     '📱', '💻', '🖥️', '🖨️', '📷', '📹', '☎️', '📞', '📟', '📠'
 ];
 
+
+// 事线视图数据
+let timelineEvents = {}; // 格式: { "projectId": [事件数组] }
+let currentTimelineProjectId = null; // 当前事线视图关联的项目ID
+
 let projects = [];
 let dailyRecords = {};
 let todoItems = {};
@@ -1621,7 +1626,8 @@ let currentProjectViewType = 'project';  // 当前项目详情页使用的视图
         let showEditProjectModal = false;
         let showSettingsModal = false;
         let showEditTodoModal = false;
-        
+        // 事线视图数据 - 存储每个日期的事件备注
+let timelineRemarks = {}; // 格式: { "projectId_monthStr_day": { title: "事件标题", remark: "备注内容" } }
         // 编辑相关暂存
         let currentEditTodoId = null;
         let currentEditTodoProjectId = null;
@@ -1854,6 +1860,377 @@ function renderFinance() {
     `;
 }
 
+function renderTimelineView() {
+    const project = projects.find(p => p.id === currentProjectId);
+    if (!project) {
+        goToHome();
+        return renderHome();
+    }
+    
+    // 获取当前项目的事件列表
+    const events = timelineEvents[currentProjectId] || [];
+    
+    // 按日期排序
+    events.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // 生成事件列表HTML
+    let eventsHtml = '';
+    
+    for (let i = 0; i < events.length; i++) {
+        const event = events[i];
+        const eventDate = new Date(event.date);
+        const dateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+        
+        // 获取追加内容列表
+        const additions = event.additions || [];
+        
+        // 生成追加内容HTML
+        let additionsHtml = '';
+        if (additions.length > 0) {
+            additionsHtml = `
+                <div style="margin-top: 12px; margin-left: 0;">
+                    ${additions.map((add, idx) => `
+                        <div style="
+                            font-size: 12px;
+                            color: #888;
+                            line-height: 1.5;
+                            margin-bottom: 6px;
+                            padding-left: 12px;
+                            border-left: 2px solid #e0e0e0;
+                        ">
+                            ${toSafeString(add.content).replace(/\n/g, '<br>')}
+                            <span style="font-size: 10px; color: #ccc; margin-left: 8px;">${add.date || ''}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        eventsHtml += `
+            <div class="timeline-event-card" style="
+                background: white;
+                padding: 12px 16px;
+                margin-bottom: 16px;
+                border-left: 4px solid #5a7a9a;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                position: relative;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-size: 15px; font-weight: 500; color: #333; flex: 1;">${toSafeString(event.title)}</div>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 13px; color: #5a7a9a;">${dateStr}</span>
+                    </div>
+                </div>
+                
+                <!-- 浅灰色分割线 -->
+                <div style="height: 1px; background: #e8e8e8; margin: 8px 0;"></div>
+                
+                <!-- 备注内容 - 靠左对齐 -->
+                ${event.remark ? `
+                    <div style="
+                        font-size: 13px; 
+                        color: #666; 
+                        line-height: 1.5;
+                        white-space: pre-wrap;
+                        word-break: break-word;
+                        text-align: left;
+                        padding: 0;
+                        margin: 0;
+                    ">${toSafeString(event.remark).replace(/\n/g, '<br>')}</div>
+                ` : '<div style="min-height: 0;"></div>'}
+                
+                <!-- 追加内容区域 -->
+                ${additionsHtml}
+                
+                <!-- 按钮区域：编辑和删除 -->
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: ${event.remark || additions.length > 0 ? '12px' : '8px'};">
+                    <button class="timeline-edit-btn" onclick="openEditTimelineEventModal('${currentProjectId}', '${event.id}')" style="
+                        background: none;
+                        border: none;
+                        font-size: 12px;
+                        color: #5a7a9a;
+                        cursor: pointer;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 4px;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='#f0f4fa'" onmouseout="this.style.background='transparent'">
+                        ✎ 编辑
+                    </button>
+                    <button class="timeline-delete-btn" onclick="deleteTimelineEvent('${currentProjectId}', '${event.id}')" style="
+                        background: none;
+                        border: none;
+                        font-size: 12px;
+                        color: #ccc;
+                        cursor: pointer;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 4px;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.color='#d32f2f'; this.style.background='#f5f5f5'" onmouseout="this.style.color='#ccc'; this.style.background='transparent'">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // 添加连线（如果不是最后一个事件）
+        if (i < events.length - 1) {
+            const nextEvent = events[i + 1];
+            const nextDate = new Date(nextEvent.date);
+            const currentDate = new Date(event.date);
+            const daysBetween = Math.round((nextDate - currentDate) / (1000 * 60 * 60 * 24));
+            
+            eventsHtml += `
+                <div class="timeline-connector" style="
+                    text-align: center;
+                    margin: -8px 0 8px 0;
+                ">
+                    <div style="
+                        display: inline-block;
+                        background: #f0f0f0;
+                        padding: 4px 12px;
+                        border-radius: 20px;
+                        font-size: 11px;
+                        color: #999;
+                    ">
+                        相隔 ${daysBetween} 天
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    if (events.length === 0) {
+        eventsHtml = '<div style="text-align: center; color: #999; padding: 40px 20px; background: #f8f8f8; border-radius: 12px;">暂无事件，点击右上角 + 添加第一个事件</div>';
+    }
+    
+    // 待办事项部分
+    const todoKey = currentProjectId.toString();
+    let todos = todoItems[todoKey] || [];
+    const incompleteCount = todos.length;
+    const expanded = todoExpanded[currentProjectId] === true;
+    
+    let todoItemsHtml = '';
+    if (todos.length > 0) {
+        for (let i = 0; i < todos.length; i++) {
+            const todo = todos[i];
+            const hasProgress = todo.target !== undefined && todo.target > 0;
+            let tagsHtml = '';
+            if (todo.tags && todo.tags.length > 0) {
+                for (let j = 0; j < todo.tags.length; j++) {
+                    tagsHtml += `<span class="todo-tag">${toSafeString(todo.tags[j])}</span>`;
+                }
+            }
+            
+            let todoHtml = `
+                <div class="todo-item" onclick="openEditTodoModal(${currentProjectId}, ${todo.id})">
+                    <div class="todo-checkbox ${hasProgress && todo.progress >= todo.target ? 'checked' : ''}" onclick="event.stopPropagation(); toggleTodoComplete(${currentProjectId}, ${todo.id})"></div>
+                    <div class="todo-content">
+                        <div class="todo-header-row">
+                            <div class="todo-text ${hasProgress && todo.progress >= todo.target ? 'completed' : ''}">${toSafeString(todo.text)}</div>
+                            <div class="todo-actions" onclick="event.stopPropagation()">
+                                ${tagsHtml ? `<div class="todo-tags">${tagsHtml}</div>` : ''}
+                                <button class="todo-delete-btn" onclick="deleteTodo(${currentProjectId}, ${todo.id})">✕</button>
+                            </div>
+                        </div>`;
+            
+            if (hasProgress) {
+                const progressPercent = Math.round((todo.progress / todo.target) * 100);
+                todoHtml += `
+                    <div class="todo-progress-section" onclick="event.stopPropagation()">
+                        <div class="todo-progress-bar-container"><div class="todo-progress-bar-fill" style="width: ${progressPercent}%;"></div></div>
+                        <div class="todo-progress-controls">
+                            <span class="todo-progress-value">${todo.progress}/${todo.target} ${todo.unit || ''}</span>
+                            <div class="todo-button-group">
+                                <button class="todo-control-btn" onclick="updateTodoProgress(${currentProjectId}, ${todo.id}, -1); event.stopPropagation();" ${todo.progress <= 0 ? 'disabled' : ''}>−</button>
+                                <span class="todo-current-progress">${todo.progress}</span>
+                                <button class="todo-control-btn" onclick="updateTodoProgress(${currentProjectId}, ${todo.id}, 1); event.stopPropagation();" ${todo.progress >= todo.target ? 'disabled' : ''}>+</button>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+            todoHtml += `</div></div>`;
+            todoItemsHtml += todoHtml;
+        }
+    } else {
+        todoItemsHtml = '<div style="text-align: center; color: #999; padding: 16px 0;">暂无待办，点击"+"添加</div>';
+    }
+    
+    // 计算本月事件数量
+    const [year, month] = currentMonth.split('-').map(Number);
+    const monthEventCount = events.filter(e => {
+        const eDate = new Date(e.date);
+        return eDate.getFullYear() === year && eDate.getMonth() + 1 === month;
+    }).length;
+    const daysInMonth = getDaysInMonth(year, month - 1);
+    const progressPercent = Math.round((monthEventCount / daysInMonth) * 100);
+    
+    return `
+        <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
+            <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="nav-btn" onclick="goToHome()">← 返回</button>
+                </div>
+                <h2 class="project-title" style="margin: 0; font-size: 16px; text-align: center;">${toSafeString(project.name)} · 事线</h2>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px;">
+                        <span>📅</span>
+                        <span>${getViewDisplayName()}</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-card" style="width: 100%; box-sizing: border-box; padding: 14px 16px;">
+                <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <button class="month-btn" onclick="changeMonth(-1)">◀ 上月</button>
+                    <span class="current-month" style="font-size: 15px;">${currentMonth}</span>
+                    <button class="month-btn" onclick="changeMonth(1)">下月 ▶</button>
+                </div>
+                
+                <div class="progress-info" style="width: 100%; margin-bottom: 4px;">
+                    <span>本月事记</span>
+                    <span>${monthEventCount}/${daysInMonth} 天</span>
+                </div>
+                <div class="month-progress-bar" style="width: 100%; height: 5px;">
+                    <div class="month-progress-fill" style="width: ${progressPercent}%; height: 5px;"></div>
+                </div>
+            </div>
+            
+            <div class="todo-section" style="width: 100%; box-sizing: border-box;">
+                <div class="todo-header" onclick="toggleTodoSection(${currentProjectId})">
+                    <div class="todo-title-wrapper">
+                        <span class="todo-title">待办事项</span>
+                        <span class="todo-count">${incompleteCount}</span>
+                    </div>
+                    <button class="todo-add-btn" onclick="event.stopPropagation(); openAddTodoModal()">+</button>
+                </div>
+                <div class="todo-list ${expanded ? '' : 'collapsed'}">
+                    ${todoItemsHtml}
+                </div>
+            </div>
+
+            <div class="daily-records" style="width: 100%; box-sizing: border-box;">
+                <div class="records-header" style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 class="records-title" style="margin: 0;">每日记录</h3>
+                    <button onclick="openAddTimelineEventModal()" style="
+                        width: 32px;
+                        height: 32px;
+                        background: #5a7a9a;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        font-size: 20px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">+</button>
+                </div>
+                <div class="timeline-events-container">
+                    ${eventsHtml}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ==================== 编辑事件（含追加功能）====================
+let showEditTimelineEventModal = false;
+let currentEditEventId = null;
+let currentEditEventData = null;
+
+function openEditTimelineEventModal(projectId, eventId) {
+    const events = timelineEvents[projectId] || [];
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+        currentEditEventId = eventId;
+        currentEditEventData = JSON.parse(JSON.stringify(event));
+        showEditTimelineEventModal = true;
+        render();
+        setTimeout(() => {
+            const input = document.getElementById('edit-event-title');
+            if (input) input.focus();
+        }, 100);
+    }
+}
+
+function closeEditTimelineEventModal() {
+    showEditTimelineEventModal = false;
+    currentEditEventId = null;
+    currentEditEventData = null;
+    render();
+}
+
+function addAdditionToEvent() {
+    const additionText = document.getElementById('edit-event-addition');
+    if (!additionText?.value.trim()) {
+        alert('请输入追加内容');
+        return;
+    }
+    
+    if (!currentEditEventData.additions) {
+        currentEditEventData.additions = [];
+    }
+    
+    currentEditEventData.additions.push({
+        content: additionText.value.trim(),
+        date: new Date().toISOString().slice(0, 10)
+    });
+    
+    additionText.value = '';
+    render();
+    setTimeout(() => {
+        const input = document.getElementById('edit-event-addition');
+        if (input) input.focus();
+    }, 100);
+}
+
+function deleteAddition(index) {
+    if (confirm('确定删除这条追加内容吗？')) {
+        currentEditEventData.additions.splice(index, 1);
+        render();
+    }
+}
+
+function saveTimelineEventEdit() {
+    const titleInput = document.getElementById('edit-event-title');
+    const remarkInput = document.getElementById('edit-event-remark');
+    const dateInput = document.getElementById('edit-event-date');
+    
+    if (!titleInput?.value.trim()) {
+        alert('请输入事件标题');
+        return;
+    }
+    
+    if (!dateInput?.value) {
+        alert('请选择日期');
+        return;
+    }
+    
+    // 更新事件数据
+    currentEditEventData.title = titleInput.value.trim();
+    currentEditEventData.remark = remarkInput?.value.trim() || '';
+    currentEditEventData.date = dateInput.value;
+    
+    // 保存到全局数据
+    if (timelineEvents[currentProjectId]) {
+        const index = timelineEvents[currentProjectId].findIndex(e => e.id === currentEditEventId);
+        if (index !== -1) {
+            timelineEvents[currentProjectId][index] = currentEditEventData;
+        }
+    }
+    
+    saveData();
+    closeEditTimelineEventModal();
+}
+
 // 财政视图的复选框切换（有金额时打钩）
 function toggleFinanceCheck(monthStr, day) {
     const key = monthStr;
@@ -1881,23 +2258,24 @@ function toggleFinanceCheck(monthStr, day) {
 
 // ==================== 获取当前视图显示名称 ====================
 function getViewDisplayName() {
-    // 如果在项目详情页，使用 currentProjectViewType
     if (currentPage === 'project' && currentProjectId) {
         const viewType = currentProjectViewType;
         if (viewType === 'english') return '英语';
         if (viewType === 'finance') return '财政';
         if (viewType === 'duration') return '时长';
+        if (viewType === 'timeline') return '事线';
         return '常规';
     }
     
-    // 如果在特殊视图页面，使用 currentPage
     if (currentPage === 'english') return '英语';
     if (currentPage === 'finance') return '财政';
     if (currentPage === 'duration') return '时长';
+    if (currentPage === 'timeline') return '事线';
     if (currentPage === 'project') return '常规';
     
     return '视图';
 }
+
 
 // ==================== 辅助函数 ====================
 function toSafeString(value) {
@@ -2041,6 +2419,7 @@ function loadData() {
             }));
             
             // 4. 修复其他数据
+            timelineRemarks = data.timelineRemarks || {};
             dailyRecords = data.dailyRecords || {};
             todoItems = data.todoItems || {};
             gistConfig = data.gistConfig || { token: '', gistId: '' };
@@ -2052,7 +2431,8 @@ function loadData() {
             todoExpanded = data.todoExpanded || {};
             viewCalendarPreferences = data.viewCalendarPreferences || {};
             lastUsedView = data.lastUsedView || 'project';
-            
+            timelineEvents = data.timelineEvents || {};
+currentTimelineProjectId = data.currentTimelineProjectId || null;
             // 5. 修复项目视图偏好
             projectViewTypePreferences = data.projectViewTypePreferences || {};
             currentProjectViewType = data.currentProjectViewType || 'project';
@@ -2178,7 +2558,10 @@ function saveData() {
             currentPage: currentPage,
             currentProjectId: currentProjectId,
             lastUsedView: lastUsedView,
+            timelineEvents: timelineEvents,
+currentTimelineProjectId: currentTimelineProjectId,
             currentProjectViewType: currentProjectViewType,
+            timelineRemarks: timelineRemarks,
             projectViewTypePreferences: projectViewTypePreferences,  // ✅ 添加这一行
             savedCalendarViewType: calendarViewType,
             viewCalendarPreferences: viewCalendarPreferences
@@ -2447,9 +2830,24 @@ function switchToRegularView() {
 }
 
 
-
-
-
+function switchToTimelineView() {
+    currentPage = 'timeline';
+    lastUsedView = 'timeline';
+    
+    if (currentProjectId) {
+        projectViewTypePreferences[currentProjectId] = 'timeline';
+        currentProjectViewType = 'timeline';
+        calendarViewType = viewCalendarPreferences['timeline'] || 'week';
+    } else {
+        calendarViewType = viewCalendarPreferences['timeline'] || 'week';
+    }
+    
+    saveData();
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
+    closeViewSelectModal();
+    render();
+}
 
         // ==================== 视图切换 ====================
         function openViewTypeModal() {
@@ -3028,11 +3426,212 @@ function toggleDurationCheck(monthStr, day) {
 }
 
 
-// ==================== 简化 render 函数 ====================
+
+// 事线事件管理
+let showAddTimelineEventModal = false;
+let currentEventDate = null;
+let showTimelineRemarkModal = false;
+let currentRemarkMonth = '';
+let currentRemarkDay = null;
+let currentRemarkData = { title: '', remark: '' };
+function openTimelineRemarkModal(monthStr, day) {
+    currentRemarkMonth = monthStr;
+    currentRemarkDay = day;
+    const remarkKey = `${currentProjectId}_${monthStr}_${day}`;
+    currentRemarkData = timelineRemarks[remarkKey] || { title: '', remark: '' };
+    showTimelineRemarkModal = true;
+    render();
+    setTimeout(() => {
+        const input = document.getElementById('timeline-remark-title');
+        if (input) input.focus();
+    }, 100);
+}
+
+
+// 事线事件管理
+
+function openAddTimelineEventModal() {
+    showAddTimelineEventModal = true;
+    render();
+    setTimeout(() => {
+        const input = document.getElementById('timeline-event-title');
+        if (input) input.focus();
+    }, 100);
+}
+
+function closeAddTimelineEventModal() {
+    showAddTimelineEventModal = false;
+    render();
+}
+
+function saveTimelineEvent() {
+    const titleInput = document.getElementById('timeline-event-title');
+    const remarkInput = document.getElementById('timeline-event-remark');
+    const dateInput = document.getElementById('timeline-event-date');
+    
+    if (!currentProjectId) {
+        alert('请先选择项目');
+        closeAddTimelineEventModal();
+        return;
+    }
+    
+    if (!titleInput?.value.trim()) {
+        alert('请输入事件标题');
+        return;
+    }
+    
+    if (!dateInput?.value) {
+        alert('请选择日期');
+        return;
+    }
+    
+    if (!timelineEvents[currentProjectId]) {
+        timelineEvents[currentProjectId] = [];
+    }
+    
+    const newEvent = {
+        id: 'evt_' + Date.now() + '_' + Math.random(),
+        title: titleInput.value.trim(),
+        remark: remarkInput?.value.trim() || '',
+        date: dateInput.value,
+        additions: [],  // ✅ 添加这一行
+        createdAt: new Date().toISOString()
+    };
+    
+    timelineEvents[currentProjectId].push(newEvent);
+    saveData();
+    closeAddTimelineEventModal();
+    render();
+}
+function deleteTimelineEvent(projectId, eventId) {
+    if (confirm('确定删除这个事件吗？')) {
+        if (timelineEvents[projectId]) {
+            timelineEvents[projectId] = timelineEvents[projectId].filter(e => e.id !== eventId);
+            if (timelineEvents[projectId].length === 0) {
+                delete timelineEvents[projectId];
+            }
+            saveData();
+            render();
+        }
+    }
+}
+
+function closeTimelineRemarkModal() {
+    showTimelineRemarkModal = false;
+    currentRemarkMonth = '';
+    currentRemarkDay = null;
+    currentRemarkData = { title: '', remark: '' };
+    render();
+}
+
+function saveTimelineRemark() {
+    const titleInput = document.getElementById('timeline-remark-title');
+    const remarkInput = document.getElementById('timeline-remark-content');
+    
+    if (!currentProjectId || !currentRemarkMonth || currentRemarkDay === null) {
+        closeTimelineRemarkModal();
+        return;
+    }
+    
+    const remarkKey = `${currentProjectId}_${currentRemarkMonth}_${currentRemarkDay}`;
+    
+    if (!titleInput?.value.trim() && !remarkInput?.value.trim()) {
+        // 如果两者都为空，删除备注
+        delete timelineRemarks[remarkKey];
+    } else {
+        timelineRemarks[remarkKey] = {
+            title: titleInput?.value.trim() || '',
+            remark: remarkInput?.value.trim() || ''
+        };
+    }
+    
+    saveData();
+    closeTimelineRemarkModal();
+}
+
+function deleteTimelineRemark() {
+    if (confirm('确定删除这个日期的备注吗？')) {
+        const remarkKey = `${currentProjectId}_${currentRemarkMonth}_${currentRemarkDay}`;
+        delete timelineRemarks[remarkKey];
+        saveData();
+        closeTimelineRemarkModal();
+    }
+}
+
+function openAddTimelineEventModal(date) {
+    currentEventDate = date || '';
+    showAddTimelineEventModal = true;
+    render();
+    setTimeout(() => {
+        const input = document.getElementById('timeline-event-title');
+        if (input) input.focus();
+    }, 100);
+}
+
+function closeAddTimelineEventModal() {
+    showAddTimelineEventModal = false;
+    currentEventDate = null;
+    render();
+}
+
+function saveTimelineEvent() {
+    const titleInput = document.getElementById('timeline-event-title');
+    const remarkInput = document.getElementById('timeline-event-remark');
+    const dateInput = document.getElementById('timeline-event-date');
+    
+    if (!currentProjectId) {
+        alert('请先选择项目');
+        closeAddTimelineEventModal();
+        return;
+    }
+    
+    if (!titleInput?.value.trim()) {
+        alert('请输入事件标题');
+        return;
+    }
+    
+    if (!dateInput?.value) {
+        alert('请选择日期');
+        return;
+    }
+    
+    if (!timelineEvents[currentProjectId]) {
+        timelineEvents[currentProjectId] = [];
+    }
+    
+    const newEvent = {
+        id: 'evt_' + Date.now() + '_' + Math.random(),
+        title: titleInput.value.trim(),
+        remark: remarkInput?.value.trim() || '',
+        date: dateInput.value,
+        createdAt: new Date().toISOString()
+    };
+    
+    timelineEvents[currentProjectId].push(newEvent);
+    saveData();
+    closeAddTimelineEventModal();
+    render();
+}
+
+function deleteTimelineEvent(projectId, eventId) {
+    if (confirm('确定删除这个事件吗？')) {
+        if (timelineEvents[projectId]) {
+            timelineEvents[projectId] = timelineEvents[projectId].filter(e => e.id !== eventId);
+            if (timelineEvents[projectId].length === 0) {
+                delete timelineEvents[projectId];
+            }
+            saveData();
+            render();
+        }
+    }
+}
+
+// 更新 getViewDisplayName 函数，添加事线视图
+// 找到 getViewDisplayName 函数，添加 timeline 判断
+
 function render() {
     const app = document.getElementById('app');
     
-    // 直接根据 currentPage 渲染，不再需要特殊处理
     if (currentPage === 'home') {
         app.innerHTML = renderHome() + renderModals();
     } else if (currentPage === 'finance') {
@@ -3041,15 +3640,14 @@ function render() {
         app.innerHTML = renderDurationView() + renderModals();
     } else if (currentPage === 'english') {
         app.innerHTML = renderEnglishView() + renderModals();
+    } else if (currentPage === 'timeline') {
+        app.innerHTML = renderTimelineView() + renderModals();
     } else if (currentPage === 'project') {
         app.innerHTML = renderMonthlyView() + renderModals();
     } else {
         app.innerHTML = renderHome() + renderModals();
     }
 }
-
-
-
 
         function updateProgress(projectId, delta) {
             const project = projects.find(p => p.id === projectId);
@@ -3349,6 +3947,7 @@ function goToHome() {
 
 
 // ==================== 修复 goToProject 函数 ====================
+// ==================== 修复 goToProject 函数 ====================
 function goToProject(projectId) {
     // 保存当前页面
     if (currentPage !== 'project') {
@@ -3363,13 +3962,15 @@ function goToProject(projectId) {
     if (savedViewType) {
         currentProjectViewType = savedViewType;
         
-        // ✅ 根据保存的视图类型设置 currentPage
+        // ✅ 根据保存的视图类型设置 currentPage - 添加 timeline 支持
         if (savedViewType === 'english') {
             currentPage = 'english';
         } else if (savedViewType === 'finance') {
             currentPage = 'finance';
         } else if (savedViewType === 'duration') {
             currentPage = 'duration';
+        } else if (savedViewType === 'timeline') {  // ✅ 添加这一行
+            currentPage = 'timeline';
         } else {
             currentPage = 'project';
         }
@@ -3389,7 +3990,6 @@ function goToProject(projectId) {
     saveData();
     render();
 }
-
 
         function changeMonth(delta) {
     const [year, month] = currentMonth.split('-').map(Number);
@@ -4149,12 +4749,152 @@ function editCategory(categoryId) {
         function renderModals() {
             let modals = '';
 
-           
-           // 视图选择弹窗
+
        // 修改/添加目标弹窗
      // 视图选择弹窗
-
-     
+     // 编辑事件弹窗（含追加功能）
+if (showEditTimelineEventModal && currentEditEventData) {
+    const additions = currentEditEventData.additions || [];
+    
+    modals += `
+        <div class="modal-overlay" onclick="closeEditTimelineEventModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+                <div class="modal-title">编辑事线事件</div>
+                
+                <div class="gist-input-group">
+                    <label class="gist-label">事件标题</label>
+                    <input type="text" id="edit-event-title" class="modal-input" value="${toSafeString(currentEditEventData.title).replace(/"/g, '&quot;')}">
+                </div>
+                
+                <div class="gist-input-group">
+                    <label class="gist-label">事件日期</label>
+                    <input type="date" id="edit-event-date" class="modal-input" value="${currentEditEventData.date}">
+                </div>
+                
+                <div class="gist-input-group">
+                    <label class="gist-label">备注内容</label>
+                    <textarea id="edit-event-remark" class="modal-textarea" rows="4" style="resize: vertical;">${toSafeString(currentEditEventData.remark)}</textarea>
+                </div>
+                
+                <!-- 追加内容区域 -->
+                <div class="gist-input-group">
+                    <label class="gist-label">追加内容 <span style="font-weight: 300; color: #999;">（记录后续进展）</span></label>
+                    <div style="margin-bottom: 8px;">
+                        <textarea id="edit-event-addition" class="modal-textarea" rows="2" placeholder="记录新的进展或补充说明..." style="resize: vertical; margin-bottom: 8px;"></textarea>
+                        <button class="add-project-btn" onclick="addAdditionToEvent()" style="width: 100%;">+ 添加追加</button>
+                    </div>
+                </div>
+                
+                <!-- 已有追加内容列表 -->
+                ${additions.length > 0 ? `
+                    <div class="gist-input-group">
+                        <label class="gist-label">已有追加记录</label>
+                        <div style="max-height: 200px; overflow-y: auto;">
+                            ${additions.map((add, idx) => `
+                                <div style="
+                                    background: #f8f8f8;
+                                    padding: 8px 12px;
+                                    margin-bottom: 8px;
+                                    border-radius: 8px;
+                                    position: relative;
+                                ">
+                                    <div style="font-size: 12px; color: #999; margin-bottom: 4px;">${add.date || ''}</div>
+                                    <div style="font-size: 13px; color: #666; white-space: pre-wrap;">${toSafeString(add.content)}</div>
+                                    <button onclick="deleteAddition(${idx})" style="
+                                        position: absolute;
+                                        top: 8px;
+                                        right: 8px;
+                                        background: none;
+                                        border: none;
+                                        font-size: 12px;
+                                        color: #ccc;
+                                        cursor: pointer;
+                                    " onmouseover="this.style.color='#d32f2f'" onmouseout="this.style.color='#ccc'">✕</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-secondary" onclick="closeEditTimelineEventModal()">取消</button>
+                    <button class="modal-btn modal-btn-primary" onclick="saveTimelineEventEdit()">保存</button>
+                </div>
+            </div>
+        </div>
+    `;
+}      
+           // 视图选择弹窗
+     // 事线备注编辑弹窗
+if (showTimelineRemarkModal) {
+    modals += `
+        <div class="modal-overlay" onclick="closeTimelineRemarkModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 450px;">
+                <div class="modal-title">编辑事记 · ${currentRemarkMonth}-${String(currentRemarkDay).padStart(2, '0')}</div>
+                
+                <div class="gist-input-group">
+                    <label class="gist-label">事件标题</label>
+                    <input type="text" id="timeline-remark-title" class="modal-input" 
+                        value="${toSafeString(currentRemarkData.title).replace(/"/g, '&quot;')}" 
+                        placeholder="例如：项目启动、重要会议">
+                </div>
+                
+                <div class="gist-input-group">
+                    <label class="gist-label">备注内容</label>
+                    <textarea id="timeline-remark-content" class="modal-textarea" rows="5" 
+                        placeholder="可以换行输入详细说明&#10;例如：具体安排、参与人员、注意事项等" 
+                        style="resize: vertical;">${toSafeString(currentRemarkData.remark).replace(/</g, '&lt;')}</textarea>
+                </div>
+                
+                <div class="gist-help" style="margin-bottom: 16px;">
+                    💡 提示：填写标题或备注后，该日期将显示事记标记，并与前后事记自动连线
+                </div>
+                
+                <div class="modal-buttons">
+                    ${currentRemarkData.title || currentRemarkData.remark ? 
+                        `<button class="modal-btn modal-btn-secondary" onclick="deleteTimelineRemark()" style="background: #fff0f0; color: #d32f2f;">删除</button>` : ''}
+                    <button class="modal-btn modal-btn-secondary" onclick="closeTimelineRemarkModal()">取消</button>
+                    <button class="modal-btn modal-btn-primary" onclick="saveTimelineRemark()">保存</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+     // 事线事件添加弹窗
+// 事线事件添加弹窗
+if (showAddTimelineEventModal) {
+    const todayDate = new Date().toISOString().split('T')[0];
+    
+    modals += `
+        <div class="modal-overlay" onclick="closeAddTimelineEventModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 450px;">
+                <div class="modal-title">添加事线事件</div>
+                
+                <div class="gist-input-group">
+                    <label class="gist-label">事件标题 <span style="color: #d32f2f;">*</span></label>
+                    <input type="text" id="timeline-event-title" class="modal-input" placeholder="例如：项目启动会、重要里程碑" autocomplete="off">
+                </div>
+                
+                <div class="gist-input-group">
+                    <label class="gist-label">事件日期 <span style="color: #d32f2f;">*</span></label>
+                    <input type="date" id="timeline-event-date" class="modal-input" value="${todayDate}">
+                </div>
+                
+                <div class="gist-input-group">
+                    <label class="gist-label">备注说明</label>
+                    <textarea id="timeline-event-remark" class="modal-textarea" rows="5" 
+                        placeholder="可以换行输入详细说明&#10;例如：具体安排、参与人员、注意事项等" 
+                        style="resize: vertical;"></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-secondary" onclick="closeAddTimelineEventModal()">取消</button>
+                    <button class="modal-btn modal-btn-primary" onclick="saveTimelineEvent()">添加事件</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
 
 // 视图选择弹窗
 // 视图选择弹窗
@@ -4187,6 +4927,12 @@ if (showViewSelectModal) {
         style="width: 100%; text-align: center; display: flex; align-items: center; gap: 8px; justify-content: center;">
     <span>📖</span>
     <span>英语视图</span>
+</button>
+<button class="modal-btn ${currentPage === 'timeline' ? 'modal-btn-primary' : ''}" 
+        onclick="switchToTimelineView()" 
+        style="width: 100%; text-align: center; display: flex; align-items: center; gap: 8px; justify-content: center;">
+    <span>📅</span>
+    <span>事线视图</span>
 </button>
                 </div>
             </div>
@@ -4813,7 +5559,25 @@ function quickAddCategory() {
             render();
         }
 
-
+window.openEditTimelineEventModal = openEditTimelineEventModal;
+window.closeEditTimelineEventModal = closeEditTimelineEventModal;
+window.saveTimelineEventEdit = saveTimelineEventEdit;
+window.addAdditionToEvent = addAdditionToEvent;
+window.deleteAddition = deleteAddition;
+window.switchToTimelineView = switchToTimelineView;
+window.openAddTimelineEventModal = openAddTimelineEventModal;
+window.closeAddTimelineEventModal = closeAddTimelineEventModal;
+window.saveTimelineEvent = saveTimelineEvent;
+window.deleteTimelineEvent = deleteTimelineEvent;
+window.openTimelineRemarkModal = openTimelineRemarkModal;
+window.closeTimelineRemarkModal = closeTimelineRemarkModal;
+window.saveTimelineRemark = saveTimelineRemark;
+window.deleteTimelineRemark = deleteTimelineRemark;
+window.switchToTimelineView = switchToTimelineView;
+window.openAddTimelineEventModal = openAddTimelineEventModal;
+window.closeAddTimelineEventModal = closeAddTimelineEventModal;
+window.saveTimelineEvent = saveTimelineEvent;
+window.deleteTimelineEvent = deleteTimelineEvent;
 window.switchToEnglishView = switchToEnglishView;
 window.updateEnglishText = updateEnglishText;
 window.updateEnglishBooks = updateEnglishBooks;
