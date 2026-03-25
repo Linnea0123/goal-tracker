@@ -1588,7 +1588,8 @@ const COMMON_EMOJIS = [
 // 事线视图数据
 let timelineEvents = {}; // 格式: { "projectId": [事件数组] }
 let currentTimelineProjectId = null; // 当前事线视图关联的项目ID
-
+let isViewingArchived = false;  // 是否正在查看归档项目
+let currentArchivedProjectId = null;  // 当前查看的归档项目ID
 let projects = [];
 let dailyRecords = {};
 let todoItems = {};
@@ -1618,7 +1619,7 @@ let currentGoalId = null;
        let englishRecords = {}; // 格式: { "2024-03": { "15": { text: "书名", books: 1 } } }
 
 let currentProjectViewType = 'project';  // 当前项目详情页使用的视图类型
-    
+    let currentEditProjectIsArchived = false;
         // 弹窗控制
         let showEditGoalModal = false;
         let showSwitchGoalModal = false;
@@ -1860,12 +1861,145 @@ function renderFinance() {
     `;
 }
 
+
+
+
+
+
+
+// ==================== 编辑事件（含追加功能）====================
+let showEditTimelineEventModal = false;
+let currentEditEventId = null;
+let currentEditEventData = null;
+
+function openEditTimelineEventModal(projectId, eventId) {
+    const events = timelineEvents[projectId] || [];
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+        currentEditEventId = eventId;
+        currentEditEventData = JSON.parse(JSON.stringify(event));
+        showEditTimelineEventModal = true;
+        render();
+        setTimeout(() => {
+            const input = document.getElementById('edit-event-title');
+            if (input) input.focus();
+        }, 100);
+    }
+}
+
+function closeEditTimelineEventModal() {
+    showEditTimelineEventModal = false;
+    currentEditEventId = null;
+    currentEditEventData = null;
+    render();
+}
+
+function addAdditionToEvent() {
+    const additionText = document.getElementById('edit-event-addition');
+    if (!additionText?.value.trim()) {
+        alert('请输入追加内容');
+        return;
+    }
+    
+    if (!currentEditEventData.additions) {
+        currentEditEventData.additions = [];
+    }
+    
+    currentEditEventData.additions.push({
+        content: additionText.value.trim(),
+        date: new Date().toISOString().slice(0, 10)
+    });
+    
+    additionText.value = '';
+    render();
+    setTimeout(() => {
+        const input = document.getElementById('edit-event-addition');
+        if (input) input.focus();
+    }, 100);
+}
+
+function deleteAddition(index) {
+    if (confirm('确定删除这条追加内容吗？')) {
+        currentEditEventData.additions.splice(index, 1);
+        render();
+    }
+}
+
+function saveTimelineEventEdit() {
+    const titleInput = document.getElementById('edit-event-title');
+    const remarkInput = document.getElementById('edit-event-remark');
+    const dateInput = document.getElementById('edit-event-date');
+    
+    if (!titleInput?.value.trim()) {
+        alert('请输入事件标题');
+        return;
+    }
+    
+    if (!dateInput?.value) {
+        alert('请选择日期');
+        return;
+    }
+    
+    // 更新事件数据
+    currentEditEventData.title = titleInput.value.trim();
+    currentEditEventData.remark = remarkInput?.value.trim() || '';
+    currentEditEventData.date = dateInput.value;
+    
+    // 保存到全局数据
+    if (timelineEvents[currentProjectId]) {
+        const index = timelineEvents[currentProjectId].findIndex(e => e.id === currentEditEventId);
+        if (index !== -1) {
+            timelineEvents[currentProjectId][index] = currentEditEventData;
+        }
+    }
+    
+    saveData();
+    closeEditTimelineEventModal();
+}
+
+// 财政视图的复选框切换（有金额时打钩）
+function toggleFinanceCheck(monthStr, day) {
+    const key = monthStr;
+    if (!financeRecords[key]) financeRecords[key] = {};
+    if (!financeRecords[key][day]) financeRecords[key][day] = { text: '', amount: '' };
+    
+    if (financeRecords[key][day].amount && parseFloat(financeRecords[key][day].amount) > 0) {
+        // 如果有金额，清空金额
+        financeRecords[key][day].amount = '';
+        if (!financeRecords[key][day].text) {
+            delete financeRecords[key][day];
+            if (Object.keys(financeRecords[key]).length === 0) {
+                delete financeRecords[key];
+            }
+        }
+    } else {
+        // 如果没有金额，设置默认值
+        financeRecords[key][day].amount = '30';
+    }
+    
+    saveData();
+    render();
+}
 function renderTimelineView() {
-    const project = projects.find(p => p.id === currentProjectId);
+    console.log('renderTimelineView 被调用, currentProjectId:', currentProjectId, 'isViewingArchived:', isViewingArchived, 'currentArchivedProjectId:', currentArchivedProjectId);
+    
+    // 先查找活跃项目
+    let project = projects.find(p => p.id === currentProjectId);
+    
+    // 如果活跃项目中没有，检查归档项目
+    if (!project && isViewingArchived && currentArchivedProjectId === currentProjectId) {
+        project = archivedProjects.find(p => p.id === currentProjectId);
+        console.log('在归档中查找项目:', project ? project.name : '未找到');
+    }
+    
+    // 如果项目不存在，返回主页
     if (!project) {
+        console.log('❌ 项目不存在，返回主页');
         goToHome();
         return renderHome();
     }
+    
+    console.log('✅ 成功加载项目:', project.name, '是否归档:', isViewingArchived);
     
     // 获取当前项目的事件列表
     const events = timelineEvents[currentProjectId] || [];
@@ -2072,8 +2206,35 @@ function renderTimelineView() {
     const daysInMonth = getDaysInMonth(year, month - 1);
     const progressPercent = Math.round((monthEventCount / daysInMonth) * 100);
     
+    // 归档标识
+    const archivedBadge = isViewingArchived ? `
+        <div style="
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        ">
+            <span style="color: #f57c00;">📦 此项目已归档，您可以查看和编辑</span>
+            <button onclick="restoreAndEdit(${currentProjectId})" style="
+                background: #5a7a9a;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 4px 12px;
+                font-size: 12px;
+                cursor: pointer;
+            ">恢复并编辑</button>
+        </div>
+    ` : '';
+    
     return `
         <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
+            ${archivedBadge}
             <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button class="nav-btn" onclick="goToHome()">← 返回</button>
@@ -2140,121 +2301,6 @@ function renderTimelineView() {
         </div>
     `;
 }
-
-// ==================== 编辑事件（含追加功能）====================
-let showEditTimelineEventModal = false;
-let currentEditEventId = null;
-let currentEditEventData = null;
-
-function openEditTimelineEventModal(projectId, eventId) {
-    const events = timelineEvents[projectId] || [];
-    const event = events.find(e => e.id === eventId);
-    if (event) {
-        currentEditEventId = eventId;
-        currentEditEventData = JSON.parse(JSON.stringify(event));
-        showEditTimelineEventModal = true;
-        render();
-        setTimeout(() => {
-            const input = document.getElementById('edit-event-title');
-            if (input) input.focus();
-        }, 100);
-    }
-}
-
-function closeEditTimelineEventModal() {
-    showEditTimelineEventModal = false;
-    currentEditEventId = null;
-    currentEditEventData = null;
-    render();
-}
-
-function addAdditionToEvent() {
-    const additionText = document.getElementById('edit-event-addition');
-    if (!additionText?.value.trim()) {
-        alert('请输入追加内容');
-        return;
-    }
-    
-    if (!currentEditEventData.additions) {
-        currentEditEventData.additions = [];
-    }
-    
-    currentEditEventData.additions.push({
-        content: additionText.value.trim(),
-        date: new Date().toISOString().slice(0, 10)
-    });
-    
-    additionText.value = '';
-    render();
-    setTimeout(() => {
-        const input = document.getElementById('edit-event-addition');
-        if (input) input.focus();
-    }, 100);
-}
-
-function deleteAddition(index) {
-    if (confirm('确定删除这条追加内容吗？')) {
-        currentEditEventData.additions.splice(index, 1);
-        render();
-    }
-}
-
-function saveTimelineEventEdit() {
-    const titleInput = document.getElementById('edit-event-title');
-    const remarkInput = document.getElementById('edit-event-remark');
-    const dateInput = document.getElementById('edit-event-date');
-    
-    if (!titleInput?.value.trim()) {
-        alert('请输入事件标题');
-        return;
-    }
-    
-    if (!dateInput?.value) {
-        alert('请选择日期');
-        return;
-    }
-    
-    // 更新事件数据
-    currentEditEventData.title = titleInput.value.trim();
-    currentEditEventData.remark = remarkInput?.value.trim() || '';
-    currentEditEventData.date = dateInput.value;
-    
-    // 保存到全局数据
-    if (timelineEvents[currentProjectId]) {
-        const index = timelineEvents[currentProjectId].findIndex(e => e.id === currentEditEventId);
-        if (index !== -1) {
-            timelineEvents[currentProjectId][index] = currentEditEventData;
-        }
-    }
-    
-    saveData();
-    closeEditTimelineEventModal();
-}
-
-// 财政视图的复选框切换（有金额时打钩）
-function toggleFinanceCheck(monthStr, day) {
-    const key = monthStr;
-    if (!financeRecords[key]) financeRecords[key] = {};
-    if (!financeRecords[key][day]) financeRecords[key][day] = { text: '', amount: '' };
-    
-    if (financeRecords[key][day].amount && parseFloat(financeRecords[key][day].amount) > 0) {
-        // 如果有金额，清空金额
-        financeRecords[key][day].amount = '';
-        if (!financeRecords[key][day].text) {
-            delete financeRecords[key][day];
-            if (Object.keys(financeRecords[key]).length === 0) {
-                delete financeRecords[key];
-            }
-        }
-    } else {
-        // 如果没有金额，设置默认值
-        financeRecords[key][day].amount = '30';
-    }
-    
-    saveData();
-    render();
-}
-
 
 // ==================== 获取当前视图显示名称 ====================
 function getViewDisplayName() {
@@ -2422,6 +2468,7 @@ function loadData() {
             timelineRemarks = data.timelineRemarks || {};
             dailyRecords = data.dailyRecords || {};
             todoItems = data.todoItems || {};
+            archivedProjects = data.archivedProjects || [];  // ← 添加这一行
             gistConfig = data.gistConfig || { token: '', gistId: '' };
             recordChecked = data.recordChecked || {};
             financeRecords = data.financeRecords || {};
@@ -2552,6 +2599,7 @@ function saveData() {
             recordChecked, 
             progressType,
             todoExpanded,
+            archivedProjects,  // ← 添加这一行
             categories,
             financeRecords,
             durationRecords,
@@ -3698,29 +3746,66 @@ function saveProjectAdd() {
 }
 
 
-   function editProject(event, projectId) {
+
+function editProject(event, projectId) {
     event.stopPropagation();
-    const project = projects.find(p => p.id === projectId);
+    
+    // 先查找活跃项目
+    let project = projects.find(p => p.id === projectId);
+    let isArchived = false;
+    
+    // 如果不在活跃项目中，查找归档项目
+    if (!project && isViewingArchived && currentArchivedProjectId === projectId) {
+        project = archivedProjects.find(p => p.id === projectId);
+        if (project) {
+            isArchived = true;
+        }
+    }
+    
     if (!project) return;
+    
     currentEditProjectId = projectId;
+    currentEditProjectIsArchived = isArchived;  // 新增变量记录
     showEditProjectModal = true;
     render();
     setTimeout(() => {
         document.getElementById('edit-project-name').value = project.name || '';
         document.getElementById('edit-project-target').value = project.target || '';
-        // 只有项目有进度目标时才显示数值，否则显示空
         document.getElementById('edit-project-target-number').value = (project.progressTarget && project.progressTarget > 0) ? project.progressTarget : '';
         document.getElementById('edit-project-unit').value = project.progressUnit || '';
         document.getElementById('edit-project-current').value = (project.progressCurrent && project.progressCurrent > 0) ? project.progressCurrent : 0;
         document.getElementById('edit-project-deadline').value = project.deadline || '';
         document.getElementById('edit-project-category').value = project.categoryId || '';
+        
+        // 添加归档提示
+        if (isArchived) {
+            const tip = document.createElement('div');
+            tip.style.cssText = 'background: #fff3e0; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #f57c00;';
+            tip.innerHTML = '📦 此项目已归档，编辑后会保存在归档中';
+            const modalContent = document.querySelector('.modal-content');
+            if (modalContent && !document.getElementById('archived-edit-tip')) {
+                tip.id = 'archived-edit-tip';
+                modalContent.insertBefore(tip, modalContent.firstChild.nextSibling);
+            }
+        }
     }, 100);
-}     
+}
 
 
 function saveProjectEdit() {
     if (!currentEditProjectId) return;
-    const project = projects.find(p => p.id === currentEditProjectId);
+    
+    // 确定要编辑的项目在哪个数组中
+    let project = projects.find(p => p.id === currentEditProjectId);
+    let targetArray = projects;
+    let isArchived = false;
+    
+    if (!project && currentEditProjectIsArchived) {
+        project = archivedProjects.find(p => p.id === currentEditProjectId);
+        targetArray = archivedProjects;
+        isArchived = true;
+    }
+    
     if (!project) return;
     
     const nameInput = document.getElementById('edit-project-name');
@@ -3729,7 +3814,6 @@ function saveProjectEdit() {
     const unitInput = document.getElementById('edit-project-unit');
     const currentInput = document.getElementById('edit-project-current');
     const deadlineInput = document.getElementById('edit-project-deadline');
-    // 新增：获取分类选择框的值
     const categorySelect = document.getElementById('edit-project-category');
     
     if (nameInput?.value.trim()) project.name = nameInput.value.trim();
@@ -3744,17 +3828,53 @@ function saveProjectEdit() {
         const num = parseInt(currentInput.value);
         if (!isNaN(num) && num >= 0) project.progressCurrent = Math.min(num, project.progressTarget);
     }
-    // 新增：保存分类ID
     if (categorySelect) {
         project.categoryId = categorySelect.value || null;
+    }
+    
+    // 更新时间戳
+    if (isArchived) {
+        project.archivedAt = new Date().toISOString();
     }
     
     saveData();
     showEditProjectModal = false;
     currentEditProjectId = null;
-    render();
+    currentEditProjectIsArchived = false;
+    
+    // 重新渲染
+    if (isArchived && isViewingArchived) {
+        render();
+    } else {
+        render();
+    }
 }
-        function deleteProject(event, projectId) {
+
+
+function restoreAndEdit(projectId) {
+    if (confirm('恢复此项目并开始编辑？恢复后项目将移出归档。')) {
+        // 从归档中恢复
+        const projectIndex = archivedProjects.findIndex(p => p.id === projectId);
+        if (projectIndex !== -1) {
+            const project = archivedProjects[projectIndex];
+            delete project.archivedAt;
+            
+            archivedProjects.splice(projectIndex, 1);
+            projects.push(project);
+            
+            // 退出归档查看模式
+            isViewingArchived = false;
+            currentArchivedProjectId = null;
+            
+            saveData();
+            
+            // 重新进入项目
+            goToProject(projectId);
+        }
+    }
+}
+
+function deleteProject(event, projectId) {
             event.stopPropagation();
             if (confirm('确定删除这个项目吗？')) {
                 projects = projects.filter(p => p.id !== projectId);
@@ -3765,6 +3885,225 @@ function saveProjectEdit() {
             }
         }
 
+
+        // 归档项目
+
+// ==================== 归档项目 ====================
+// 归档项目
+function archiveProject(projectId) {
+    const projectIndex = projects.findIndex(p => p.id === projectId);
+    if (projectIndex === -1) return;
+    
+    const project = projects[projectIndex];
+    project.archivedAt = new Date().toISOString();
+    
+    projects.splice(projectIndex, 1);
+    archivedProjects.push(project);
+    
+    if (currentProjectId === projectId) {
+        goToHome();
+    }
+    
+    saveData();
+    render();
+}
+
+// 恢复归档项目
+function restoreProject(projectId) {
+    const projectIndex = archivedProjects.findIndex(p => p.id === projectId);
+    if (projectIndex === -1) return;
+    
+    const project = archivedProjects[projectIndex];
+    delete project.archivedAt;
+    
+    archivedProjects.splice(projectIndex, 1);
+    projects.push(project);
+    
+    saveData();
+    render();
+}
+
+// 打开归档弹窗
+function openArchivedModal() {
+    showArchivedModal = true;
+    render();
+}
+
+// 关闭归档弹窗
+function closeArchivedModal() {
+    showArchivedModal = false;
+    render();
+}
+
+// 永久删除归档项目
+function deleteArchivedProject(projectId) {
+    if (confirm('确定永久删除这个项目吗？此操作不可恢复！')) {
+        archivedProjects = archivedProjects.filter(p => p.id !== projectId);
+        saveData();
+        render();
+    }
+}
+
+// 查看归档项目详情
+// 查看归档项目详情
+function goToArchivedProject(projectId) {
+    console.log('点击归档项目:', projectId);
+    closeArchivedModal();
+    
+    const project = archivedProjects.find(p => p.id === projectId);
+    if (!project) {
+        console.error('项目不存在:', projectId);
+        alert('项目不存在');
+        return;
+    }
+    
+    console.log('找到项目:', project.name);
+    
+    isViewingArchived = true;
+    currentArchivedProjectId = projectId;
+    
+    // 直接设置当前项目ID并跳转
+    currentProjectId = projectId;
+    
+    // 恢复视图类型
+    const savedViewType = projectViewTypePreferences[projectId];
+    
+    if (savedViewType) {
+        currentProjectViewType = savedViewType;
+        if (savedViewType === 'english') {
+            currentPage = 'english';
+        } else if (savedViewType === 'finance') {
+            currentPage = 'finance';
+        } else if (savedViewType === 'duration') {
+            currentPage = 'duration';
+        } else if (savedViewType === 'timeline') {
+            currentPage = 'timeline';
+        } else {
+            currentPage = 'project';
+        }
+    } else {
+        currentProjectViewType = 'project';
+        currentPage = 'project';
+    }
+    
+    calendarViewType = viewCalendarPreferences[currentProjectViewType] || 'week';
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
+    
+    saveData();
+    render();
+}
+// 恢复并编辑归档项目
+function restoreAndEdit(projectId) {
+    if (confirm('恢复此项目并开始编辑？恢复后项目将移出归档。')) {
+        const projectIndex = archivedProjects.findIndex(p => p.id === projectId);
+        if (projectIndex !== -1) {
+            const project = archivedProjects[projectIndex];
+            delete project.archivedAt;
+            
+            archivedProjects.splice(projectIndex, 1);
+            projects.push(project);
+            
+            isViewingArchived = false;
+            currentArchivedProjectId = null;
+            
+            saveData();
+            goToProject(projectId);
+        }
+    }
+}
+
+// 恢复归档项目
+function restoreProject(projectId) {
+    const projectIndex = archivedProjects.findIndex(p => p.id === projectId);
+    if (projectIndex === -1) return;
+    
+    const project = archivedProjects[projectIndex];
+    delete project.archivedAt;  // 移除归档标记
+    
+    archivedProjects.splice(projectIndex, 1);
+    projects.push(project);
+    
+    saveData();
+    render();
+}
+
+// 打开归档弹窗
+let showArchivedModal = false;
+function openArchivedModal() {
+    showArchivedModal = true;
+    render();
+}
+
+function closeArchivedModal() {
+    showArchivedModal = false;
+    render();
+}
+
+// 永久删除归档项目
+function deleteArchivedProject(projectId) {
+    if (confirm('确定永久删除这个项目吗？此操作不可恢复！')) {
+        archivedProjects = archivedProjects.filter(p => p.id !== projectId);
+        saveData();
+        render();
+    }
+}
+
+
+
+// 查看归档项目详情
+function goToArchivedProject(projectId) {
+    console.log('点击归档项目, ID:', projectId);
+    
+    // 关闭弹窗
+    showArchivedModal = false;
+    
+    // 查找归档项目
+    const project = archivedProjects.find(p => p.id === projectId);
+    if (!project) {
+        console.error('找不到归档项目:', projectId);
+        alert('项目不存在');
+        return;
+    }
+    
+    console.log('找到项目:', project.name);
+    
+    // 设置归档查看状态
+    isViewingArchived = true;
+    currentArchivedProjectId = projectId;
+    
+    // 关键：设置当前项目ID和页面
+    currentProjectId = projectId;
+    currentPage = 'project';  // 直接设置为项目视图
+    currentProjectViewType = 'project';
+    
+    // 恢复该项目的视图偏好（如果有）
+    const savedViewType = projectViewTypePreferences[projectId];
+    if (savedViewType) {
+        currentProjectViewType = savedViewType;
+        if (savedViewType === 'english') {
+            currentPage = 'english';
+        } else if (savedViewType === 'finance') {
+            currentPage = 'finance';
+        } else if (savedViewType === 'duration') {
+            currentPage = 'duration';
+        } else if (savedViewType === 'timeline') {
+            currentPage = 'timeline';
+        } else {
+            currentPage = 'project';
+        }
+    }
+    
+    // 设置日历视图
+    calendarViewType = viewCalendarPreferences[currentPage] || 'week';
+    currentMonth = getCurrentYearMonth().monthStr;
+    currentWeekStart = getWeekStart(new Date());
+    
+    console.log('跳转到项目:', project.name, '页面:', currentPage);
+    
+    saveData();
+    render();
+}
         // ==================== 每日记录 ====================
         function updateRecord(projectId, monthStr, day, value) {
             const key = projectId + '_' + monthStr;
@@ -3938,6 +4277,10 @@ function toggleRecordCheck(projectId, monthStr, day) {
         // ==================== 页面导航 ====================
 
 function goToHome() {
+    // 重置归档查看状态
+    isViewingArchived = false;
+    currentArchivedProjectId = null;
+    
     currentPage = 'home';
     currentProjectId = null;
     calendarViewType = viewCalendarPreferences['home'] || 'week';
@@ -3948,7 +4291,23 @@ function goToHome() {
 
 // ==================== 修复 goToProject 函数 ====================
 // ==================== 修复 goToProject 函数 ====================
-function goToProject(projectId) {
+
+
+function goToProject(projectId, isArchived = false) {
+    // 检查是否是归档项目
+    let project = projects.find(p => p.id === projectId);
+    
+    if (!project && isArchived) {
+        project = archivedProjects.find(p => p.id === projectId);
+        if (project) {
+            isViewingArchived = true;
+            currentArchivedProjectId = projectId;
+        }
+    } else if (!project) {
+        goToHome();
+        return;
+    }
+    
     // 保存当前页面
     if (currentPage !== 'project') {
         lastPage = currentPage;
@@ -3956,33 +4315,27 @@ function goToProject(projectId) {
     
     currentProjectId = projectId;
     
-    // ✅ 关键修复：恢复这个项目上次使用的视图类型
+    // 恢复视图类型
     const savedViewType = projectViewTypePreferences[projectId];
     
     if (savedViewType) {
         currentProjectViewType = savedViewType;
-        
-        // ✅ 根据保存的视图类型设置 currentPage - 添加 timeline 支持
         if (savedViewType === 'english') {
             currentPage = 'english';
         } else if (savedViewType === 'finance') {
             currentPage = 'finance';
         } else if (savedViewType === 'duration') {
             currentPage = 'duration';
-        } else if (savedViewType === 'timeline') {  // ✅ 添加这一行
+        } else if (savedViewType === 'timeline') {
             currentPage = 'timeline';
         } else {
             currentPage = 'project';
         }
-        
-        console.log('✅ 恢复项目视图类型:', projectId, '->', savedViewType, '页面设置为:', currentPage);
     } else {
         currentProjectViewType = 'project';
         currentPage = 'project';
-        console.log('⚠️ 项目无保存的视图类型，使用默认: project');
     }
     
-    // 根据视图类型设置日历偏好
     calendarViewType = viewCalendarPreferences[currentProjectViewType] || 'week';
     currentMonth = getCurrentYearMonth().monthStr;
     currentWeekStart = getWeekStart(new Date());
@@ -4145,6 +4498,7 @@ function renderHome() {
 
                 <div class="bottom-actions">
                     <button class="bottom-btn" onclick="openSettingsModal()"><span class="btn-icon">⚙️</span><span class="btn-text">设置</span></button>
+                    <button class="bottom-btn" onclick="openArchivedModal()"><span class="btn-icon">📦</span><span class="btn-text">归档</span></button>  <!-- 新增这个按钮 -->
                     <button class="bottom-btn" onclick="openCategoryModal()"><span class="btn-icon">📁</span><span class="btn-text">分类</span></button>
                     <button class="bottom-btn ${isSyncing ? 'syncing' : ''}" onclick="syncToGist()"><span class="btn-icon">↻</span><span class="btn-text">同步</span></button>
                     <button class="bottom-btn" onclick="restoreFromGist()"><span class="btn-icon">↺</span><span class="btn-text">恢复</span></button>
@@ -4388,7 +4742,8 @@ function renderHome() {
 
             <div class="bottom-actions">
                 <button class="bottom-btn" onclick="openSettingsModal()"><span class="btn-icon">⚙️</span><span class="btn-text">设置</span></button>
-                <button class="bottom-btn" onclick="openCategoryModal()"><span class="btn-icon">📁</span><span class="btn-text">分类</span></button>
+                 <button class="bottom-btn" onclick="openArchivedModal()"><span class="btn-icon">📦</span><span class="btn-text">归档</span></button>
+                 <button class="bottom-btn" onclick="openCategoryModal()"><span class="btn-icon">📁</span><span class="btn-text">分类</span></button>
                 <button class="bottom-btn ${isSyncing ? 'syncing' : ''}" onclick="syncToGist()"><span class="btn-icon">↻</span><span class="btn-text">同步</span></button>
                 <button class="bottom-btn" onclick="restoreFromGist()"><span class="btn-icon">↺</span><span class="btn-text">恢复</span></button>
             </div>
@@ -4399,11 +4754,58 @@ function renderHome() {
 
 
 
-        
         function renderMonthlyView() {
-    const project = projects.find(p => p.id === currentProjectId);
-    if (!project) { currentPage = 'home'; return renderHome(); }
-
+    console.log('renderMonthlyView 被调用, currentProjectId:', currentProjectId, 'isViewingArchived:', isViewingArchived, 'currentArchivedProjectId:', currentArchivedProjectId);
+    
+    // 先检查是否是归档项目
+    let project = projects.find(p => p.id === currentProjectId);
+    let isArchivedProject = false;
+    
+    // 如果活跃项目中没有，检查归档项目
+    if (!project && isViewingArchived && currentArchivedProjectId === currentProjectId) {
+        project = archivedProjects.find(p => p.id === currentProjectId);
+        if (project) {
+            isArchivedProject = true;
+            console.log('✅ 加载归档项目:', project.name);
+        }
+    }
+    
+    if (!project) { 
+        console.log('❌ 项目不存在，返回主页');
+        currentPage = 'home'; 
+        isViewingArchived = false;
+        currentArchivedProjectId = null;
+        return renderHome(); 
+    }
+    
+    console.log('✅ 成功加载项目:', project.name, '是否归档:', isArchivedProject);
+    
+    // 在页面顶部添加归档标识
+    const archivedBadge = isArchivedProject ? `
+        <div style="
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        ">
+            <span style="color: #f57c00;">📦 此项目已归档，您可以查看和编辑</span>
+            <button onclick="restoreAndEdit(${currentProjectId})" style="
+                background: #5a7a9a;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 4px 12px;
+                font-size: 12px;
+                cursor: pointer;
+            ">恢复并编辑</button>
+        </div>
+    ` : '';
+    
     const [year, month] = currentMonth.split('-').map(Number);
     const daysInMonth = getDaysInMonth(year, month - 1);
     const key = currentProjectId + '_' + currentMonth;
@@ -4591,54 +4993,51 @@ function renderHome() {
         return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
     }
 
-    
-return `
-    <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
-        <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
-    <div style="display: flex; align-items: center; gap: 8px; width: 70px;">
-        <button class="nav-btn" onclick="goToHome()">← 返回</button>
-    </div>
-    <h2 class="project-title" style="margin: 0; font-size: 16px; text-align: center; flex: 1;">${toSafeString(project.name)}</h2>
-    <div style="display: flex; align-items: center; gap: 8px; width: 70px; justify-content: flex-end;">
-        <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
-    
-    <span>${getViewDisplayName()}</span>
-</button>
-        <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
-    </div>
-</div>
+    return `
+        <div class="page" style="width: 100%; max-width: 500px; margin: 0 auto; overflow-x: hidden; box-sizing: border-box;">
+            ${archivedBadge}
+            <div class="month-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; gap: 8px; width: 70px;">
+                    <button class="nav-btn" onclick="goToHome()">← 返回</button>
+                </div>
+                <h2 class="project-title" style="margin: 0; font-size: 16px; text-align: center; flex: 1;">${toSafeString(project.name)}</h2>
+                <div style="display: flex; align-items: center; gap: 8px; width: 70px; justify-content: flex-end;">
+                    <button class="nav-btn" onclick="openViewSelectModal()" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;">
+                        <span>${getViewDisplayName()}</span>
+                    </button>
+                    <div onclick="openCalendarModal()" style="font-size: 24px; cursor: pointer; width: 40px; text-align: center;">📅</div>
+                </div>
+            </div>
 
-        <div class="stats-card" style="width: 100%; box-sizing: border-box; padding: 14px 16px;">
+            <div class="stats-card" style="width: 100%; box-sizing: border-box; padding: 14px 16px;">
+                <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; min-height: 34px; width: 100%; box-sizing: border-box;">
+                    ${calendarViewType === 'month' 
+                        ? `<button class="month-btn" onclick="changeMonth(-1)" style="padding: 4px 12px;">◀ 上月</button>
+                           <span class="current-month" style="font-size: 15px;">${currentMonth}</span>
+                           <button class="month-btn" onclick="changeMonth(1)" style="padding: 4px 12px;">下月 ▶</button>`
+                        : `<button class="month-btn" onclick="changeWeek(-1)" style="padding: 4px 12px;">◀ 上周</button>
+                           <span class="current-month" style="font-size: 15px;">${weekDisplay}</span>
+                           <button class="month-btn" onclick="changeWeek(1)" style="padding: 4px 12px;">下周 ▶</button>`
+                    }
+                </div>
 
-    <div class="month-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; min-height: 34px; width: 100%; box-sizing: border-box;">
-        ${calendarViewType === 'month' 
-            ? `<button class="month-btn" onclick="changeMonth(-1)" style="padding: 4px 12px;">◀ 上月</button>
-               <span class="current-month" style="font-size: 15px;">${currentMonth}</span>
-               <button class="month-btn" onclick="changeMonth(1)" style="padding: 4px 12px;">下月 ▶</button>`
-            : `<button class="month-btn" onclick="changeWeek(-1)" style="padding: 4px 12px;">◀ 上周</button>
-               <span class="current-month" style="font-size: 15px;">${weekDisplay}</span>
-               <button class="month-btn" onclick="changeWeek(1)" style="padding: 4px 12px;">下周 ▶</button>`
-        }
-    </div>
-
-    ${project.progressTarget && project.progressTarget > 0 ? `
-    <!-- 进度类型切换 -->
-    <div class="progress-type-selector" style="width: 100%; box-sizing: border-box; margin: 6px 0 8px 0; padding: 3px;">
-        <button class="progress-type-btn ${progressType === 'monthly' ? 'active' : ''}" onclick="setProgressType('monthly')" style="padding: 5px 0; font-size: 12px;">按月进度</button>
-        <button class="progress-type-btn ${progressType === 'project' ? 'active' : ''}" onclick="setProgressType('project')" style="padding: 5px 0; font-size: 12px;">按项目目标</button>
-    </div>
-    ` : ''}
-    
-    <div class="progress-info" style="width: 100%; box-sizing: border-box; margin-bottom: 4px; font-size: 12px;">
-        <span>${progressType === 'monthly' ? '本月打卡' : '项目进度'}</span>
-        <span>${progressText}</span>
-    </div>
-    <div class="month-progress-bar" style="width: 100%; box-sizing: border-box; height: 5px;">
-        <div class="month-progress-fill" style="width: ${progress}%; height: 5px;"></div>
-    </div>
-</div>
+                ${project.progressTarget && project.progressTarget > 0 ? `
+                <!-- 进度类型切换 -->
+                <div class="progress-type-selector" style="width: 100%; box-sizing: border-box; margin: 6px 0 8px 0; padding: 3px;">
+                    <button class="progress-type-btn ${progressType === 'monthly' ? 'active' : ''}" onclick="setProgressType('monthly')" style="padding: 5px 0; font-size: 12px;">按月进度</button>
+                    <button class="progress-type-btn ${progressType === 'project' ? 'active' : ''}" onclick="setProgressType('project')" style="padding: 5px 0; font-size: 12px;">按项目目标</button>
+                </div>
+                ` : ''}
+                
+                <div class="progress-info" style="width: 100%; box-sizing: border-box; margin-bottom: 4px; font-size: 12px;">
+                    <span>${progressType === 'monthly' ? '本月打卡' : '项目进度'}</span>
+                    <span>${progressText}</span>
+                </div>
+                <div class="month-progress-bar" style="width: 100%; box-sizing: border-box; height: 5px;">
+                    <div class="month-progress-fill" style="width: ${progress}%; height: 5px;"></div>
+                </div>
+            </div>
             
-
             <div class="todo-section" style="width: 100%; box-sizing: border-box;">
                 <div class="todo-header" onclick="toggleTodoSection(${currentProjectId})">
                     <div class="todo-title-wrapper">
@@ -4654,16 +5053,13 @@ return `
 
             <div class="daily-records" style="width: 100%; box-sizing: border-box;">
                 <div class="records-header" style="width: 100%; box-sizing: border-box;">
-    <h3 class="records-title">每日记录</h3>
-    <div style="display: flex; align-items: center; gap: 8px;">
-  
-        <button class="view-type-btn" onclick="openViewTypeModal()">
-            
-            <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
-        </button>
-    </div>
-</div>
-
+                    <h3 class="records-title">每日记录</h3>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="view-type-btn" onclick="openViewTypeModal()">
+                            <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
+                        </button>
+                    </div>
+                </div>
                 ${daysRows}
             </div>
         </div>
@@ -4750,9 +5146,107 @@ function editCategory(categoryId) {
             let modals = '';
 
 
-       // 修改/添加目标弹窗
-     // 视图选择弹窗
-     // 编辑事件弹窗（含追加功能）
+      // 归档项目弹窗
+
+// 归档项目弹窗
+if (showArchivedModal) {
+    let archivedListHtml = '';
+    
+    if (archivedProjects.length === 0) {
+        archivedListHtml = '<div style="text-align: center; color: #999; padding: 40px 20px;">暂无归档项目</div>';
+    } else {
+        for (let i = 0; i < archivedProjects.length; i++) {
+            const proj = archivedProjects[i];
+            const archivedDate = proj.archivedAt ? new Date(proj.archivedAt).toLocaleDateString() : '未知日期';
+            
+            // 获取所属目标信息
+            const parentGoal = goals.find(g => g.id === proj.goalId);
+            const goalName = parentGoal ? parentGoal.name : '未知目标';
+            
+            // 获取项目的进度信息
+            const hasProgress = proj.progressTarget && proj.progressTarget > 0;
+            const progressPercent = hasProgress ? Math.round((proj.progressCurrent || 0) / proj.progressTarget * 100) : 0;
+      
+            archivedListHtml += `
+              <div style="
+    background: #f8f8f8;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #eaeaea;
+    cursor: pointer;
+    transition: all 0.2s;
+" onclick="goToArchivedProject(${proj.id})" 
+   onmouseover="this.style.background='#f0f0f0'; this.style.borderColor='#5a7a9a';" 
+   onmouseout="this.style.background='#f8f8f8'; this.style.borderColor='#eaeaea';">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500; font-size: 15px; color: #333; margin-bottom: 4px;">
+                                ${toSafeString(proj.name)}
+                            </div>
+                            <div style="font-size: 12px; color: #888; margin-bottom: 4px;">
+                                📁 ${goalName}
+                            </div>
+                            ${proj.target ? `<div style="font-size: 12px; color: #999;">📝 ${toSafeString(proj.target)}</div>` : ''}
+                            ${proj.deadline ? `<div style="font-size: 12px; color: #999;">📅 截止: ${proj.deadline}</div>` : ''}
+                            ${hasProgress ? `
+                                <div style="margin-top: 8px;">
+                                    <div style="font-size: 11px; color: #5a7a9a; margin-bottom: 2px;">
+                                        进度: ${proj.progressCurrent || 0}/${proj.progressTarget} ${proj.progressUnit || ''}
+                                    </div>
+                                    <div style="height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden;">
+                                        <div style="height: 100%; width: ${progressPercent}%; background: #5a7a9a; border-radius: 2px;"></div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            <div style="font-size: 11px; color: #aaa; margin-top: 8px;">
+                                🗄️ 归档于 ${archivedDate}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-shrink: 0;" onclick="event.stopPropagation()">
+                            <button onclick="restoreProject(${proj.id})" style="
+                                padding: 6px 12px;
+                                background: #5a7a9a;
+                                color: white;
+                                border: none;
+                                border-radius: 6px;
+                                font-size: 12px;
+                                cursor: pointer;
+                            ">恢复</button>
+                            <button onclick="deleteArchivedProject(${proj.id})" style="
+                                padding: 6px 12px;
+                                background: #fff0f0;
+                                color: #d32f2f;
+                                border: 1px solid #ffcdd2;
+                                border-radius: 6px;
+                                font-size: 12px;
+                                cursor: pointer;
+                            ">永久删除</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    modals += `
+        <div class="modal-overlay" onclick="closeArchivedModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 450px; max-height: 80vh; overflow-y: auto;">
+                <div class="modal-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📦 归档项目 (${archivedProjects.length})</span>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    ${archivedListHtml}
+                </div>
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-secondary" onclick="closeArchivedModal()">关闭</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+      // 编辑事件弹窗（含追加功能）
 if (showEditTimelineEventModal && currentEditEventData) {
     const additions = currentEditEventData.additions || [];
     
@@ -5166,17 +5660,42 @@ if (showAddProjectModal) {
 
 
 // 编辑项目弹窗
+
+// 编辑项目弹窗
 if (showEditProjectModal) {
     const project = projects.find(p => p.id === currentEditProjectId);
     const today = new Date().toISOString().split('T')[0];
     modals += `
         <div class="modal-overlay" onclick="closeEditProjectModal()">
-            <div class="modal-content" onclick="event.stopPropagation()">
-                <div class="modal-title">编辑项目</div>
+            <div class="modal-content" onclick="event.stopPropagation()" style="position: relative;">
+                <!-- 标题栏和归档按钮在同一行，标题左对齐 -->
+                <div style="position: relative; margin-bottom: 20px; text-align: center;">
+    <div class="modal-title" style="margin-bottom: 0;">编辑项目</div>
+    <button onclick="archiveProject(${currentEditProjectId}); closeEditProjectModal();" style="
+        position: absolute;
+        top: 50%;
+        right: 0;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        font-size: 13px;
+        cursor: pointer;
+        color: #999;
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    " onmouseover="this.style.background='#f0f0f0'; this.style.color='#d32f2f';" 
+       onmouseout="this.style.background='transparent'; this.style.color='#999';">
+        📦
+    </button>
+</div>
+                
                 <input type="text" id="edit-project-name" class="modal-input" placeholder="项目名称" value="${project ? toSafeString(project.name).replace(/"/g, '&quot;') : ''}">
                 <input type="text" id="edit-project-target" class="modal-input" placeholder="备注" value="${project ? toSafeString(project.target).replace(/"/g, '&quot;') : ''}">
                 
-                <!-- 分类选择行：标签、+按钮、下拉框在同一行 -->
+                <!-- 分类选择行 -->
                 <div style="margin-bottom: 16px;">
                     <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
                         <label class="gist-label" style="margin-bottom: 0; white-space: nowrap;">选择分类</label>
@@ -5199,47 +5718,47 @@ if (showEditProjectModal) {
                         " onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">+</button>
                     </div>
                     <select id="edit-project-category" class="modal-input" style="margin-bottom: 0;">
-    <option value="">无分类</option>
-    ${(() => {
-        const currentGoal = getCurrentGoal();
-        const goalCategories = currentGoal ? (categories[currentGoal.id] || []) : [];
-        return goalCategories.map(cat => {
-            const catId = String(cat.id || '').replace(/"/g, '&quot;');
-            const catName = String(cat.name || '未命名').replace(/"/g, '&quot;');
-            const bgColor = cat.color || '#f0f0f0';
-            const isSelected = project && project.categoryId === cat.id ? 'selected' : '';
-            return `<option value="${catId}" style="background: ${bgColor}20;" ${isSelected}>${catName}</option>`;
-        }).join('');
-    })()}
-</select>
+                        <option value="">无分类</option>
+                        ${(() => {
+                            const currentGoal = getCurrentGoal();
+                            const goalCategories = currentGoal ? (categories[currentGoal.id] || []) : [];
+                            return goalCategories.map(cat => {
+                                const catId = String(cat.id || '').replace(/"/g, '&quot;');
+                                const catName = String(cat.name || '未命名').replace(/"/g, '&quot;');
+                                const bgColor = cat.color || '#f0f0f0';
+                                const isSelected = project && project.categoryId === cat.id ? 'selected' : '';
+                                return `<option value="${catId}" style="background: ${bgColor}20;" ${isSelected}>${catName}</option>`;
+                            }).join('');
+                        })()}
+                    </select>
                 </div>
                 
-<!-- 截止日期区域 -->
-<div style="margin-bottom: 16px;">
-    <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
-    <input type="date" id="edit-project-deadline" class="modal-input" style="margin-bottom: 8px; width: 100%; box-sizing: border-box; display: block;" value="${project && project.deadline ? project.deadline : ''}">
-    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('today')">今天</button>
-        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('tomorrow')">明天</button>
-        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('week')">7天后</button>
-        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('month')">30天后</button>
-    </div>
-    <div style="display: flex; gap: 8px;">
-        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="clearDeadline()">清除截止日期</button>
-    </div>
-</div>
+                <!-- 截止日期区域 -->
+                <div style="margin-bottom: 16px;">
+                    <label class="gist-label" style="margin-bottom: 4px; display: block;">截止日期（选填）</label>
+                    <input type="date" id="edit-project-deadline" class="modal-input" style="margin-bottom: 8px; width: 100%; box-sizing: border-box; display: block;" value="${project && project.deadline ? project.deadline : ''}">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('today')">今天</button>
+                        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('tomorrow')">明天</button>
+                        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('week')">7天后</button>
+                        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="setQuickDeadline('month')">30天后</button>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="deadline-quick-btn" style="flex: 1; text-align: center; padding: 8px 0;" onclick="clearDeadline()">清除截止日期</button>
+                    </div>
+                </div>
                 
-                <!-- 目标数量和单位 - 去掉默认值 -->
-<div style="display: flex; gap: 8px; margin-bottom: 16px;">
-    <div style="flex: 1;">
-        <label class="gist-label">目标数量（选填）</label>
-        <input type="number" id="edit-project-target-number" class="modal-input" placeholder="不填则无进度条" value="">
-    </div>
-    <div style="flex: 1;">
-        <label class="gist-label">单位</label>
-        <input type="text" id="edit-project-unit" class="modal-input" placeholder="件/个/次" value="${project?.progressUnit || ''}">
-    </div>
-</div>
+                <!-- 目标数量和单位 -->
+                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <div style="flex: 1;">
+                        <label class="gist-label">目标数量（选填）</label>
+                        <input type="number" id="edit-project-target-number" class="modal-input" placeholder="不填则无进度条" value="${project && project.progressTarget && project.progressTarget > 0 ? project.progressTarget : ''}">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="gist-label">单位</label>
+                        <input type="text" id="edit-project-unit" class="modal-input" placeholder="件/个/次" value="${project?.progressUnit || ''}">
+                    </div>
+                </div>
                 
                 <!-- 当前进度 -->
                 <div style="margin-bottom: 16px;">
@@ -5255,7 +5774,9 @@ if (showEditProjectModal) {
         </div>
     `;
 }
-            // 设置弹窗
+
+
+// 设置弹窗
             if (showSettingsModal) {
                 modals += `
                     <div class="modal-overlay" onclick="closeSettingsModal()">
@@ -5626,7 +6147,11 @@ window.openCalendarModal = openCalendarModal;
         window.toggleProjectComplete = toggleProjectComplete;
         window.updateProgress = updateProgress;
         window.changeMonth = changeMonth;
-        
+        window.archiveProject = archiveProject;
+window.restoreProject = restoreProject;
+window.openArchivedModal = openArchivedModal;
+window.closeArchivedModal = closeArchivedModal;
+window.deleteArchivedProject = deleteArchivedProject;
         window.openAddTodoModal = openAddTodoModal;
         window.openEditTodoModal = openEditTodoModal;
         window.saveEditTodo = saveEditTodo;
@@ -5634,13 +6159,21 @@ window.openCalendarModal = openCalendarModal;
         window.toggleTodoComplete = toggleTodoComplete;
         window.deleteTodo = deleteTodo;
         window.toggleTodoSection = toggleTodoSection;
-        
+        window.goToArchivedProject = goToArchivedProject;
+window.restoreAndEdit = restoreAndEdit;
         window.openSettingsModal = openSettingsModal;
         window.closeSettingsModal = closeSettingsModal;
         window.saveSettings = saveSettings;
         window.syncToGist = syncToGist;
         window.restoreFromGist = restoreFromGist;
-        
+        // 在全局导出区域添加以下绑定
+window.archiveProject = archiveProject;
+window.restoreProject = restoreProject;
+window.openArchivedModal = openArchivedModal;
+window.closeArchivedModal = closeArchivedModal;
+window.deleteArchivedProject = deleteArchivedProject;
+window.goToArchivedProject = goToArchivedProject;
+window.restoreAndEdit = restoreAndEdit;
         window.updateRecord = updateRecord;
         window.toggleRecordCheck = toggleRecordCheck;
 
