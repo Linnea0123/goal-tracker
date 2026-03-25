@@ -4618,6 +4618,36 @@ function renderHome() {
     const completedProjects = getCompletedProjectsCount();
     const currentProjects = projects.filter(p => p.goalId === currentGoalId);
     
+
+
+
+
+// 在汇总弹窗中切换复选框
+function toggleSummaryCheck(projectId, dateStr) {
+    const [year, month, day] = dateStr.split('-');
+    const monthStr = `${year}-${month}`;
+    const checkKey = `${projectId}_${monthStr}_${parseInt(day)}`;
+    
+    // 获取该日期的内容
+    const recordKey = `${projectId}_${monthStr}`;
+    const records = dailyRecords[recordKey] || {};
+    const content = records[parseInt(day)] || '';
+    const checkboxType = getCheckboxType(content);
+    
+    // 如果是红叉叉，不处理
+    if (checkboxType === 'red-cross') {
+        return;
+    }
+    
+    // 切换打勾状态
+    recordChecked[checkKey] = !recordChecked[checkKey];
+    
+    // 重新加载汇总数据
+    loadSummaryData();
+    saveData();
+    render();
+}
+
     // 项目卡片渲染函数
     function renderProjectCard(project) {
         const projectName = toSafeString(project.name);
@@ -4823,6 +4853,7 @@ function renderHome() {
                         <span class="goal-text">${toSafeString(goalName)}</span>
                     </div>
                     <div class="goal-actions-vertical">
+                        <span class="goal-edit-hint" onclick="openSummaryModal()" style="font-size: 13px;">📊 汇总</span>
                         <span class="goal-edit-hint" onclick="openEditGoalModal('${goalId}')" style="font-size: 13px;">✎ 编辑</span>
                     </div>
                 </div>
@@ -5259,11 +5290,254 @@ function editCategory(categoryId) {
 }
 
 
+
+// ==================== 汇总功能 ====================
+let showSummaryModal = false;
+let summarySelectedDate = new Date().toISOString().slice(0, 10);
+let summaryRecords = [];
+
+// 打开汇总弹窗
+function openSummaryModal() {
+    console.log('打开汇总弹窗');
+    summarySelectedDate = new Date().toISOString().slice(0, 10);
+    loadSummaryData();
+    showSummaryModal = true;
+    render();
+}
+
+// 关闭汇总弹窗
+function closeSummaryModal() {
+    showSummaryModal = false;
+    render();
+}
+
+// 加载汇总数据
+function loadSummaryData() {
+    summaryRecords = [];
+    const currentGoal = getCurrentGoal();
+    if (!currentGoal) return;
+    
+    // 获取当前目标下的所有项目
+    const goalProjects = projects.filter(p => p.goalId === currentGoal.id);
+    
+    // 解析选择的日期
+    const [year, month, day] = summarySelectedDate.split('-').map(Number);
+    const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+    
+    for (let project of goalProjects) {
+        // 获取该项目的每日记录
+        const recordKey = `${project.id}_${monthStr}`;
+        const records = dailyRecords[recordKey] || {};
+        const content = records[day];
+        
+        if (content && content.trim() !== '') {
+            // 获取复选框状态
+            const checkKey = `${project.id}_${monthStr}_${day}`;
+            const isChecked = recordChecked[checkKey] || false;
+            
+            // 检测是否是红叉叉
+            const checkboxType = getCheckboxType(content);
+            
+            summaryRecords.push({
+                projectId: project.id,
+                projectName: project.name,
+                content: content,
+                isChecked: isChecked,
+                checkboxType: checkboxType,
+                date: summarySelectedDate
+            });
+        }
+    }
+    
+    // 按项目名称排序
+    summaryRecords.sort((a, b) => a.projectName.localeCompare(b.projectName, 'zh-CN'));
+}
+
+// 切换汇总日期
+function changeSummaryDate(delta) {
+    const date = new Date(summarySelectedDate);
+    date.setDate(date.getDate() + delta);
+    summarySelectedDate = date.toISOString().slice(0, 10);
+    loadSummaryData();
+    render();
+}
+
+// 设置汇总日期为今天
+function setSummaryToday() {
+    summarySelectedDate = new Date().toISOString().slice(0, 10);
+    loadSummaryData();
+    render();
+}
+
+// 在汇总弹窗中编辑记录
+function editSummaryRecord(projectId, content, dateStr) {
+    // 解析日期
+    const [year, month, day] = dateStr.split('-');
+    const monthStr = `${year}-${month}`;
+    
+    // 更新记录
+    const recordKey = `${projectId}_${monthStr}`;
+    if (!dailyRecords[recordKey]) dailyRecords[recordKey] = {};
+    
+    if (content.trim() === '') {
+        delete dailyRecords[recordKey][parseInt(day)];
+    } else {
+        dailyRecords[recordKey][parseInt(day)] = content;
+    }
+    
+    // 重新加载汇总数据
+    loadSummaryData();
+    saveData();
+    render();
+}
+
+// 在汇总弹窗中切换复选框
+function toggleSummaryCheck(projectId, dateStr) {
+    const [year, month, day] = dateStr.split('-');
+    const monthStr = `${year}-${month}`;
+    const checkKey = `${projectId}_${monthStr}_${parseInt(day)}`;
+    
+    // 获取该日期的内容
+    const recordKey = `${projectId}_${monthStr}`;
+    const records = dailyRecords[recordKey] || {};
+    const content = records[parseInt(day)] || '';
+    const checkboxType = getCheckboxType(content);
+    
+    // 如果是红叉叉，不处理
+    if (checkboxType === 'red-cross') {
+        return;
+    }
+    
+    // 切换打勾状态
+    recordChecked[checkKey] = !recordChecked[checkKey];
+    
+    // 重新加载汇总数据
+    loadSummaryData();
+    saveData();
+    render();
+}
+
         function renderModals() {
             let modals = '';
 
 
-      // 归档项目弹窗
+// 汇总弹窗
+// 汇总弹窗
+if (showSummaryModal) {
+    const currentGoal = getCurrentGoal();
+    const goalName = currentGoal ? currentGoal.name : '我的目标';
+    const goalIcon = currentGoal ? currentGoal.icon : '🎯';
+    
+    const dateObj = new Date(summarySelectedDate);
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const weekday = weekdays[dateObj.getDay()];
+    const isToday = summarySelectedDate === new Date().toISOString().slice(0, 10);
+    
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth() + 1;
+    const day = dateObj.getDate();
+    const dateDisplay = `${year}年${month}月${day}日 ${weekday}`;
+    
+    let recordsHtml = '';
+    
+    if (summaryRecords.length === 0) {
+        recordsHtml = '<div style="text-align: center; color: #999; padding: 60px 20px;">📭 这一天没有记录，去写点什么吧~</div>';
+    } else {
+        for (let record of summaryRecords) {
+            // 确定复选框样式
+            let checkboxClass = '';
+            if (record.checkboxType === 'red-cross') {
+                checkboxClass = 'red-cross';
+            } else if (record.isChecked) {
+                checkboxClass = 'checked';
+            }
+            
+            recordsHtml += `
+                <div style="
+                    background: white;
+                    border-radius: 10px;
+                    padding: 12px;
+                    margin-bottom: 12px;
+                    border: 1px solid #eaeaea;
+                ">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                        <div class="record-checkbox ${checkboxClass}" 
+                             style="flex-shrink: 0; width: 20px; height: 20px;"
+                             onclick="toggleSummaryCheck(${record.projectId}, '${record.date}')">
+                        </div>
+                        <div style="font-weight: 500; color: #5a7a9a; font-size: 14px;">${toSafeString(record.projectName)}</div>
+                    </div>
+                    <div style="margin-left: 28px;">
+                        <div class="record-text-wrapper" style="padding: 8px 12px; background: #fafafa;">
+                            <textarea class="record-input-field" rows="2" 
+                                style="min-height: 50px; width: 100%; background: transparent; border: none; outline: none; font-size: 14px; line-height: 1.4; resize: vertical;"
+                                onchange="editSummaryRecord(${record.projectId}, this.value, '${record.date}')"
+                                placeholder="写下你的记录...">${toSafeString(record.content)}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // 计算统计信息
+    const completedCount = summaryRecords.filter(r => r.isChecked && r.checkboxType !== 'red-cross').length;
+    const redCrossCount = summaryRecords.filter(r => r.checkboxType === 'red-cross').length;
+    
+    modals += `
+        <div class="modal-overlay" onclick="closeSummaryModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px; max-height: 85vh; overflow-y: auto; padding: 20px;">
+                <!-- 目标名称 -->
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <div style="display: inline-flex; align-items: center; gap: 8px; background: ${currentGoal ? currentGoal.color : '#5a7a9a'}20; padding: 8px 16px; border-radius: 30px;">
+                        <span style="font-size: 20px;">${goalIcon}</span>
+                        <span style="font-size: 16px; font-weight: 500; color: ${currentGoal ? currentGoal.color : '#5a7a9a'};">${toSafeString(goalName)}</span>
+                    </div>
+                </div>
+                
+                <!-- 日期标题栏 -->
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; border-bottom: 2px solid #eaeaea; padding-bottom: 12px;">
+                    <div>
+                        <div style="font-size: 18px; font-weight: 500; color: #333;">📅 ${dateDisplay}</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">今日汇总 · 共 ${summaryRecords.length} 条记录</div>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="month-btn" onclick="changeSummaryDate(-1)" style="padding: 4px 10px; font-size: 12px;">◀</button>
+                        ${!isToday ? `<button class="month-btn" onclick="setSummaryToday()" style="padding: 4px 10px; font-size: 12px;">今天</button>` : ''}
+                        <button class="month-btn" onclick="changeSummaryDate(1)" style="padding: 4px 10px; font-size: 12px;">▶</button>
+                    </div>
+                </div>
+                
+                <!-- 记录列表 -->
+                <div style="margin-bottom: 16px;">
+                    ${recordsHtml}
+                </div>
+                
+                <!-- 统计卡片 -->
+                <div style="background: #f8f8f8; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; border: 1px solid #eaeaea;">
+                    <div style="display: flex; justify-content: space-around;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 20px; font-weight: 600; color: #5a7a9a;">${summaryRecords.length}</div>
+                            <div style="font-size: 11px; color: #999;">总记录</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 20px; font-weight: 600; color: #2e7d32;">${completedCount}</div>
+                            <div style="font-size: 11px; color: #999;">已完成</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 20px; font-weight: 600; color: #d32f2f;">${redCrossCount}</div>
+                            <div style="font-size: 11px; color: #999;">问题标记</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-secondary" onclick="closeSummaryModal()">关闭</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
 
 // 归档项目弹窗
 if (showArchivedModal) {
@@ -6262,7 +6536,12 @@ window.openCalendarModal = openCalendarModal;
         window.switchGoal = switchGoal;
         window.deleteGoal = deleteGoal;
         window.setProgressType = setProgressType;
-        
+        window.openSummaryModal = openSummaryModal;
+window.closeSummaryModal = closeSummaryModal;
+window.changeSummaryDate = changeSummaryDate;
+window.setSummaryToday = setSummaryToday;
+window.toggleSummaryCheck = toggleSummaryCheck;
+window.editSummaryRecord = editSummaryRecord;
         window.openAddProjectModal = function() { showAddProjectModal = true; render(); setTimeout(() => document.getElementById('project-name-input')?.focus(), 100); };
         window.closeAddProjectModal = function() { showAddProjectModal = false; render(); };
         window.saveProjectAdd = saveProjectAdd;
