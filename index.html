@@ -1850,7 +1850,7 @@ function renderFinance() {
             <div class="daily-records" style="width: 100%; box-sizing: border-box;">
                 <div class="records-header" style="width: 100%; box-sizing: border-box;">
                     <h3 class="records-title">每日支出</h3>
-                    <button class="view-type-btn" onclick="openViewTypeModal()">
+                    <button class="view-type-btn" onclick="toggleCalendarView()">
                         <span>📊</span>
                         <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
                     </button>
@@ -2916,7 +2916,21 @@ function switchToTimelineView() {
     saveData();
     render();
 }
-        function changeWeek(delta) {
+   
+// 添加这个新函数 - 直接切换周历/月历
+function toggleCalendarView() {
+    if (calendarViewType === 'month') {
+        calendarViewType = 'week';
+    } else {
+        calendarViewType = 'month';
+    }
+    // 保存当前页面的日历偏好
+    viewCalendarPreferences[currentPage] = calendarViewType;
+    saveData();
+    render();
+}
+
+function changeWeek(delta) {
     const date = new Date(currentWeekStart);
     date.setDate(date.getDate() + delta * 7);
     currentWeekStart = getWeekStart(date);
@@ -3159,7 +3173,7 @@ function renderDurationView() {
             <div class="daily-records" style="width: 100%; box-sizing: border-box;">
                 <div class="records-header" style="width: 100%; box-sizing: border-box;">
                     <h3 class="records-title">每日时长</h3>
-                    <button class="view-type-btn" onclick="openViewTypeModal()">
+                    <button class="view-type-btn" onclick="toggleCalendarView()">
                         <span>📊</span>
                         <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
                     </button>
@@ -3347,7 +3361,7 @@ function renderEnglishView() {
             <div class="daily-records" style="width: 100%; box-sizing: border-box;">
                 <div class="records-header" style="width: 100%; box-sizing: border-box;">
                     <h3 class="records-title">每日阅读记录</h3>
-                    <button class="view-type-btn" onclick="openViewTypeModal()">
+                    <button class="view-type-btn" onclick="toggleCalendarView()">
                         <span>📊</span>
                         <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
                     </button>
@@ -5055,9 +5069,9 @@ function renderHome() {
                 <div class="records-header" style="width: 100%; box-sizing: border-box;">
                     <h3 class="records-title">每日记录</h3>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <button class="view-type-btn" onclick="openViewTypeModal()">
-                            <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
-                        </button>
+                        <button class="view-type-btn" onclick="toggleCalendarView()">
+    <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
+</button>
                     </div>
                 </div>
                 ${daysRows}
