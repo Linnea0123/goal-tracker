@@ -9,6 +9,30 @@
 <style>
 
 
+/* 红叉叉复选框样式 - 完美居中 */
+.record-checkbox.red-cross {
+    background-color: #e74c3c !important;
+    border-color: #c0392b !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    line-height: 1 !important;
+    font-size: 0 !important;
+}
+
+.record-checkbox.red-cross::after {
+    content: "×" !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: white !important;
+    display: block !important;
+    line-height: 1 !important;
+    height: auto !important;
+    margin-top: -1px !important;
+    font-family: "Segoe UI", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
         * {
             margin: 0;
             padding: 0;
@@ -1267,12 +1291,13 @@ html, body {
 .record-text-wrapper {
     background-color: #f8f8f8;
     border-radius: 4px;
-    padding: 6px 8px;
+    padding: 0 8px !important;
     border: 1px solid #f0f0f0;
     display: flex;
     align-items: center;
     width: 100%;
     box-sizing: border-box;
+    min-height: 34px;
 }
 
 .record-input-field {
@@ -1282,12 +1307,12 @@ html, body {
     outline: none;
     font-size: 14px;
     font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    line-height: 1.5;
+    line-height: normal !important;
     color: #333;
     font-weight: 400;
     resize: none;
     overflow: hidden;
-    padding: 0;
+    padding: 0 !important;
     margin: 0;
     box-sizing: border-box;
 }
@@ -1712,12 +1737,17 @@ function renderFinance() {
     if (calendarViewType === 'month') {
         for (let day = 1; day <= daysInMonth; day++) {
             const isToday = currentMonth === todayStr && day === todayDay;
+            const checkboxType = getCheckboxType(content);  // 添加这行
             const record = records[day] || { text: '', amount: '' };
             const weekday = getWeekday(year, month, day);
             const todayClass = isToday ? 'today-date' : '';
             const contentClass = isToday ? 'today-content' : '';
             const hasAmount = record.amount && parseFloat(record.amount) > 0;
-            
+              // 确定复选框样式
+    let checkboxClass = isChecked ? 'checked' : '';
+    if (checkboxType === 'red-cross' && !isChecked) {
+        checkboxClass = 'red-cross';
+    }
             daysRows += `
                 <div class="date-row">
                     <div class="date-column ${todayClass}">
@@ -2930,6 +2960,27 @@ function toggleCalendarView() {
     render();
 }
 
+// 检测文本内容，判断是否需要标记为红叉叉
+function getCheckboxType(text) {
+    if (!text || text.trim() === '') return 'normal';
+    
+    // 定义需要标记为红叉叉的关键词
+    const sleepIssues = [
+        '熬夜', '失眠', '晚睡', '睡不着', '难入睡', '夜醒', '睡眠不足',
+        '通宵', '彻夜', '未睡', '没睡', '睡不好', '睡眠差', '熬夜了',
+        '失眠了', '晚睡了', '睡太晚', '凌晨', '天亮才睡', '睡眠质量差'
+    ];
+    
+    const lowerText = text.toLowerCase();
+    for (let keyword of sleepIssues) {
+        if (lowerText.includes(keyword.toLowerCase())) {
+            return 'red-cross';
+        }
+    }
+    return 'normal';
+}
+
+
 function changeWeek(delta) {
     const date = new Date(currentWeekStart);
     date.setDate(date.getDate() + delta * 7);
@@ -4119,14 +4170,31 @@ function goToArchivedProject(projectId) {
     render();
 }
         // ==================== 每日记录 ====================
-        function updateRecord(projectId, monthStr, day, value) {
-            const key = projectId + '_' + monthStr;
-            if (!dailyRecords[key]) dailyRecords[key] = {};
-            if (value.trim() === '') delete dailyRecords[key][day];
-            else dailyRecords[key][day] = value;
-            saveData();
-        }
-
+ function updateRecord(projectId, monthStr, day, value) {
+    const key = projectId + '_' + monthStr;
+    if (!dailyRecords[key]) dailyRecords[key] = {};
+    if (value.trim() === '') {
+        delete dailyRecords[key][day];
+    } else {
+        dailyRecords[key][day] = value;
+    }
+    
+    // 自动检测并更新复选框状态
+    const checkboxType = getCheckboxType(value);
+    const checkKey = `${projectId}_${monthStr}_${day}`;
+    
+    if (checkboxType === 'red-cross') {
+        // 如果是熬夜等关键词，自动标记为红叉叉（不存储到 recordChecked，让渲染时自动显示）
+        // 同时清除可能的打勾状态
+        delete recordChecked[checkKey];
+    } else {
+        // 非熬夜内容，保持原有逻辑
+        // 注意：不自动修改 recordChecked，让用户自己决定是否打勾
+    }
+    
+    saveData();
+    render();
+}
  
 function updateFinanceRecord(monthStr, day, field, value) {
     const key = monthStr;
@@ -4158,8 +4226,26 @@ function toggleRecordCheck(projectId, monthStr, day) {
     const project = projects.find(p => p.id === projectId);
     if (!project) return;
     
-    // 只切换复选框状态，完全不修改项目进度
-    recordChecked[checkKey] = !recordChecked[checkKey];
+    // 获取该日期的记录内容
+    const recordKey = `${projectId}_${monthStr}`;
+    const records = dailyRecords[recordKey] || {};
+    const content = records[day] || '';
+    const checkboxType = getCheckboxType(content);
+    
+    // 如果内容是睡眠问题，切换时保持红叉叉，不打勾
+    if (checkboxType === 'red-cross') {
+        // 红叉叉状态：点击后清除红叉叉
+        if (recordChecked[checkKey]) {
+            // 如果已经标记，则取消标记
+            delete recordChecked[checkKey];
+        } else {
+            // 标记为红叉叉（实际上 recordChecked 不存储红叉叉状态）
+            // 红叉叉是根据内容自动显示的，这里不需要存储
+        }
+    } else {
+        // 正常内容，切换打勾状态
+        recordChecked[checkKey] = !recordChecked[checkKey];
+    }
     
     saveData();
     render();
@@ -4768,7 +4854,8 @@ function renderHome() {
 
 
 
-        function renderMonthlyView() {
+
+function renderMonthlyView() {
     console.log('renderMonthlyView 被调用, currentProjectId:', currentProjectId, 'isViewingArchived:', isViewingArchived, 'currentArchivedProjectId:', currentArchivedProjectId);
     
     // 先检查是否是归档项目
@@ -4862,7 +4949,18 @@ function renderHome() {
             const todayClass = isToday ? 'today-date' : '';
             const contentClass = isToday ? 'today-content' : '';
             const checkKey = `${currentProjectId}_${currentMonth}_${day}`;
-            const isChecked = recordChecked[checkKey] || false;
+const isChecked = recordChecked[checkKey] || false;
+
+// 检测是否需要红叉叉
+const checkboxType = getCheckboxType(content);
+let checkboxClass = '';
+
+// 优先级：红叉叉 > 打勾 > 普通
+if (checkboxType === 'red-cross') {
+    checkboxClass = 'red-cross';
+} else if (isChecked) {
+    checkboxClass = 'checked';
+}
             
             daysRows += `
                 <div class="date-row">
@@ -4871,7 +4969,7 @@ function renderHome() {
                         <span class="date-week">${weekday}</span>
                     </div>
                     <div class="content-wrapper">
-                        <div class="record-checkbox ${isChecked ? 'checked' : ''}" 
+                        <div class="record-checkbox ${checkboxClass}" 
                              onclick="toggleRecordCheck(${currentProjectId}, '${currentMonth}', ${day})">
                         </div>
                         <div class="content-column ${contentClass}">
@@ -4889,14 +4987,13 @@ function renderHome() {
     } else {
         // 周视图
         const weekDays = getWeekDays(currentWeekStart);
-        
         for (let i = 0; i < weekDays.length; i++) {
             const d = weekDays[i];
             const day = d.day;
-            const month = d.month;
-            const year = d.year;
+            const monthNum = d.month;
+            const yearNum = d.year;
             const dateStr = d.date;
-            const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+            const monthStr = `${yearNum}-${String(monthNum).padStart(2, '0')}`;
             const dayStr = day;
             
             const isToday = dateStr === today.toISOString().split('T')[0];
@@ -4911,6 +5008,13 @@ function renderHome() {
             const checkKey = `${currentProjectId}_${monthStr}_${dayStr}`;
             const isChecked = recordChecked[checkKey] || false;
             
+            // 检测是否需要红叉叉
+            const checkboxType = getCheckboxType(content);
+            let checkboxClass = isChecked ? 'checked' : '';
+            if (checkboxType === 'red-cross' && !isChecked) {
+                checkboxClass = 'red-cross';
+            }
+            
             daysRows += `
                 <div class="date-row">
                     <div class="date-column ${todayClass}">
@@ -4918,7 +5022,7 @@ function renderHome() {
                         <span class="date-week">${weekday}</span>
                     </div>
                     <div class="content-wrapper">
-                        <div class="record-checkbox ${isChecked ? 'checked' : ''}" 
+                        <div class="record-checkbox ${checkboxClass}" 
                              onclick="toggleRecordCheck(${currentProjectId}, '${monthStr}', ${dayStr})">
                         </div>
                         <div class="content-column ${contentClass}">
@@ -5070,8 +5174,8 @@ function renderHome() {
                     <h3 class="records-title">每日记录</h3>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <button class="view-type-btn" onclick="toggleCalendarView()">
-    <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
-</button>
+                            <span>${calendarViewType === 'month' ? '月历' : '周历'}</span>
+                        </button>
                     </div>
                 </div>
                 ${daysRows}
@@ -5079,7 +5183,6 @@ function renderHome() {
         </div>
     `;
 }
-
 
 // ==================== 分类相关函数 ====================
 function openCategoryModal() {
@@ -5953,7 +6056,16 @@ if (showCategoryModal) {
                             const checkKey = `${currentProjectId}_${currentMonth}_${day}`;
                             const isChecked = recordChecked[checkKey] || false;
                             const isToday = currentMonth === todayStr && day === todayDay;
-                            
+                            // 检测是否需要红叉叉
+const checkboxType = getCheckboxType(content);
+let checkboxClass = '';
+
+// 优先级：红叉叉 > 打勾 > 普通
+if (checkboxType === 'red-cross') {
+    checkboxClass = 'red-cross';
+} else if (isChecked) {
+    checkboxClass = 'checked';
+}
                             if (isChecked) checkedDays++;
                             
                             rowHtml += `
