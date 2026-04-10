@@ -915,9 +915,13 @@ font-family: '微软雅黑', 'Microsoft YaHei', 'Segoe UI', sans-serif;
         <span style="font-size: 16px; color: #FA8C57;">›</span>
     </div>
     <div class="setting-item" id="cloudSyncBtn" style="cursor: pointer;">
-        <span class="setting-label">☁️ 云端同步</span>
-        <span style="font-size: 16px; color: #FA8C57;">›</span>
-    </div>
+    <span class="setting-label">⚙️ 云端设置</span>
+    <span style="font-size: 16px; color: #FA8C57;">›</span>
+</div>
+<div class="setting-item" id="cloudUploadBtn" style="cursor: pointer;">
+    <span class="setting-label">☁️ 云端同步</span>
+    <span style="font-size: 16px; color: #FA8C57;">›</span>
+</div>
     <div class="setting-item" id="cloudRestoreBtn" style="cursor: pointer;">
         <span class="setting-label">🔄 云端恢复</span>
         <span style="font-size: 16px; color: #FA8C57;">›</span>
@@ -932,7 +936,7 @@ font-family: '微软雅黑', 'Microsoft YaHei', 'Segoe UI', sans-serif;
         <div class="modal-body">
             <div class="input-label">GitHub Token</div>
             <input type="password" id="githubToken" class="task-input" placeholder="输入 GitHub Personal Access Token">
-            <div class="input-label">Gist ID（可选，留空自动创建）</div>
+            <div class="input-label">Gist ID（必填，从 GitHub Gist 获取）</div>
             <input type="text" id="gistId" class="task-input" placeholder="留空自动创建新 Gist">
             <div style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">
                 <a href="https://github.com/settings/tokens" target="_blank" style="color: #FA8C57;">👉 获取 Token（需要 gist 权限）</a>
@@ -1657,6 +1661,10 @@ async function syncToGist() {
         alert('请先设置 GitHub Token');
         return false;
     }
+    if (!gistId) {
+        alert('请先填写 Gist ID（在 GitHub Gist 页面获取）');
+        return false;
+    }
     
     const exportData = {
         tasksDB: tasksDB,
@@ -1671,46 +1679,31 @@ async function syncToGist() {
     const content = JSON.stringify(exportData, null, 2);
     
     try {
-        let url = 'https://api.github.com/gists';
-        let method = 'POST';
-        let body = {
-            description: 'Week Planner Backup',
-            public: false,
-            files: {
-                'weekplanner_data.json': {
-                    content: content
-                }
-            }
-        };
-        
-        if (gistId) {
-            url = `https://api.github.com/gists/${gistId}`;
-            method = 'PATCH';
-            body = {
+        const url = `https://api.github.com/gists/${gistId}`;
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${githubToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
                 files: {
                     'weekplanner_data.json': {
                         content: content
                     }
                 }
-            };
-        }
-        
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Authorization': `token ${githubToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
+            })
         });
         
-        if (!response.ok) throw new Error('上传失败');
-        const result = await response.json();
-        if (!gistId) {
-            gistId = result.id;
-            localStorage.setItem('gistId', gistId);
+        if (!response.ok) {
+            if (response.status === 404) {
+                alert('❌ Gist ID 不存在，请检查是否正确');
+            } else {
+                alert('❌ 同步失败：HTTP ' + response.status);
+            }
+            return false;
         }
-        alert('✅ 云端同步成功！Gist ID: ' + gistId);
+        alert('✅ 云端同步成功！');
         return true;
     } catch(e) {
         alert('❌ 同步失败：' + e.message);
@@ -1790,17 +1783,27 @@ document.getElementById('importDataBtn')?.addEventListener('click', () => {
     closeSidebar();
 });
 
+
+// 云端设置按钮 - 打开设置弹窗
 document.getElementById('cloudSyncBtn')?.addEventListener('click', () => {
     document.getElementById('gistModal').classList.add('active');
     closeSidebar();
 });
 
+// 云端同步按钮 - 直接同步
+document.getElementById('cloudUploadBtn')?.addEventListener('click', async () => {
+    closeSidebar();
+    await syncToGist();
+});
+
+// 云端恢复按钮
 document.getElementById('cloudRestoreBtn')?.addEventListener('click', async () => {
     closeSidebar();
     if (confirm('确定要从云端恢复数据吗？当前数据将被覆盖！')) {
         await restoreFromGist();
     }
 });
+
 
 // Gist 弹窗事件
 const gistModal = document.getElementById('gistModal');
@@ -1820,12 +1823,13 @@ if (saveGistBtn) {
             alert('请输入 GitHub Token');
             return;
         }
+        if (!id) {
+            alert('请输入 Gist ID');
+            return;
+        }
         saveGistSettings(token, id);
         alert('✅ 设置已保存');
         gistModal.classList.remove('active');
-        if (confirm('是否立即同步数据到云端？')) {
-            syncToGist();
-        }
     });
 }
 
