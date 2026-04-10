@@ -223,7 +223,7 @@ input:checked + .slider:before {
 
         body {
             font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f5f7fb;
+            background-color: #ffffff;  /* 原来是 #f5f7fb，改成白色 */
             color: #1e2a3e;
             line-height: 1.5;
             padding: 20px 16px 90px 16px;
@@ -271,7 +271,7 @@ input:checked + .slider:before {
         .plan-group {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 10px;
             margin-bottom: 20px;
         }
         .group-row {
@@ -285,7 +285,7 @@ input:checked + .slider:before {
             background: white;
             border-radius: 2px;
             overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+           
         }
         .unscheduled-card {
             flex: 1;
@@ -293,7 +293,7 @@ input:checked + .slider:before {
             background: white;
             border-radius: 2px;
             overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+           
         }
         .day-header {
             display: flex;
@@ -303,7 +303,7 @@ input:checked + .slider:before {
              padding: 0px 7px 0px 14px;  /* 右边距改为10px，让+号更靠右 */
              margin-bottom: 0px;  /* 添加这行，减少与任务列表的距离 */
             font-weight: 600;
-            color: white;
+            color: rgb(0, 0, 0);
         }
         .day-name-wrapper {
             display: flex;
@@ -314,15 +314,17 @@ input:checked + .slider:before {
         .day-name {
             font-size: 14px;
             font-weight: 600;
+            color: #000000;
         }
         .day-number {
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             opacity: 0.9;
+             color: #ffffff;  /* 日期数字白色 */
         }
         .day-add-btn {
             font-size: 22px;
-            font-weight: 300;
+            font-weight: 100;
             cursor: pointer;
             width: 28px;
             height: 28px;
