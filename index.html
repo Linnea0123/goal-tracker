@@ -14,6 +14,20 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* 待办背景色样式 - 根据标签 */
+.task-item-bg[data-tag="学习"] {
+    background: #d9e6f5 !important;
+}
+.task-item-bg[data-tag="生活"] {
+    background: #f5e0e8 !important;
+}
+.task-item-bg[data-tag="育儿"] {
+    background: #e0f0e5 !important;
+}
+.task-item-bg[data-tag="重要"] {
+    background: #e6e0f0 !important;
+}
+
         /* 待办背景色样式 */
 .task-item-bg {
     background: #fff7ed !important;  /* 浅橙色背景 */
@@ -25,7 +39,7 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: 280px;
+    width: 200px;
     background: white;
     z-index: 2000;
     transform: translateX(-100%);
@@ -213,7 +227,7 @@ input:checked + .slider:before {
             flex: 1;
             min-width: 140px;
             background: white;
-            border-radius: 8px;
+            border-radius: 2px;
             overflow: hidden;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
         }
@@ -221,7 +235,7 @@ input:checked + .slider:before {
             flex: 1;
             min-width: 140px;
             background: white;
-            border-radius: 8px;
+            border-radius: 2px;
             overflow: hidden;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
         }
@@ -229,6 +243,7 @@ input:checked + .slider:before {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            
             padding: 0px 14px;
              margin-bottom: 0px;  /* 添加这行，减少与任务列表的距离 */
             font-weight: 600;
@@ -291,21 +306,22 @@ input:checked + .slider:before {
            
         }
         .tasks {
-            padding: 0px 0 12px 0;
-            min-height: 80px;
-        }
-        .task-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 0 8px 0;
-            margin: 8px 10px;
-            border-radius: 10px;
-            cursor: pointer;
-            background: #f8fafc;
-        }
+    padding: 0px 0 0px 0;
+    height: 140px;           /* 固定高度4行 */
+    overflow-y: auto;        /* 超出滚动 */
+}
+      .task-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;           /* 上下内边距控制背景条高度 */
+    margin: 4px 10px;         /* 上下外边距控制任务间距 */
+    border-radius: 10px;
+    cursor: pointer;
+    background: transparent;   /* 背景透明，不要颜色 */
+}
         .task-item:hover {
-            background: #f1f5f9;
+            background: transparent;  /* 或者改成浅一点的颜色 #f8fafc */
         }
         .task-left {
             display: flex;
@@ -577,11 +593,7 @@ font-family: '微软雅黑', 'Microsoft YaHei', 'Segoe UI', sans-serif;
 
     <div class="content-padding"></div>
 
-    <div class="bottom-nav">
-        <div class="nav-item active"><div class="nav-icon">📅</div><div class="nav-text">计划</div></div>
-        <div class="nav-item"><div class="nav-icon">✅</div><div class="nav-text">清单</div></div>
-        <div class="nav-item"><div class="nav-icon">⭐</div><div class="nav-text">人生目标</div></div>
-    </div>
+    
 
     <!-- 新建待办弹窗 -->
     <div id="taskModal" class="modal-overlay">
@@ -814,9 +826,10 @@ const tagEmoji = {
 const tagDisplay = task.tag ? `<span class="task-tag" data-tag="${task.tag}">${tagEmoji[task.tag] || task.tag}</span>` : '';
         const checkedClass = task.completed ? 'completed' : '';
         const textClass = task.completed ? 'task-text completed-text' : 'task-text';
-        const bgClass = taskBgEnabled ? 'task-item-bg' : '';
-        html += `
-            <div class="task-item" data-task-id="${task.id}" data-card-key="${cardKey}">
+        const bgClass = taskBgEnabled ? `task-item-bg` : '';
+const tagAttr = task.tag ? `data-tag="${task.tag}"` : '';
+ html += `
+            <div class="task-item ${bgClass}" ${tagAttr} data-task-id="${task.id}" data-card-key="${cardKey}">
                 <div class="task-left">
                     ${tagDisplay}
                     <span class="${textClass}">${escapeHtml(task.text)}</span>
@@ -1069,15 +1082,15 @@ function renderAll() {
                 }
             });
 
-            // 底部导航
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                    alert(`切换到「${this.querySelector('.nav-text')?.innerText}」视图 (演示)`);
-                });
-            });
+           // 底部导航
+const navItems = document.querySelectorAll('.nav-item');
+navItems.forEach(item => {
+    item.addEventListener('click', function() {
+        navItems.forEach(nav => nav.classList.remove('active'));
+        this.classList.add('active');
+        alert(`切换到「${this.querySelector('.nav-text')?.innerText}」视图 (演示)`);
+    });
+});
 
             // 顶部图标
            // 顶部图标
@@ -1219,7 +1232,6 @@ if (taskBgToggle) {
         renderAll();
     });
 }
-
 
 
             // 初始化
