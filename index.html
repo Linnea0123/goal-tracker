@@ -3,14 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <title>第15周 · 周计划</title>
+    <title>第15周 · 周计划 | 智能待办</title>
     <style>
+
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
+
+        /* 已完成任务的文字样式：变灰 + 删除线 */
+.completed-text {
+    text-decoration: line-through;
+    color: #94a3b8 !important;
+}
+
+
+
+
 
         body {
             font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
@@ -22,28 +34,6 @@
             margin: 0 auto;
         }
 
-        /* 顶部状态栏 */
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 0 12px;
-            margin-bottom: 8px;
-            font-size: 15px;
-            font-weight: 500;
-            color: #1e293b;
-        }
-        .time {
-            font-size: 17px;
-            font-weight: 600;
-        }
-        .status-icons {
-            display: flex;
-            gap: 6px;
-            font-size: 13px;
-        }
-
-        /* 标题栏 */
         .header {
             display: flex;
             justify-content: space-between;
@@ -80,61 +70,50 @@
             cursor: pointer;
         }
 
-        /* 分组容器 - 4组布局 */
         .plan-group {
             display: flex;
             flex-direction: column;
             gap: 20px;
             margin-bottom: 20px;
         }
-
-        /* 每一行组 */
         .group-row {
             display: flex;
             gap: 14px;
             flex-wrap: wrap;
         }
-
-        /* 单个日期卡片 */
         .day-card {
             flex: 1;
             min-width: 140px;
             background: white;
-            border-radius: 24px;
+            border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-            transition: transform 0.1s ease;
         }
-
-        /* 未排期特殊卡片 */
         .unscheduled-card {
             flex: 1;
             min-width: 140px;
             background: white;
-            border-radius: 24px;
+            border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
         }
-
-        /* 头部背景色 */
         .day-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 18px;
+            padding: 0px 14px;
+             margin-bottom: 0px;  /* 添加这行，减少与任务列表的距离 */
             font-weight: 600;
             color: white;
         }
-
-        /* ★★★ 所有星期文字向右移动 ★★★ */
         .day-name-wrapper {
             display: flex;
             align-items: baseline;
             gap: 6px;
-            padding-left: 12px;  /* 向右移动12像素 */
+            padding-left: 12px;
         }
         .day-name {
-            font-size: 17px;
+            font-size: 15px;
             font-weight: 600;
         }
         .day-number {
@@ -142,7 +121,6 @@
             font-weight: 500;
             opacity: 0.9;
         }
-
         .day-add-btn {
             font-size: 22px;
             font-weight: 300;
@@ -153,19 +131,13 @@
             align-items: center;
             justify-content: center;
             border-radius: 20px;
-            background: rgba(255,255,255,0.2);
-            transition: background 0.2s;
+            
         }
-        .day-add-btn:hover {
-            background: rgba(255,255,255,0.35);
-        }
-
-        /* 未排期头部样式 */
         .unscheduled-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 18px;
+            padding: 0px 14px;
             background: #eef2ff;
             color: #1e40af;
         }
@@ -175,16 +147,9 @@
             gap: 10px;
             padding-left: 8px;
         }
-        .unscheduled-icon {
-            font-size: 20px;
-        }
         .unscheduled-text {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-        }
-        .unscheduled-arrow {
-            font-size: 18px;
-            color: #3b82f6;
         }
         .unscheduled-add {
             font-size: 24px;
@@ -195,25 +160,20 @@
             align-items: center;
             justify-content: center;
             border-radius: 20px;
-            background: rgba(59,130,246,0.1);
+           
         }
-
-        /* 任务区域 */
         .tasks {
-            padding: 8px 0 12px 0;
+            padding: 0px 0 12px 0;
             min-height: 80px;
         }
-
-        /* 任务项样式（保留但无具体待办） */
         .task-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 16px;
-            margin: 4px 10px;
-            border-radius: 40px;
+            padding: 8px 0 8px 0;
+            margin: 8px 10px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.15s;
             background: #f8fafc;
         }
         .task-item:hover {
@@ -222,16 +182,36 @@
         .task-left {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-        .task-avatar {
-            font-size: 16px;
+            gap: 8px;
+            flex: 1;
+            justify-content: flex-start;
         }
         .task-text {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
-            color: #334155;
+            color: #1e293b;
+            word-break: break-word;
+            flex: 1;
         }
+
+        /* 新增：已完成任务的文字样式 */
+.task-item .task-checkbox.completed + .task-left .task-text,
+.task-item.completed .task-text {
+    text-decoration: line-through;
+    color: #94a3b8;
+}
+
+        .task-tag {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .task-tag[data-tag="学习"] { background: #d9e6f5; color: #4a6a8b; }
+        .task-tag[data-tag="生活"] { background: #f5e0e8; color: #9b6b7c; }
+        .task-tag[data-tag="育儿"] { background: #e0f0e5; color: #5c8b6f; }
+        .task-tag[data-tag="重要"] { background: #e6e0f0; color: #7a6a9e; }
         .task-checkbox {
             width: 20px;
             height: 20px;
@@ -242,38 +222,39 @@
             justify-content: center;
             cursor: pointer;
             background: white;
+            flex-shrink: 0;
+            margin-left: 8px;
         }
-        .task-checkbox.completed {
-            background: #22c55e;
-            border-color: #22c55e;
-            color: white;
-        }
-        .task-checkbox.completed::after {
-            content: '✓';
-            font-size: 12px;
-            font-weight: bold;
-        }
+/* 修改后：完成后隐藏边框和背景，只显示灰色勾 */
+.task-checkbox.completed {
+    background: transparent;
+    border: none;  /* 去掉边框 */
+}
 
-        /* 空状态提示 */
+.task-checkbox.completed::after {
+    content: '✓';
+    font-size: 14px;
+font-family: '微软雅黑', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    color: #94a3b8;
+}
         .empty-tasks {
             text-align: center;
             padding: 18px 12px;
             color: #94a3b8;
             font-size: 13px;
-            letter-spacing: 0.3px;
+            cursor: pointer;
         }
-
-        /* 颜色主题 */
-        .monday-bg { background: linear-gradient(135deg, #ff8a50, #ff6b35); }
-        .tuesday-bg { background: linear-gradient(135deg, #a8e6cf, #7fcdcd); }
-        .wednesday-bg { background: linear-gradient(135deg, #87ceeb, #5fc3e0); }
-        .thursday-bg { background: linear-gradient(135deg, #ffeaa7, #fdcb6e); }
-        .friday-bg { background: linear-gradient(135deg, #ffb366, #ff8a65); }
-        .saturday-bg { background: linear-gradient(135deg, #c084fc, #a855f7); }
-        .sunday-bg { background: linear-gradient(135deg, #b8e186, #9bd17c); }
-
-        /* 底部导航栏 */
-        .bottom-nav {
+       /* 修改后（纯色，去掉渐变） */
+/* 修改后（更暗的版本） */
+/* 稍微变暗一点点的版本 */
+.monday-bg { background: #FA8C57; }
+.tuesday-bg { background: #D0E1AA; }
+.wednesday-bg { background: #ABD7FA; }
+.thursday-bg { background: #f8e4ac; }
+.friday-bg { background: #FBCDB3; }
+.saturday-bg { background: #fcdee1; }
+.sunday-bg { background: #C5C58F; }
+.bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
@@ -295,275 +276,706 @@
             cursor: pointer;
             padding: 4px 12px;
             border-radius: 30px;
-            transition: background 0.2s;
         }
-        .nav-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-        .nav-text {
-            font-size: 11px;
-            color: #64748b;
-            font-weight: 500;
-        }
-        .nav-item.active .nav-text {
-            color: #0f172a;
-            font-weight: 600;
-        }
-        .nav-item.active .nav-icon {
-            transform: scale(1.02);
-        }
+        .nav-icon { font-size: 24px; margin-bottom: 4px; }
+        .nav-text { font-size: 11px; color: #64748b; font-weight: 500; }
+        .nav-item.active .nav-text { color: #0f172a; font-weight: 600; }
 
-        /* 内容底部留白 */
-        .content-padding {
-            padding-bottom: 20px;
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s;
         }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-container {
+            background: white;
+            width: 85%;
+            max-width: 340px;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            padding: 20px 20px 8px 20px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .modal-body { padding: 20px; }
+        .input-label { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: block; }
+        .task-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 24px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .task-input:focus { border-color: #3b82f6; outline: none; }
+        .tag-selector { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+        .tag-option {
+            background: #f1f5f9;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .tag-option.active { background: #3b82f6; color: white; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 8px; }
+        .modal-btn { flex: 1; text-align: center; padding: 12px; border-radius: 40px; font-weight: 600; cursor: pointer; }
+        .modal-cancel { background: #f1f5f9; color: #475569; }
+        .modal-confirm { background: #0f172a; color: white; }
+        .content-padding { padding-bottom: 20px; }
     </style>
 </head>
 <body>
+
     
 
-    <div class="header">
-        <div class="week-title">
-            <span>≡ 第15周</span>
-            <span class="month">4月</span>
-        </div>
-        <div class="header-icons">
-            <div class="icon-btn">👁</div>
-            <div class="icon-btn">📋</div>
-        </div>
+<div class="header">
+    <div class="week-title">
+        <span>≡ 第<span id="weekNumber">15</span>周</span>
+        <span class="month" id="monthDisplay">4月</span>
     </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="week-nav-btn" id="prevWeekBtn" style="width: 32px; height: 32px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 18px; font-weight: 600;">‹</div>
+        <div class="week-nav-btn" id="nextWeekBtn" style="width: 32px; height: 32px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 18px; font-weight: 600;">›</div>
+        <div class="icon-btn">👁</div>
+        <div class="icon-btn">📋</div>
+    </div>
+</div>
 
-    <!-- 4组布局 -->
+
+
     <div class="plan-group">
-        <!-- 第一组：未排期 + 周一 -->
         <div class="group-row">
-            <!-- 未排期卡片 -->
-            <div class="unscheduled-card">
+            <div class="unscheduled-card" data-card-type="unscheduled" data-day-key="unscheduled">
                 <div class="unscheduled-header">
                     <div class="unscheduled-left">
-                        <span class="unscheduled-icon">📦</span>
                         <span class="unscheduled-text">未排期</span>
-                        <span class="unscheduled-arrow">›</span>
                     </div>
                     <div class="unscheduled-add">+</div>
                 </div>
-                <div class="tasks">
-                    <div class="empty-tasks">✨ 暂无任务，点击 + 添加</div>
-                </div>
+                <div class="tasks" id="tasks-unscheduled"></div>
             </div>
-
-            <!-- 周一卡片 -->
-            <div class="day-card">
+            <div class="day-card" data-card-type="day" data-day-key="monday">
                 <div class="day-header monday-bg">
-                    <div class="day-name-wrapper">
-                        <span class="day-name">周一</span>
-                        <span class="day-number">6</span>
-                    </div>
+                    <div class="day-name-wrapper"><span class="day-name">周一</span><span class="day-number">6</span></div>
                     <div class="day-add-btn">+</div>
                 </div>
-                <div class="tasks">
-                    <div class="empty-tasks">📋 暂无计划</div>
-                </div>
+                <div class="tasks" id="tasks-monday"></div>
             </div>
         </div>
-
-        <!-- 第二组：周二 + 周三 -->
         <div class="group-row">
-            <!-- 周二 -->
-            <div class="day-card">
+            <div class="day-card" data-card-type="day" data-day-key="tuesday">
                 <div class="day-header tuesday-bg">
-                    <div class="day-name-wrapper">
-                        <span class="day-name">周二</span>
-                        <span class="day-number">7</span>
-                    </div>
+                    <div class="day-name-wrapper"><span class="day-name">周二</span><span class="day-number">7</span></div>
                     <div class="day-add-btn">+</div>
                 </div>
-                <div class="tasks">
-                    <div class="empty-tasks">📋 暂无计划</div>
-                </div>
+                <div class="tasks" id="tasks-tuesday"></div>
             </div>
-
-            <!-- 周三 -->
-            <div class="day-card">
+            <div class="day-card" data-card-type="day" data-day-key="wednesday">
                 <div class="day-header wednesday-bg">
-                    <div class="day-name-wrapper">
-                        <span class="day-name">周三</span>
-                        <span class="day-number">8</span>
-                    </div>
+                    <div class="day-name-wrapper"><span class="day-name">周三</span><span class="day-number">8</span></div>
                     <div class="day-add-btn">+</div>
                 </div>
-                <div class="tasks">
-                    <div class="empty-tasks">📋 暂无计划</div>
-                </div>
+                <div class="tasks" id="tasks-wednesday"></div>
             </div>
         </div>
-
-        <!-- 第三组：周四 + 周五 -->
         <div class="group-row">
-            <!-- 周四 -->
-            <div class="day-card">
+            <div class="day-card" data-card-type="day" data-day-key="thursday">
                 <div class="day-header thursday-bg">
-                    <div class="day-name-wrapper">
-                        <span class="day-name">周四</span>
-                        <span class="day-number">9</span>
-                    </div>
+                    <div class="day-name-wrapper"><span class="day-name">周四</span><span class="day-number">9</span></div>
                     <div class="day-add-btn">+</div>
                 </div>
-                <div class="tasks">
-                    <div class="empty-tasks">📋 暂无计划</div>
-                </div>
+                <div class="tasks" id="tasks-thursday"></div>
             </div>
-
-            <!-- 周五 -->
-            <div class="day-card">
+            <div class="day-card" data-card-type="day" data-day-key="friday">
                 <div class="day-header friday-bg">
-                    <div class="day-name-wrapper">
-                        <span class="day-name">周五</span>
-                        <span class="day-number">10</span>
-                    </div>
+                    <div class="day-name-wrapper"><span class="day-name">周五</span><span class="day-number">10</span></div>
                     <div class="day-add-btn">+</div>
                 </div>
-                <div class="tasks">
-                    <div class="empty-tasks">📋 暂无计划</div>
-                </div>
+                <div class="tasks" id="tasks-friday"></div>
             </div>
         </div>
-
-        <!-- 第四组：周六 + 周日 -->
         <div class="group-row">
-            <!-- 周六 -->
-            <div class="day-card">
+            <div class="day-card" data-card-type="day" data-day-key="saturday">
                 <div class="day-header saturday-bg">
-                    <div class="day-name-wrapper">
-                        <span class="day-name">周六</span>
-                        <span class="day-number">11</span>
-                    </div>
+                    <div class="day-name-wrapper"><span class="day-name">周六</span><span class="day-number">11</span></div>
                     <div class="day-add-btn">+</div>
                 </div>
-                <div class="tasks">
-                    <div class="empty-tasks">📋 暂无计划</div>
-                </div>
+                <div class="tasks" id="tasks-saturday"></div>
             </div>
-
-            <!-- 周日 -->
-            <div class="day-card">
+            <div class="day-card" data-card-type="day" data-day-key="sunday">
                 <div class="day-header sunday-bg">
-                    <div class="day-name-wrapper">
-                        <span class="day-name">周天</span>
-                        <span class="day-number">12</span>
-                    </div>
+                    <div class="day-name-wrapper"><span class="day-name">周天</span><span class="day-number">12</span></div>
                     <div class="day-add-btn">+</div>
                 </div>
-                <div class="tasks">
-                    <div class="empty-tasks">📋 暂无计划</div>
-                </div>
+                <div class="tasks" id="tasks-sunday"></div>
             </div>
         </div>
     </div>
 
     <div class="content-padding"></div>
 
-    <!-- 底部导航栏 -->
     <div class="bottom-nav">
-        <div class="nav-item active">
-            <div class="nav-icon">📅</div>
-            <div class="nav-text">计划</div>
+        <div class="nav-item active"><div class="nav-icon">📅</div><div class="nav-text">计划</div></div>
+        <div class="nav-item"><div class="nav-icon">✅</div><div class="nav-text">清单</div></div>
+        <div class="nav-item"><div class="nav-icon">⭐</div><div class="nav-text">人生目标</div></div>
+    </div>
+
+    <!-- 新建待办弹窗 -->
+    <div id="taskModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">新建待办</div>
+            <div class="modal-body">
+                <div class="input-label">任务内容</div>
+                <input type="text" id="taskInput" class="task-input" placeholder="例如: 整理会议纪要" autocomplete="off">
+                <div class="input-label">标签分类</div>
+                <div class="tag-selector" id="tagSelector">
+                    <span data-tag="学习" class="tag-option">学习</span>
+                    <span data-tag="生活" class="tag-option">生活</span>
+                    <span data-tag="育儿" class="tag-option">育儿</span>
+                    <span data-tag="重要" class="tag-option">重要</span>
+                </div>
+                <div class="modal-actions">
+                    <div class="modal-btn modal-cancel" id="cancelModalBtn">取消</div>
+                    <div class="modal-btn modal-confirm" id="confirmModalBtn">添加</div>
+                </div>
+            </div>
         </div>
-        <div class="nav-item">
-            <div class="nav-icon">✅</div>
-            <div class="nav-text">清单</div>
+    </div>
+
+    <!-- 任务操作弹窗 -->
+    <div id="taskActionModal" class="modal-overlay">
+        <div class="modal-container" style="width: 75%; max-width: 280px;">
+            <div class="modal-header" style="padding: 16px 20px;">任务操作</div>
+            <div class="modal-body" style="padding: 8px 16px 20px;">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button id="taskEditBtn" style="padding: 12px; background: #f1f5f9; border: none; border-radius: 40px; font-size: 16px; font-weight: 500; cursor: pointer;">编辑</button>
+                    <button id="taskDeleteBtn" style="padding: 12px; background: #fee2e2; border: none; border-radius: 40px; font-size: 16px; font-weight: 500; cursor: pointer; color: #dc2626;">删除</button>
+                    <button id="taskCopyBtn" style="padding: 12px; background: #f1f5f9; border: none; border-radius: 40px; font-size: 16px; font-weight: 500; cursor: pointer;">复制副本</button>
+                    <button id="taskActionCancelBtn" style="padding: 10px; background: transparent; border: none; border-radius: 40px; font-size: 14px; cursor: pointer; color: #94a3b8;">取消</button>
+                </div>
+            </div>
         </div>
-        <div class="nav-item">
-            <div class="nav-icon">⭐</div>
-            <div class="nav-text">人生目标</div>
+    </div>
+
+    <!-- 编辑任务弹窗 -->
+    <div id="editTaskModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">编辑任务</div>
+            <div class="modal-body">
+                <div class="input-label">任务内容</div>
+                <input type="text" id="editTaskInput" class="task-input" placeholder="例如: 整理会议纪要" autocomplete="off">
+                <div class="input-label">标签分类</div>
+                <div class="tag-selector" id="editTagSelector">
+                    <span data-tag="学习" class="tag-option">学习</span>
+                    <span data-tag="生活" class="tag-option">生活</span>
+                    <span data-tag="育儿" class="tag-option">育儿</span>
+                    <span data-tag="重要" class="tag-option">重要</span>
+                </div>
+                <div class="modal-actions">
+                    <div class="modal-btn modal-cancel" id="cancelEditBtn">取消</div>
+                    <div class="modal-btn modal-confirm" id="confirmEditBtn">保存</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+
         (function() {
-            // 清空所有具体待办事项（代码中已经没有任何硬编码任务，只有空状态占位符）
-            // 交互功能: 复选框（目前无任务，但保留动态添加的潜力）
-            
-            // 1. 添加按钮点击提示（未排期 + 每个日期的+号）
-            const addBtns = document.querySelectorAll('.unscheduled-add, .day-add-btn');
-            addBtns.forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const parentCard = this.closest('.day-card') || this.closest('.unscheduled-card');
-                    let targetName = '';
-                    if(parentCard) {
-                        const dayNameSpan = parentCard.querySelector('.day-name');
-                        if(dayNameSpan) targetName = dayNameSpan.innerText;
-                        else if(parentCard.querySelector('.unscheduled-text')) targetName = '未排期';
-                    }
-                    alert(`✨ 添加新任务到 ${targetName || '日程'} (演示交互)`);
+            // 数据存储
+            const tasksDB = {
+                unscheduled: [], monday: [], tuesday: [], wednesday: [],
+                thursday: [], friday: [], saturday: [], sunday: []
+            };
+let hideCompleted = false;  // 控制是否隐藏已完成任务
+            let activeCardKey = null;
+            let selectedTag = '生活';
+let currentYear = 2026;
+let currentMonth = 4;  // 4月
+let currentWeek = 15;  // 第15周
+
+// 获取某周的第一天（周一）的日期
+function getWeekDates(year, weekNum) {
+    // 简单实现：假设2026年第15周从4月6日（周一）开始
+    // 第15周：4月6日（周一）到4月12日（周日）
+    const baseDate = new Date(2026, 3, 6); // 4月6日，周一
+    const daysOffset = (weekNum - 15) * 7;
+    const monday = new Date(2026, 3, 6 + daysOffset);
+    return {
+        monday: monday.getDate(),
+        tuesday: monday.getDate() + 1,
+        wednesday: monday.getDate() + 2,
+        thursday: monday.getDate() + 3,
+        friday: monday.getDate() + 4,
+        saturday: monday.getDate() + 5,
+        sunday: monday.getDate() + 6,
+        month: monday.getMonth() + 1
+    };
+}
+
+function updateWeekDates() {
+    const dates = getWeekDates(currentYear, currentWeek);
+    document.querySelector('.day-card[data-day-key="monday"] .day-number').innerText = dates.monday;
+    document.querySelector('.day-card[data-day-key="tuesday"] .day-number').innerText = dates.tuesday;
+    document.querySelector('.day-card[data-day-key="wednesday"] .day-number').innerText = dates.wednesday;
+    document.querySelector('.day-card[data-day-key="thursday"] .day-number').innerText = dates.thursday;
+    document.querySelector('.day-card[data-day-key="friday"] .day-number').innerText = dates.friday;
+    document.querySelector('.day-card[data-day-key="saturday"] .day-number').innerText = dates.saturday;
+    document.querySelector('.day-card[data-day-key="sunday"] .day-number').innerText = dates.sunday;
+    document.getElementById('weekNumber').innerText = currentWeek;
+    document.getElementById('monthDisplay').innerText = dates.month + '月';
+    
+   // 添加红色圆点标识当前周
+    const weekTitle = document.querySelector('.week-title');
+    // 移除已有的圆点
+    const existingDot = document.querySelector('.week-dot');
+    if (existingDot) existingDot.remove();
+    
+    // 如果是当前周（第15周），添加红色圆点
+    if (currentWeek === 15) {
+        const dot = document.createElement('span');
+        dot.className = 'week-dot';
+        dot.innerHTML = ' ●';
+        dot.style.color = '#ef4444';
+        dot.style.fontSize = '20px';
+        dot.style.marginLeft = '6px';
+        dot.style.verticalAlign = 'middle';
+        weekTitle.appendChild(dot);
+    }
+}
+
+// 切换周
+function goPrevWeek() {
+    currentWeek--;
+    updateWeekDates();
+}
+
+function goNextWeek() {
+    currentWeek++;
+    updateWeekDates();
+}
+            // DOM 元素
+            const modal = document.getElementById('taskModal');
+            const taskInput = document.getElementById('taskInput');
+            const confirmBtn = document.getElementById('confirmModalBtn');
+            const cancelBtn = document.getElementById('cancelModalBtn');
+            const tagOptions = document.querySelectorAll('#tagSelector .tag-option');
+
+            // 任务操作弹窗相关
+            let taskActionModal = null;
+            let activeTask = null;
+            let activeTaskCardKey = null;
+
+            // 编辑弹窗相关
+            let editModal = null;
+            let editTaskInput = null;
+            let confirmEditBtn = null;
+            let cancelEditBtn = null;
+            let editTagOptions = null;
+            let editingTask = null;
+            let editingTaskCardKey = null;
+            let editingSelectedTag = '生活';
+
+            function escapeHtml(str) {
+                return str.replace(/[&<>]/g, function(m) {
+                    if(m === '&') return '&amp;';
+                    if(m === '<') return '&lt;';
+                    if(m === '>') return '&gt;';
+                    return m;
                 });
-            });
-            
-            // 2. 任务点击演示（目前没有真实任务，但为空状态点击时也可以轻提醒）
-            const emptyDivs = document.querySelectorAll('.empty-tasks');
-            emptyDivs.forEach(empty => {
-                empty.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    // 找到所属卡片
-                    const card = this.closest('.day-card') || this.closest('.unscheduled-card');
-                    let cardTitle = '';
-                    if(card) {
-                        const dayEl = card.querySelector('.day-name');
-                        if(dayEl) cardTitle = dayEl.innerText;
-                        else if(card.querySelector('.unscheduled-text')) cardTitle = '未排期';
-                    }
-                    alert(`📌 「${cardTitle || '日程'}」暂无任务，点右上角 + 号添加吧`);
-                });
-            });
-            
-            // 3. 预留复选框的机制（未来动态添加任务时可用，现在没有具体checkbox但是保留样式）
-            // 由于完全清空，无.task-checkbox，但后期添加任务时会动态创建，因此保留全局监听
-            document.addEventListener('click', function(e) {
-                const checkbox = e.target.closest('.task-checkbox');
-                if(checkbox) {
-                    e.stopPropagation();
-                    checkbox.classList.toggle('completed');
+            }
+
+           function renderTasks(cardKey) {
+    const tasksContainer = document.getElementById(`tasks-${cardKey}`);
+    if (!tasksContainer) return;
+    let tasks = tasksDB[cardKey] || [];
+    
+    // 如果开启了隐藏模式，过滤掉已完成的任务
+    if (hideCompleted) {
+        tasks = tasks.filter(task => !task.completed);
+    }
+    
+    if (tasks.length === 0) {
+        tasksContainer.innerHTML = ``;
+        return;
+    }
+    let html = '';
+    tasks.forEach(task => {
+        const tagDisplay = task.tag ? `<span class="task-tag" data-tag="${task.tag}">${task.tag}</span>` : '';
+        const checkedClass = task.completed ? 'completed' : '';
+        // 添加 completed-text 类来控制文字样式
+        const textClass = task.completed ? 'task-text completed-text' : 'task-text';
+        html += `
+            <div class="task-item" data-task-id="${task.id}" data-card-key="${cardKey}">
+                <div class="task-left">
+                    ${tagDisplay}
+                    <span class="${textClass}">${escapeHtml(task.text)}</span>
+                </div>
+                <div class="task-checkbox ${checkedClass}" data-task-id="${task.id}" data-card-key="${cardKey}"></div>
+            </div>
+        `;
+    });
+    tasksContainer.innerHTML = html;
+}
+
+function renderAll() {
+                Object.keys(tasksDB).forEach(key => renderTasks(key));
+            }
+
+            function addTaskToCard(cardKey, taskText, tag) {
+                if (!taskText.trim()) {
+                    alert('请填写任务内容');
+                    return false;
                 }
-            });
-            
-            // 4. 任务项点击（如果后期添加任务，点击文字区域弹出详情）
-            document.addEventListener('click', function(e) {
-                const taskItem = e.target.closest('.task-item');
-                if(taskItem && !e.target.closest('.task-checkbox')) {
-                    const taskTextSpan = taskItem.querySelector('.task-text');
-                    if(taskTextSpan && taskTextSpan.innerText) {
-                        alert(`任务: ${taskTextSpan.innerText}`);
+                const newTask = {
+                    id: Date.now() + Math.random() * 10000,
+                    text: taskText.trim(),
+                    completed: false,
+                    tag: tag
+                };
+                tasksDB[cardKey].push(newTask);
+                renderTasks(cardKey);
+                return true;
+            }
+
+            function toggleTaskComplete(cardKey, taskId) {
+                const task = tasksDB[cardKey].find(t => t.id == taskId);
+                if (task) {
+                    task.completed = !task.completed;
+                    renderTasks(cardKey);
+                }
+            }
+
+            function deleteTaskById(cardKey, taskId) {
+                const idx = tasksDB[cardKey].findIndex(t => t.id == taskId);
+                if (idx !== -1) {
+                    tasksDB[cardKey].splice(idx, 1);
+                    renderTasks(cardKey);
+                }
+            }
+
+            function openModalForCard(cardKey) {
+                activeCardKey = cardKey;
+                taskInput.value = '';
+                selectedTag = '生活';
+                updateTagUI();
+                modal.classList.add('active');
+                taskInput.focus();
+            }
+
+            function closeModal() {
+                modal.classList.remove('active');
+                activeCardKey = null;
+            }
+
+            function updateTagUI() {
+                tagOptions.forEach(opt => {
+                    const tagVal = opt.getAttribute('data-tag');
+                    if (tagVal === selectedTag) {
+                        opt.classList.add('active');
                     } else {
-                        // 占位或无任务文字不触发
+                        opt.classList.remove('active');
+                    }
+                });
+            }
+
+            tagOptions.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const tagVal = opt.getAttribute('data-tag');
+                    if (tagVal) {
+                        selectedTag = tagVal;
+                        updateTagUI();
+                    }
+                });
+            });
+
+            function handleConfirmAdd() {
+                if (!activeCardKey) { closeModal(); return; }
+                const content = taskInput.value.trim();
+                if (!content) { alert('请填写待办事项内容'); return; }
+                addTaskToCard(activeCardKey, content, selectedTag);
+                closeModal();
+            }
+
+            function bindAddButtons() {
+                const unscheduledAdd = document.querySelector('.unscheduled-add');
+                if (unscheduledAdd) {
+                    unscheduledAdd.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openModalForCard('unscheduled');
+                    });
+                }
+                const dayAddBtns = document.querySelectorAll('.day-add-btn');
+                dayAddBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const dayCard = btn.closest('.day-card');
+                        if (dayCard) {
+                            const dayKey = dayCard.getAttribute('data-day-key');
+                            if (dayKey && tasksDB[dayKey] !== undefined) {
+                                openModalForCard(dayKey);
+                            }
+                        }
+                    });
+                });
+            }
+
+            // 任务操作弹窗函数
+            function showTaskActionModal(cardKey, task) {
+                activeTask = task;
+                activeTaskCardKey = cardKey;
+                if (taskActionModal) taskActionModal.classList.add('active');
+            }
+
+            function closeTaskActionModal() {
+                if (taskActionModal) taskActionModal.classList.remove('active');
+                activeTask = null;
+                activeTaskCardKey = null;
+            }
+
+            function copyTask() {
+                if (!activeTask || !activeTaskCardKey) return;
+                const newTask = {
+                    id: Date.now() + Math.random() * 10000,
+                    text: activeTask.text,
+                    completed: false,
+                    tag: activeTask.tag
+                };
+                tasksDB[activeTaskCardKey].push(newTask);
+                renderTasks(activeTaskCardKey);
+                closeTaskActionModal();
+            }
+
+            function deleteTask() {
+                if (!activeTask || !activeTaskCardKey) return;
+                if (confirm('确定要删除这个任务吗？')) {
+                    const idx = tasksDB[activeTaskCardKey].findIndex(t => t.id === activeTask.id);
+                    if (idx !== -1) {
+                        tasksDB[activeTaskCardKey].splice(idx, 1);
+                        renderTasks(activeTaskCardKey);
+                    }
+                }
+                closeTaskActionModal();
+            }
+
+            // 编辑弹窗函数
+            function openEditModal(cardKey, task) {
+                editingTask = task;
+                editingTaskCardKey = cardKey;
+                editingSelectedTag = task.tag;
+                if (editTaskInput) editTaskInput.value = task.text;
+                updateEditTagUI();
+                if (editModal) editModal.classList.add('active');
+                if (editTaskInput) editTaskInput.focus();
+            }
+
+            function closeEditModal() {
+                if (editModal) editModal.classList.remove('active');
+                editingTask = null;
+                editingTaskCardKey = null;
+            }
+
+            function updateEditTagUI() {
+                if (!editTagOptions) return;
+                editTagOptions.forEach(opt => {
+                    const tagVal = opt.getAttribute('data-tag');
+                    if (tagVal === editingSelectedTag) {
+                        opt.classList.add('active');
+                    } else {
+                        opt.classList.remove('active');
+                    }
+                });
+            }
+
+            function saveEditTask() {
+                if (!editingTask || !editingTaskCardKey) return;
+                const newText = editTaskInput ? editTaskInput.value.trim() : '';
+                if (!newText) {
+                    alert('请填写任务内容');
+                    return;
+                }
+                editingTask.text = newText;
+                editingTask.tag = editingSelectedTag;
+                renderTasks(editingTaskCardKey);
+                closeEditModal();
+            }
+
+            function editTask() {
+    // 1. 先把当前选中的任务和卡片Key保存到局部变量中
+    const taskToEdit = activeTask;
+    const cardKeyForEdit = activeTaskCardKey;
+
+    // 2. 检查是否有效
+    if (!taskToEdit || !cardKeyForEdit) return;
+
+    // 3. 关闭操作弹窗（这会清空 activeTask 和 activeTaskCardKey，但没关系，我们已经保存了）
+    closeTaskActionModal();
+
+    // 4. 使用保存的变量打开编辑弹窗
+    openEditModal(cardKeyForEdit, taskToEdit);
+}
+            // 事件监听
+            confirmBtn.addEventListener('click', handleConfirmAdd);
+            cancelBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleConfirmAdd(); });
+
+            document.addEventListener('click', (e) => {
+                const checkbox = e.target.closest('.task-checkbox');
+                if (checkbox) {
+                    e.stopPropagation();
+                    const taskId = checkbox.getAttribute('data-task-id');
+                    const cardKey = checkbox.getAttribute('data-card-key');
+                    if (taskId && cardKey) toggleTaskComplete(cardKey, taskId);
+                    return;
+                }
+                const taskItem = e.target.closest('.task-item');
+                if (taskItem && !e.target.closest('.task-checkbox')) {
+                    const taskId = taskItem.getAttribute('data-task-id');
+                    const cardKey = taskItem.getAttribute('data-card-key');
+                    if (taskId && cardKey) {
+                        const task = tasksDB[cardKey]?.find(t => t.id == taskId);
+                        if (task) showTaskActionModal(cardKey, task);
+                    }
+                    return;
+                }
+                const emptyDiv = e.target.closest('.empty-tasks');
+                if (emptyDiv) {
+                    const tasksContainer = emptyDiv.closest('.tasks');
+                    if (tasksContainer) {
+                        let cardKey = tasksContainer.id.replace('tasks-', '');
+                        if (tasksDB[cardKey] !== undefined) openModalForCard(cardKey);
                     }
                 }
             });
-            
-            // 5. 底部导航切换高亮
+
+            document.addEventListener('dblclick', (e) => {
+                const taskItem = e.target.closest('.task-item');
+                if (taskItem) {
+                    const taskId = taskItem.getAttribute('data-task-id');
+                    const cardKey = taskItem.getAttribute('data-card-key');
+                    if (taskId && cardKey && confirm('是否删除该待办？')) {
+                        deleteTaskById(cardKey, taskId);
+                    }
+                }
+            });
+
+            // 底部导航
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(item => {
                 item.addEventListener('click', function() {
                     navItems.forEach(nav => nav.classList.remove('active'));
                     this.classList.add('active');
-                    const navText = this.querySelector('.nav-text')?.innerText || '';
-                    alert(`切换到「${navText}」视图 (演示)`);
+                    alert(`切换到「${this.querySelector('.nav-text')?.innerText}」视图 (演示)`);
                 });
             });
-            
-            // 顶部图标简易反馈
-            const headerIcons = document.querySelectorAll('.icon-btn');
-            headerIcons.forEach(icon => {
-                icon.addEventListener('click', function() {
-                    const iconText = this.innerText;
-                    if(iconText === '👁') alert('切换视图模式 (演示)');
-                    else if(iconText === '📋') alert('打开月历/列表 (演示)');
+
+            // 顶部图标
+           // 顶部图标
+const headerIcons = document.querySelectorAll('.icon-btn');
+headerIcons.forEach(icon => {
+    icon.addEventListener('click', function() {
+        if (this.innerText === '👁') {
+            // 切换隐藏已完成任务的状态
+            hideCompleted = !hideCompleted;
+            // 重新渲染所有任务
+            renderAll();
+            // 可选：给个视觉反馈
+            if (hideCompleted) {
+                this.style.opacity = '0.5';
+                this.style.backgroundColor = '#e2e8f0';
+            } else {
+                this.style.opacity = '1';
+                this.style.backgroundColor = '#ffffff';
+            }
+        } else if (this.innerText === '📋') {
+            alert('打开月历/列表 (演示)');
+        }
+    });
+});
+            // ========== 弹窗初始化（放在外面立即执行）==========
+            taskActionModal = document.getElementById('taskActionModal');
+            document.getElementById('taskEditBtn')?.addEventListener('click', editTask);
+            document.getElementById('taskDeleteBtn')?.addEventListener('click', deleteTask);
+            document.getElementById('taskCopyBtn')?.addEventListener('click', copyTask);
+            document.getElementById('taskActionCancelBtn')?.addEventListener('click', closeTaskActionModal);
+            if (taskActionModal) {
+                taskActionModal.addEventListener('click', (e) => {
+                    if (e.target === taskActionModal) closeTaskActionModal();
                 });
-            });
-            
-            console.log('周计划已加载 —— 所有具体待办已清空，所有星期文字已右移，采用4组布局(未排期+周一 | 周二+周三 | 周四+周五 | 周六+周日)');
+            }
+
+            // 初始化编辑弹窗
+            editModal = document.getElementById('editTaskModal');
+            editTaskInput = document.getElementById('editTaskInput');
+            confirmEditBtn = document.getElementById('confirmEditBtn');
+            cancelEditBtn = document.getElementById('cancelEditBtn');
+            editTagOptions = document.querySelectorAll('#editTagSelector .tag-option');
+
+            if (editTagOptions) {
+                editTagOptions.forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const tagVal = opt.getAttribute('data-tag');
+                        if (tagVal) {
+                            editingSelectedTag = tagVal;
+                            updateEditTagUI();
+                        }
+                    });
+                });
+            }
+            confirmEditBtn?.addEventListener('click', saveEditTask);
+            cancelEditBtn?.addEventListener('click', closeEditModal);
+            if (editModal) {
+                editModal.addEventListener('click', (e) => {
+                    if (e.target === editModal) closeEditModal();
+                });
+            }
+            if (editTaskInput) {
+                editTaskInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') saveEditTask();
+                });
+            }
+            // ========== 弹窗初始化结束 ==========
+
+            // 初始化
+            renderAll();
+            bindAddButtons();
+            // 更新周日期显示
+updateWeekDates();
+
+// 绑定上一周/下一周按钮
+document.getElementById('prevWeekBtn').addEventListener('click', goPrevWeek);
+document.getElementById('nextWeekBtn').addEventListener('click', goNextWeek);
+
+
+            // 示例任务
+            if (tasksDB.monday.length === 0) {
+                tasksDB.monday.push({ id: 1001, text: '团队周会准备', completed: false, tag: '重要' });
+                tasksDB.monday.push({ id: 1002, text: '阅读《深度工作》', completed: false, tag: '学习' });
+                tasksDB.wednesday.push({ id: 1003, text: '健身房打卡', completed: false, tag: '生活' });
+                tasksDB.unscheduled.push({ id: 1004, text: '整理二季度目标', completed: false, tag: '重要' });
+                tasksDB.friday.push({ id: 1005, text: '家庭采购清单', completed: false, tag: '生活' });
+                renderAll();
+            }
         })();
+  
     </script>
 </body>
 </html>
