@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>拾句 · 极简集藏</title>
     <style>
         * {
@@ -12,11 +12,16 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* 防止 iOS 下输入框自动缩放 */
+        input, textarea, select {
+            font-size: 16px !important;
+        }
+
         body {
             background-color: #f5f4f2;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             color: #2e2c29;
-            padding: 24px 20px 48px;
+            padding: 20px 16px 48px;
             min-height: 100vh;
         }
 
@@ -33,38 +38,43 @@
             align-items: baseline;
             margin-bottom: 12px;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 8px;
         }
         .header {
             flex: 1;
         }
         .header h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 380;
             letter-spacing: -0.5px;
             color: #3a3834;
         }
         .sub {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #99948c;
-            margin-top: 6px;
+            margin-top: 4px;
             font-weight: 350;
         }
+        
+        /* 设置按钮 - 无边框无圆圈 */
         .settings-icon {
             background: transparent;
-            border: 0.5px solid #d6d2cb;
-            width: 44px;
-            height: 44px;
-            border-radius: 44px;
+            border: none;
+            width: auto;
+            height: auto;
+            padding: 8px 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             cursor: pointer;
             color: #5f5a53;
             transition: 0.1s;
+            border-radius: 32px;
         }
-        .settings-icon:active { background-color: #ece9e4; }
+        .settings-icon:active { 
+            background-color: #ece9e4; 
+        }
 
         /* 工具栏 */
         .toolbar {
@@ -72,15 +82,15 @@
             flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 28px;
+            gap: 10px;
+            margin-bottom: 20px;
         }
         .btn-outline {
             background: transparent;
             border: 0.5px solid #d6d2cb;
-            padding: 7px 20px;
+            padding: 6px 16px;
             border-radius: 40px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 380;
             color: #5f5a53;
             cursor: pointer;
@@ -93,24 +103,24 @@
             color: #2f2c28;
         }
 
-        /* 两列布局 */
+        /* 两列布局 - 手机端和桌面统一 */
         .two-columns {
             display: flex;
-            gap: 20px;
+            gap: 14px;
             flex-wrap: wrap;
         }
         .col {
             flex: 1;
-            min-width: 180px;
+            min-width: 0;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
         }
 
-        /* 一级分类卡片 */
+        /* 一级分类卡片 - 紧凑 */
         .primary-cat {
             background: #ffffff;
-            border-radius: 20px;
+            border-radius: 18px;
             border: 0.5px solid #e8e4df;
             overflow: hidden;
         }
@@ -118,62 +128,67 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 18px;
+            padding: 12px 14px;
             cursor: pointer;
             background-color: #fefdfc;
         }
         .primary-header:active { background-color: #f5f3ef; }
         .primary-title {
-            font-size: 1.15rem;
-            font-weight: 450;
+            font-size: 0.95rem;
+            font-weight: 470;
             color: #3d3a36;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         .collapse-icon {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: #b0aaa1;
-            width: 20px;
+            width: 18px;
         }
-        .primary-actions { display: flex; gap: 8px; }
+        .primary-actions { display: flex; gap: 6px; }
         .icon-btn {
             background: transparent;
             border: none;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #8e897f;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 3px 6px;
             border-radius: 30px;
         }
         .icon-btn:active { background-color: #eae7e1; }
         .edit-mode-only { display: none; }
-        body.edit-mode .edit-mode-only { display: inline-flex; gap: 6px; }
+        body.edit-mode .edit-mode-only { display: inline-flex; gap: 4px; }
 
         .secondary-area {
             border-top: 0.5px solid #efebe6;
             background: #ffffff;
-            padding: 14px 16px 18px;
+            padding: 10px 12px 12px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
         .secondary-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
             background: #faf9f7;
-            border-radius: 40px;
-            padding: 8px 14px;
+            border-radius: 32px;
+            padding: 6px 12px;
             cursor: pointer;
             border: 0.5px solid #f0ede8;
         }
         .secondary-item:active { background-color: #efede8; }
-        .secondary-name { font-size: 0.88rem; font-weight: 420; color: #5e5952; flex: 1; }
-        .edit-actions { display: flex; gap: 6px; }
-        .empty-sub { font-size: 0.75rem; color: #bbb4ab; text-align: center; padding: 12px 0; }
+        .secondary-name { 
+            font-size: 0.8rem; 
+            font-weight: 420; 
+            color: #5e5952; 
+            flex: 1;
+        }
+        .edit-actions { display: flex; gap: 5px; }
+        .empty-sub { font-size: 0.7rem; color: #bbb4ab; text-align: center; padding: 8px 0; }
 
-        /* 句子页面 */
+        /* 句子页面 - 无背景框，序号紧凑 */
         .sentence-page {
             position: fixed;
             top: 0;
@@ -186,14 +201,14 @@
             visibility: hidden;
             opacity: 0;
             transition: opacity 0.2s ease, visibility 0s linear 0.2s;
-            padding: 24px 20px 40px;
+            padding: 20px 16px 30px;
         }
         .sentence-page.open { visibility: visible; opacity: 1; transition: opacity 0.2s ease; }
         .page-container {
-            background: #ffffff;
-            border-radius: 32px;
-            padding: 28px 24px 40px;
-            border: 0.5px solid #eae6e0;
+            background: transparent;
+            border-radius: 0;
+            padding: 0;
+            border: none;
             max-width: 960px;
             margin: 0 auto;
             width: 100%;
@@ -201,67 +216,131 @@
         .page-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 28px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #efebe5;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 0.5px solid #e3dfd9;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
         }
-        .page-title { font-size: 1.5rem; font-weight: 420; color: #3d3a36; }
-        .back-btn { background: transparent; border: none; font-size: 0.85rem; color: #9b958c; cursor: pointer; padding: 6px 12px; border-radius: 40px; }
+        .page-title { 
+            font-size: 1.3rem; 
+            font-weight: 420; 
+            color: #3d3a36;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .back-btn, .print-btn-page {
+            background: transparent;
+            border: none;
+            font-size: 0.85rem;
+            color: #9b958c;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 40px;
+            transition: 0.1s;
+        }
+        .back-btn:active, .print-btn-page:active { background: #ece9e4; }
+        .print-btn-page {
+            font-size: 1.1rem;
+            padding: 6px 8px;
+        }
+        
+        /* 句子列表 - 极简，序号和文字距离极小 */
         .sentence-list-page {
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            margin: 16px 0 28px;
+            gap: 12px;
+            margin: 8px 0 20px;
             min-height: 280px;
         }
-        /* 句子卡片 - 可点击弹出操作菜单 */
         .sentence-card {
-            padding: 16px 20px;
-            background: #fefcf9;
-            border-radius: 24px;
-            border: 0.5px solid #efebe6;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            color: #3c3935;
-            position: relative;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            cursor: pointer;
-            transition: background 0.1s;
-        }
-        .sentence-card:active { background-color: #f3f1ed; }
+    padding: 4px 0;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: #3c3935;
+    position: relative;
+    display: flex;
+    align-items: center;      /* 垂直居中对齐 */
+    gap: 2px;                /* 进一步缩小间距 */
+    cursor: pointer;
+    transition: opacity 0.1s;
+    border-bottom: 0.5px solid #efebe6;
+}
+
+.sentence-index {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #b8b0a4;
+    min-width: 26px;         /* 宽度可以再小一点 */
+    letter-spacing: 0;
+    line-height: 1.45;       /* 与文字行高一致，确保对齐 */
+}
+        .sentence-card:active { opacity: 0.6; background: transparent; }
         .sentence-index {
-            font-size: 0.85rem;
-            font-weight: 450;
+            font-size: 0.75rem;
+            font-weight: 400;
             color: #b8b0a4;
-            min-width: 36px;
+            min-width: 30px;
+            letter-spacing: 0.2px;
         }
-        .sentence-text { flex: 1; }
-        .empty-placeholder { text-align: center; padding: 48px 20px; color: #bbb3a8; font-size: 0.8rem; }
+        .sentence-text { 
+            flex: 1; 
+            word-break: break-word;
+        }
+        .empty-placeholder { 
+            text-align: center; 
+            padding: 40px 20px; 
+            color: #bbb3a8; 
+            font-size: 0.8rem; 
+        }
+        
+        /* 添加句子区域 */
         .add-form {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
             flex-wrap: wrap;
             margin-top: 16px;
-            padding-top: 20px;
-            border-top: 0.5px solid #efebe6;
+            padding-top: 16px;
+            border-top: 0.5px solid #e3dfd9;
         }
-        .add-form input { flex: 1; padding: 12px 16px; border: 0.5px solid #e0dbd3; border-radius: 60px; font-size: 0.85rem; background: #ffffff; }
-        .small-round-btn { background: #efede8; border: none; padding: 8px 22px; border-radius: 40px; font-size: 0.75rem; color: #56524b; cursor: pointer; }
+        .add-form input { 
+            flex: 1; 
+            padding: 10px 14px; 
+            border: 0.5px solid #e0dbd3; 
+            border-radius: 40px; 
+            font-size: 16px !important; /* 防止缩放 */
+            background: #ffffff; 
+            font-family: inherit;
+        }
+        .add-form input:focus { outline: none; border-color: #cfc8be; }
+        .small-round-btn { 
+            background: #efede8; 
+            border: none; 
+            padding: 7px 18px; 
+            border-radius: 40px; 
+            font-size: 0.75rem; 
+            color: #56524b; 
+            cursor: pointer;
+        }
+        .small-round-btn:active { background: #e4e0d9; }
 
-        /* 浮动菜单 (点击句子后弹出) */
+        /* 浮动菜单 */
         .action-menu {
             position: fixed;
             background: white;
             border-radius: 28px;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.12);
             border: 0.5px solid #e8e4df;
-            padding: 8px 0;
-            min-width: 140px;
+            padding: 6px 0;
+            min-width: 130px;
             z-index: 1200;
             visibility: hidden;
             opacity: 0;
@@ -272,10 +351,10 @@
             display: block;
             width: 100%;
             text-align: left;
-            padding: 12px 20px;
+            padding: 10px 18px;
             background: none;
             border: none;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #3d3a36;
             cursor: pointer;
         }
@@ -300,29 +379,50 @@
         .settings-card {
             background: white;
             width: 90%;
-            max-width: 400px;
-            border-radius: 40px;
-            padding: 28px 24px;
+            max-width: 380px;
+            border-radius: 36px;
+            padding: 24px 22px;
             border: 0.5px solid #eae6e0;
         }
-        .settings-card h3 { font-weight: 420; margin-bottom: 20px; }
-        .settings-card input { width: 100%; padding: 12px; border: 0.5px solid #ddd8d0; border-radius: 60px; margin: 12px 0; }
-        .settings-card button { margin-top: 8px; width: 100%; padding: 10px; border-radius: 60px; background: #efede8; border: none; cursor: pointer; }
-        .status-msg { font-size: 0.75rem; color: #8f8a82; margin-top: 12px; text-align: center; }
-        .print-fab {
-            position: fixed; bottom: 24px; right: 24px; width: 50px; height: 50px;
-            background: #e2ded7; border-radius: 60px; display: flex; align-items: center;
-            justify-content: center; cursor: pointer; border: 0.5px solid #cec7be;
-            color: #5c574f; font-size: 22px; z-index: 1100;
-        }
+        .settings-card h3 { font-weight: 420; margin-bottom: 18px; font-size: 1.2rem; }
+        .settings-card input { width: 100%; padding: 10px 12px; border: 0.5px solid #ddd8d0; border-radius: 60px; margin: 10px 0; font-size: 16px !important; }
+        .settings-card button { margin-top: 8px; width: 100%; padding: 9px; border-radius: 60px; background: #efede8; border: none; cursor: pointer; font-size: 0.8rem; }
+        .status-msg { font-size: 0.7rem; color: #8f8a82; margin-top: 10px; text-align: center; }
+        
+        /* 全局打印按钮已移除，改为页面内按钮 */
+        
+        /* 通用模态框 */
         .modal-mask, .dialog-card { position: fixed; z-index: 1250; }
         .modal-mask { top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.15);backdrop-filter:blur(2px);visibility:hidden;opacity:0;transition:0.15s; }
         .modal-mask.active { visibility:visible;opacity:1; }
-        .dialog-card { top:50%;left:50%;transform:translate(-50%,-50%);background:white;width:280px;max-width:85%;padding:24px 20px;border-radius:36px;text-align:center;visibility:hidden;opacity:0;transition:0.1s; }
+        .dialog-card { top:50%;left:50%;transform:translate(-50%,-50%);background:white;width:270px;max-width:85%;padding:22px 18px;border-radius:32px;text-align:center;visibility:hidden;opacity:0;transition:0.1s; }
         .dialog-card.active { visibility:visible;opacity:1; }
-        .dialog-card input { width:100%;padding:12px;margin:16px 0;border:0.5px solid #ddd8d0;border-radius:60px; }
-        @media (max-width:680px) { .two-columns { flex-direction: column; } .col { width:100%; } }
-        @media print { body * { visibility:hidden; } .app, .sentence-page, .sentence-page * { visibility:visible; } .sentence-page { position:relative; opacity:1; background:white; } .toolbar,.print-fab,.settings-modal,.action-menu{ display:none; } }
+        .dialog-card input { width:100%;padding:10px 12px;margin:14px 0;border:0.5px solid #ddd8d0;border-radius:60px;font-size:16px !important; }
+        .dialog-buttons { display: flex; gap: 10px; justify-content: center; }
+        
+        /* 响应式：手机端保持和桌面完全一致的布局和间距 */
+        @media (max-width: 640px) {
+            body { padding: 16px 12px 40px; }
+            .two-columns { gap: 12px; }
+            .col { gap: 10px; }
+            .primary-header { padding: 10px 12px; }
+            .primary-title { font-size: 0.85rem; }
+            .secondary-area { padding: 8px 10px 10px; gap: 6px; }
+            .secondary-item { padding: 5px 10px; }
+            .secondary-name { font-size: 0.75rem; }
+           .sentence-card { gap: 2px; padding: 4px 0; align-items: center; }
+    .sentence-index { min-width: 24px; font-size: 0.7rem; line-height: 1.45; }
+            .sentence-text { font-size: 0.85rem; }
+            .page-title { font-size: 1.2rem; }
+        }
+        
+        @media print {
+            body * { visibility:hidden; }
+            .app, .sentence-page, .sentence-page * { visibility:visible; }
+            .sentence-page { position:relative; opacity:1; background:white; padding:0; }
+            .toolbar,.settings-modal,.action-menu,.add-form,.edit-mode-only,.header-actions{ display:none; }
+            .sentence-card { border-bottom: 0.5px solid #ccc; }
+        }
     </style>
 </head>
 <body>
@@ -340,30 +440,60 @@
     </div>
     <div id="categoriesContainer" class="two-columns"></div>
 </div>
-<button class="print-fab" id="printBtn">🖨️</button>
 
 <!-- 句子页面 -->
 <div id="sentencePage" class="sentence-page">
     <div class="page-container">
-        <div class="page-header"><span class="page-title" id="pageCategoryTitle">——</span><button class="back-btn" id="closePageBtn">← 返回</button></div>
+        <div class="page-header">
+            <span class="page-title" id="pageCategoryTitle">——</span>
+            <div class="header-actions">
+                <button id="printPageBtn" class="print-btn-page" title="打印句子">🖨️</button>
+                <button id="closePageBtn" class="back-btn">← 返回</button>
+            </div>
+        </div>
         <div id="sentencePageList" class="sentence-list-page"></div>
-        <div class="add-form"><input type="text" id="pageSentenceInput" placeholder="写下一句好词好句..."><button id="pageAddSentenceBtn" class="small-round-btn">留存</button></div>
+        <div class="add-form">
+            <input type="text" id="pageSentenceInput" placeholder="写下一句好词好句..." autocomplete="off">
+            <button id="pageAddSentenceBtn" class="small-round-btn">留存</button>
+        </div>
     </div>
 </div>
 
-<!-- 句子操作浮动菜单 (删除/编辑/复制) -->
-<div id="actionMenu" class="action-menu"><button id="menuEdit">✏️ 编辑</button><button id="menuDelete">🗑️ 删除</button><button id="menuCopy">📋 复制</button></div>
+<!-- 句子操作浮动菜单 -->
+<div id="actionMenu" class="action-menu">
+    <button id="menuEdit">✏️ 编辑</button>
+    <button id="menuDelete">🗑️ 删除</button>
+    <button id="menuCopy">📋 复制</button>
+</div>
 
 <!-- 设置面板 -->
-<div id="settingsModal" class="settings-modal"><div class="settings-card"><h3>云端同步 · Gist</h3><input type="text" id="gistToken" placeholder="GitHub Personal Access Token"><input type="text" id="gistId" placeholder="Gist ID (可选)"><button id="syncToGist">☁️ 上传备份</button><button id="restoreFromGist">⬇️ 恢复云端</button><div id="syncStatus" class="status-msg"></div><button id="closeSettings" style="margin-top:20px;background:transparent;">关闭</button></div></div>
+<div id="settingsModal" class="settings-modal">
+    <div class="settings-card">
+        <h3>云端同步 · Gist</h3>
+        <input type="text" id="gistToken" placeholder="GitHub Personal Access Token">
+        <input type="text" id="gistId" placeholder="Gist ID (可选)">
+        <button id="syncToGist">☁️ 上传备份</button>
+        <button id="restoreFromGist">⬇️ 恢复云端</button>
+        <div id="syncStatus" class="status-msg"></div>
+        <button id="closeSettings" style="margin-top:20px;background:transparent;">关闭</button>
+    </div>
+</div>
 
 <div id="modalMask" class="modal-mask"></div>
-<div id="commonDialog" class="dialog-card"><h4 id="dialogTitle">新建分类</h4><input type="text" id="dialogInput" placeholder="名称"><div class="dialog-buttons"><button id="dialogConfirmBtn" class="small-round-btn">确认</button><button id="dialogCancelBtn" class="small-round-btn">取消</button></div></div>
+<div id="commonDialog" class="dialog-card">
+    <h4 id="dialogTitle">新建分类</h4>
+    <input type="text" id="dialogInput" placeholder="名称">
+    <div class="dialog-buttons">
+        <button id="dialogConfirmBtn" class="small-round-btn">确认</button>
+        <button id="dialogCancelBtn" class="small-round-btn">取消</button>
+    </div>
+</div>
 
 <script>
     // ---------- 数据结构 ----------
-    let categories = []; // [{ id, name, collapsed, children: [{ id, name, sentences:[] }] }]
-    let currentMenuContext = null; // { primaryId, secId, sentenceIndex, sentenceText }
+    let categories = [];
+    let currentMenuContext = null;
+    let currentPageRef = null;
 
     function genId() { return Date.now() + '-' + Math.random().toString(36).substring(2, 8); }
 
@@ -419,11 +549,13 @@
     function toggleCollapse(e){ const id=e.currentTarget.dataset.toggleId; const cat=categories.find(c=>c.id===id); if(cat){ cat.collapsed=!cat.collapsed; saveData(); renderMain(); } }
 
     // 句子页面逻辑
-    let currentPageRef = null; // { primaryId, secId }
     const sentencePageDiv = document.getElementById('sentencePage');
     function onSecondaryClick(e){ if(e.target.closest('.icon-btn')) return; const item=e.currentTarget; const pid=item.dataset.pid, secid=item.dataset.secid; const primary=categories.find(p=>p.id===pid); if(primary){ const sec=primary.children.find(c=>c.id===secid); if(sec){ currentPageRef={primaryId:pid, secId:secid}; document.getElementById('pageCategoryTitle').innerText=`${primary.name} · ${sec.name}`; renderSentencePage(sec.sentences); sentencePageDiv.classList.add('open'); sentencePageDiv.scrollTop=0; } } }
+    
     function renderSentencePage(sentences){ const container=document.getElementById('sentencePageList'); if(!sentences.length){ container.innerHTML='<div class="empty-placeholder">✧ 暂无句子，添加第一条 ✧</div>'; return; } let html=''; sentences.forEach((sent,idx)=>{ html+=`<div class="sentence-card" data-idx="${idx}"><div class="sentence-index">${(idx+1).toString().padStart(2,'0')}.</div><div class="sentence-text">${escapeHtml(sent)}</div></div>`; }); container.innerHTML=html; document.querySelectorAll('.sentence-card').forEach(card=>{ card.removeEventListener('click',onSentenceCardClick); card.addEventListener('click',onSentenceCardClick); }); }
+    
     function onSentenceCardClick(e){ e.stopPropagation(); const card=e.currentTarget; const idx=parseInt(card.dataset.idx); if(isNaN(idx)||!currentPageRef) return; const primary=categories.find(p=>p.id===currentPageRef.primaryId); if(primary){ const sec=primary.children.find(c=>c.id===currentPageRef.secId); if(sec&&sec.sentences[idx]){ currentMenuContext={ primaryId:currentPageRef.primaryId, secId:currentPageRef.secId, sentenceIndex:idx, sentenceText:sec.sentences[idx] }; const rect=card.getBoundingClientRect(); const menu=document.getElementById('actionMenu'); menu.style.top=`${rect.bottom+5}px`; menu.style.left=`${rect.left+10}px`; menu.classList.add('active'); } } }
+    
     function closeMenu(){ document.getElementById('actionMenu').classList.remove('active'); currentMenuContext=null; }
     document.getElementById('menuEdit').onclick=()=>{ if(currentMenuContext){ const newText=prompt('编辑句子', currentMenuContext.sentenceText); if(newText && newText.trim()){ const primary=categories.find(p=>p.id===currentMenuContext.primaryId); if(primary){ const sec=primary.children.find(c=>c.id===currentMenuContext.secId); if(sec) sec.sentences[currentMenuContext.sentenceIndex]=newText.trim(); saveData(); if(currentPageRef) renderSentencePage(sec.sentences); renderMain(); } } } closeMenu(); };
     document.getElementById('menuDelete').onclick=()=>{ if(currentMenuContext && confirm('删除此句子？')){ const primary=categories.find(p=>p.id===currentMenuContext.primaryId); if(primary){ const sec=primary.children.find(c=>c.id===currentMenuContext.secId); if(sec) sec.sentences.splice(currentMenuContext.sentenceIndex,1); saveData(); if(currentPageRef) renderSentencePage(sec.sentences); renderMain(); } } closeMenu(); };
@@ -431,6 +563,9 @@
     document.addEventListener('click',(e)=>{ if(!e.target.closest('.action-menu') && !e.target.closest('.sentence-card')) closeMenu(); });
     document.getElementById('pageAddSentenceBtn').onclick=()=>{ const input=document.getElementById('pageSentenceInput'); const text=input.value.trim(); if(!text||!currentPageRef) return; const primary=categories.find(p=>p.id===currentPageRef.primaryId); if(primary){ const sec=primary.children.find(c=>c.id===currentPageRef.secId); if(sec){ sec.sentences.push(text); saveData(); renderSentencePage(sec.sentences); input.value=''; renderMain(); } } };
     document.getElementById('closePageBtn').onclick=()=>{ sentencePageDiv.classList.remove('open'); currentPageRef=null; closeMenu(); };
+    
+    // 打印当前句子页面
+    document.getElementById('printPageBtn').onclick=()=>{ window.print(); };
 
     // 分类 CRUD
     function showDialog(title,def,cb){ const dlg=document.getElementById('commonDialog'); const titleEl=document.getElementById('dialogTitle'); const input=document.getElementById('dialogInput'); titleEl.innerText=title; input.value=def||''; window.dialogCallback=cb; document.getElementById('modalMask').classList.add('active'); dlg.classList.add('active'); }
@@ -445,7 +580,6 @@
     function handleDelSecondary(pid,secid){ if(confirm('删除子分类及所有句子？')){ const primary=categories.find(p=>p.id===pid); if(primary){ primary.children=primary.children.filter(s=>s.id!==secid); saveData(); renderMain(); if(currentPageRef?.primaryId===pid && currentPageRef?.secId===secid) sentencePageDiv.classList.remove('open'); } } }
     document.getElementById('addPrimaryBtn').onclick=()=>{ showDialog('新增一级分类','',(name)=>{ categories.push({id:genId(),name:name,collapsed:true,children:[]}); }); };
     document.getElementById('toggleEditBtn').onclick=()=>{ document.body.classList.toggle('edit-mode'); const isEdit=document.body.classList.contains('edit-mode'); document.getElementById('toggleEditBtn').innerText=isEdit?'退出编辑':'编辑模式'; if(isEdit) document.getElementById('toggleEditBtn').classList.add('active'); else document.getElementById('toggleEditBtn').classList.remove('active'); renderMain(); };
-    document.getElementById('printBtn').onclick=()=>window.print();
 
     // 云端Gist同步
     const settingsModal=document.getElementById('settingsModal');
