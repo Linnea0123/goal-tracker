@@ -2,2156 +2,460 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <title>第15周 · 周计划 | 智能待办</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>拾句 · 极简集藏</title>
     <style>
-
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-.archived-task-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #f0f2f5;
-}
-.archived-task-text {
-    font-size: 13px;
-    color: #94a3b8;
-    text-decoration: line-through;
-    flex: 1;
-}
-.archived-task-tag {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    margin-right: 8px;
-}
-.archived-task-time {
-    font-size: 11px;
-    color: #94a3b8;
-    white-space: nowrap;
-}
-.unarchive-btn {
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px 8px;
-    background: #f1f5f9;
-    border-radius: 20px;
-    margin-left: 8px;
-}
-
-        .add-tag-btn {
-    margin-left: auto;
-    cursor: pointer;
-    font-size: 28px;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    transition: 0.2s;
-}
-.add-tag-btn:active {
-    background: #f1f5f9;
-}
-
-
-        /* 标签统计全屏界面 - 和主界面宽度一致 */
-#statsPage {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #f5f7fb;
-    z-index: 3000;
-    overflow-y: auto;
-    padding: 20px 16px 30px 16px;  /* 和 body 的 padding 一致 */
-    max-width: 500px;              /* 新增：限制最大宽度 */
-    margin: 0 auto;                /* 新增：居中 */
-    width: 100%;                   /* 新增：宽度100% */
-}
-
-
-
-        /* 待办背景色样式 */
-.task-item-bg {
-    background: #fff7ed !important;  /* 浅橙色背景 */
-}
-
-        /* 左侧弹窗 */
-.sidebar-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 200px;
-    background: white;
-    z-index: 2000;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.1);
-    border-radius: 0 20px 20px 0;
-}
-.sidebar-modal.active {
-    transform: translateX(0);
-}
-.sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 1999;
-    visibility: hidden;
-    opacity: 0;
-    transition: visibility 0.3s, opacity 0.3s;
-}
-.sidebar-overlay.active {
-    visibility: visible;
-    opacity: 1;
-}
-.sidebar-header {
-    padding: 24px 20px;
-    font-size: 20px;
-    font-weight: 700;
-    border-bottom: 1px solid #e2e8f0;
-}
-.sidebar-content {
-    padding: 20px;
-}
-.setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f2f5;
-}
-.setting-label {
-    font-size: 15px;
-    font-weight: 500;
-    color: #1e293b;
-}
-/* 开关按钮 */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 48px;
-    height: 24px;
-}
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #cbd5e1;
-    transition: 0.3s;
-    border-radius: 24px;
-}
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 20px;
-    width: 20px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: 0.3s;
-    border-radius: 50%;
-}
-input:checked + .slider {
-    background-color: #FA8C57;
-}
-input:checked + .slider:before {
-    transform: translateX(24px);
-}
-
-        /* 筛选弹窗 */
-.filter-modal .modal-container {
-    max-width: 260px;
-}
-.filter-option {
-    padding: 12px 16px;
-    text-align: center;
-    cursor: pointer;
-    border-radius: 40px;
-    margin: 4px 0;
-    font-size: 14px;
-    font-weight: 500;
-}
-.filter-option:hover {
-    background: #f1f5f9;
-}
-.filter-option.active {
-    background: #FA8C57;
-    color: white;
-}
-.filter-option.clear-filter {
-    color: #ef4444;
-    border-top: 1px solid #e2e8f0;
-    margin-top: 8px;
-    padding-top: 12px;
-}
-
-        /* 已完成任务的文字样式：变灰 + 删除线 */
-.completed-text {
-    text-decoration: line-through;
-    color: #94a3b8 !important;
-}
-
-
-
-
 
         body {
-            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
-            background-color: #ffffff;  /* 原来是 #f5f7fb，改成白色 */
-            color: #1e2a3e;
-            line-height: 1.5;
-            padding: 20px 16px 90px 16px;
-            max-width: 500px;
-            margin: 0 auto;
+            background-color: #f5f4f2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            color: #2e2c29;
+            padding: 24px 20px 48px;
+            min-height: 100vh;
         }
 
-        .header {
+        .app, .page-container {
+            max-width: 960px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* 头部区域：标题 + 设置按钮 */
+        .header-row {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            margin-bottom: 24px;
+            margin-bottom: 12px;
             flex-wrap: wrap;
-        }
-       .week-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #0f172a;
-    letter-spacing: -0.3px;
-    cursor: pointer;  /* 添加手指光标 */
-}
-        .month {
-            font-size: 15px;
-            font-weight: 500;
-            color: #5b6e8c;
-            margin-left: 5px;
-        }
-        .header-icons {
-            display: flex;
             gap: 12px;
         }
-        .icon-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: #ffffff;
+        .header {
+            flex: 1;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 380;
+            letter-spacing: -0.5px;
+            color: #3a3834;
+        }
+        .sub {
+            font-size: 0.75rem;
+            color: #99948c;
+            margin-top: 6px;
+            font-weight: 350;
+        }
+        .settings-icon {
+            background: transparent;
+            border: 0.5px solid #d6d2cb;
+            width: 44px;
+            height: 44px;
+            border-radius: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 15px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            font-size: 1.4rem;
             cursor: pointer;
+            color: #5f5a53;
+            transition: 0.1s;
+        }
+        .settings-icon:active { background-color: #ece9e4; }
+
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 0.5px solid #d6d2cb;
+            padding: 7px 20px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 380;
+            color: #5f5a53;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .btn-outline:active { background-color: #ece9e4; }
+        .btn-outline.active {
+            background-color: #e3dfd9;
+            border-color: #c2bcb3;
+            color: #2f2c28;
         }
 
-        .plan-group {
+        /* 两列布局 */
+        .two-columns {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .group-row {
-            display: flex;
-            gap: 14px;
+            gap: 20px;
             flex-wrap: wrap;
         }
-        .day-card {
+        .col {
             flex: 1;
-            min-width: 140px;
-            background: white;
-            border-radius: 2px;
-            overflow: hidden;
-           
-        }
-        .unscheduled-card {
-            flex: 1;
-            min-width: 140px;
-            background: white;
-            border-radius: 2px;
-            overflow: hidden;
-           
-        }
-        .day-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            
-             padding: 0px 7px 0px 14px;  /* 右边距改为10px，让+号更靠右 */
-             margin-bottom: 0px;  /* 添加这行，减少与任务列表的距离 */
-            font-weight: 600;
-            color: rgb(0, 0, 0);
-        }
-        .day-name-wrapper {
-            display: flex;
-            align-items: baseline;
-            gap: 6px;
-            padding-left: 12px;
-        }
-        .day-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #000000;
-        }
-        .day-number {
-            font-size: 14px;
-            font-weight: 600;
-            opacity: 0.9;
-             color: #ffffff;  /* 日期数字白色 */
-        }
-        .day-add-btn {
-            font-size: 22px;
-            font-weight: 100;
-            cursor: pointer;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 20px;
-            
-        }
-        .unscheduled-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0px 14px;
-            background: #eef2ff;
-            color: #1e40af;
-        }
-        .unscheduled-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-left: 8px;
-        }
-        .unscheduled-text {
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .unscheduled-add {
-            font-size: 24px;
-            cursor: pointer;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 20px;
-           
-        }
-    .tasks {
-    padding: 0px 0 0px 0;
-    min-height: 100px;  /* 最小高度100px，空白时也有高度 */
-    /* 不设 height，让内容自动撑开 */
-}
-      .task-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0px 0;           /* 上下内边距控制背景条高度 */
-    margin: 4px 10px;         /* 上下外边距控制任务间距 */
-    border-radius: 10px;
-    cursor: pointer;
-    background: transparent;   /* 背景透明，不要颜色 */
-}
-        .task-item:hover {
-            background: transparent;  /* 或者改成浅一点的颜色 #f8fafc */
-        }
-        .task-left {
-            display: flex;
-            align-items: center;
-            gap: 0px;
-            flex: 1;
-            justify-content: flex-start;
-        }
-        .task-text {
-            font-size: 12px;
-            font-weight: 500;
-            color: #1e293b;
-            word-break: break-word;
-            flex: 1;
-        }
-
-        /* 新增：已完成任务的文字样式 */
-.task-item .task-checkbox.completed + .task-left .task-text,
-.task-item.completed .task-text {
-    text-decoration: line-through;
-    color: #94a3b8;
-}
-
-   /* 修改前 */
-.task-tag {
-    font-size: 14px;
-    padding: 2px 6px;
-    border-radius: 20px;
-    white-space: nowrap;
-    font-weight: 500;
-    min-width: 28px;
-    line-height: 1;  
-    text-align: center;
-}
-.task-tag[data-tag="学习"] { background: #d9e6f5; color: #4a6a8b; }
-.task-tag[data-tag="生活"] { background: #f5e0e8; color: #9b6b7c; }
-.task-tag[data-tag="育儿"] { background: #e0f0e5; color: #5c8b6f; }
-.task-tag[data-tag="重要"] { background: #e6e0f0; color: #7a6a9e; }
-
-/* 修改后：去掉背景和圆框 */
-.task-tag {
-    font-size: 14px;
-    padding: 0;
-    white-space: nowrap;
-    font-weight: 500;
-    background: transparent !important;
-}
-.task-tag[data-tag="学习"] { background: transparent; color: #4a6a8b; }
-.task-tag[data-tag="生活"] { background: transparent; color: #9b6b7c; }
-.task-tag[data-tag="育儿"] { background: transparent; color: #5c8b6f; }
-.task-tag[data-tag="重要"] { background: transparent; color: #7a6a9e; }
-     
-        .task-checkbox {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 2px solid #cbd5e1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            background: white;
-            flex-shrink: 0;
-            margin-left: 8px;
-        }
-/* 修改后：完成后隐藏边框和背景，只显示灰色勾 */
-.task-checkbox.completed {
-    background: transparent;
-    border: none;  /* 去掉边框 */
-}
-
-.task-checkbox.completed::after {
-    content: '✓';
-    font-size: 14px;
-font-family: '微软雅黑', 'Microsoft YaHei', 'Segoe UI', sans-serif;
-    color: #94a3b8;
-}
-        .empty-tasks {
-            text-align: center;
-            padding: 18px 12px;
-            color: #94a3b8;
-            font-size: 13px;
-            cursor: pointer;
-        }
-       /* 修改后（纯色，去掉渐变） */
-/* 修改后（更暗的版本） */
-/* 稍微变暗一点点的版本 */
-.monday-bg { background: #FA8C57; }
-.tuesday-bg { background: #D0E1AA; }
-.wednesday-bg { background: #ABD7FA; }
-.thursday-bg { background: #f8e4ac; }
-.friday-bg { background: #FBCDB3; }
-.saturday-bg { background: #fcdee1; }
-.sunday-bg { background: #C5C58F; }
-.bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255,255,255,0.96);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0 18px;
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
-            max-width: 500px;
-            margin: 0 auto;
-            border-top: 0.5px solid #e2e8f0;
-        }
-        .nav-item {
+            min-width: 180px;
             display: flex;
             flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 一级分类卡片 */
+        .primary-cat {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 0.5px solid #e8e4df;
+            overflow: hidden;
+        }
+        .primary-header {
+            display: flex;
             align-items: center;
+            justify-content: space-between;
+            padding: 16px 18px;
             cursor: pointer;
-            padding: 4px 12px;
+            background-color: #fefdfc;
+        }
+        .primary-header:active { background-color: #f5f3ef; }
+        .primary-title {
+            font-size: 1.15rem;
+            font-weight: 450;
+            color: #3d3a36;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .collapse-icon {
+            font-size: 0.85rem;
+            color: #b0aaa1;
+            width: 20px;
+        }
+        .primary-actions { display: flex; gap: 8px; }
+        .icon-btn {
+            background: transparent;
+            border: none;
+            font-size: 0.7rem;
+            color: #8e897f;
+            cursor: pointer;
+            padding: 4px 8px;
             border-radius: 30px;
         }
-        .nav-icon { font-size: 24px; margin-bottom: 4px; }
-        .nav-text { font-size: 11px; color: #64748b; font-weight: 500; }
-        .nav-item.active .nav-text { color: #0f172a; font-weight: 600; }
+        .icon-btn:active { background-color: #eae7e1; }
+        .edit-mode-only { display: none; }
+        body.edit-mode .edit-mode-only { display: inline-flex; gap: 6px; }
 
-        .modal-overlay {
+        .secondary-area {
+            border-top: 0.5px solid #efebe6;
+            background: #ffffff;
+            padding: 14px 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .secondary-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #faf9f7;
+            border-radius: 40px;
+            padding: 8px 14px;
+            cursor: pointer;
+            border: 0.5px solid #f0ede8;
+        }
+        .secondary-item:active { background-color: #efede8; }
+        .secondary-name { font-size: 0.88rem; font-weight: 420; color: #5e5952; flex: 1; }
+        .edit-actions { display: flex; gap: 6px; }
+        .empty-sub { font-size: 0.75rem; color: #bbb4ab; text-align: center; padding: 12px 0; }
+
+        /* 句子页面 */
+        .sentence-page {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
+            width: 100%;
+            height: 100%;
+            background: #f5f4f2;
+            z-index: 1050;
+            overflow-y: auto;
             visibility: hidden;
             opacity: 0;
-            transition: visibility 0.2s, opacity 0.2s;
+            transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+            padding: 24px 20px 40px;
         }
-        .modal-overlay.active { visibility: visible; opacity: 1; }
-        .modal-container {
-            background: white;
-            width: 85%;
-            max-width: 340px;
+        .sentence-page.open { visibility: visible; opacity: 1; transition: opacity 0.2s ease; }
+        .page-container {
+            background: #ffffff;
             border-radius: 32px;
-            overflow: hidden;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
-        }
-        .modal-header {
-            padding: 20px 20px 8px 20px;
-            font-size: 20px;
-            font-weight: 700;
-            color: #0f172a;
-            border-bottom: 1px solid #f0f2f5;
-        }
-        .modal-body { padding: 20px; }
-        .input-label { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: block; }
-        .task-input {
+            padding: 28px 24px 40px;
+            border: 0.5px solid #eae6e0;
+            max-width: 960px;
+            margin: 0 auto;
             width: 100%;
-            padding: 14px 16px;
-            border: 1.5px solid #e2e8f0;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #efebe5;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .page-title { font-size: 1.5rem; font-weight: 420; color: #3d3a36; }
+        .back-btn { background: transparent; border: none; font-size: 0.85rem; color: #9b958c; cursor: pointer; padding: 6px 12px; border-radius: 40px; }
+        .sentence-list-page {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 16px 0 28px;
+            min-height: 280px;
+        }
+        /* 句子卡片 - 可点击弹出操作菜单 */
+        .sentence-card {
+            padding: 16px 20px;
+            background: #fefcf9;
             border-radius: 24px;
-            font-size: 16px;
-            margin-bottom: 20px;
+            border: 0.5px solid #efebe6;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #3c3935;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.1s;
         }
-        .task-input:focus { border-color: #3b82f6; outline: none; }
-        .tag-selector { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
-        .tag-option {
-            background: #f1f5f9;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-size: 13px;
-            font-weight: 500;
+        .sentence-card:active { background-color: #f3f1ed; }
+        .sentence-index {
+            font-size: 0.85rem;
+            font-weight: 450;
+            color: #b8b0a4;
+            min-width: 36px;
+        }
+        .sentence-text { flex: 1; }
+        .empty-placeholder { text-align: center; padding: 48px 20px; color: #bbb3a8; font-size: 0.8rem; }
+        .add-form {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            padding-top: 20px;
+            border-top: 0.5px solid #efebe6;
+        }
+        .add-form input { flex: 1; padding: 12px 16px; border: 0.5px solid #e0dbd3; border-radius: 60px; font-size: 0.85rem; background: #ffffff; }
+        .small-round-btn { background: #efede8; border: none; padding: 8px 22px; border-radius: 40px; font-size: 0.75rem; color: #56524b; cursor: pointer; }
+
+        /* 浮动菜单 (点击句子后弹出) */
+        .action-menu {
+            position: fixed;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+            border: 0.5px solid #e8e4df;
+            padding: 8px 0;
+            min-width: 140px;
+            z-index: 1200;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.1s;
+        }
+        .action-menu.active { visibility: visible; opacity: 1; }
+        .action-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            font-size: 0.85rem;
+            color: #3d3a36;
             cursor: pointer;
         }
-        .tag-option.active { background: #3b82f6; color: white; }
-        .modal-actions { display: flex; gap: 12px; margin-top: 8px; }
-        .modal-btn { flex: 1; text-align: center; padding: 12px; border-radius: 40px; font-weight: 600; cursor: pointer; }
-        .modal-cancel { background: #f1f5f9; color: #475569; }
-        .modal-confirm { background: #0f172a; color: white; }
-        .content-padding { padding-bottom: 20px; }
-        
-        /* 统计卡片样式 - 每行2个，高度100px */
-        /* 统计卡片样式 - 和主界面卡片尺寸统一 */
-.stats-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    margin-top: 8px;
-}
-.stat-card {
-    flex: 1;
-    min-width: calc(50% - 7px);
-    max-width: calc(50% - 7px);
-    background: white;
-    border-radius: 2px;  /* 和主界面卡片一样 */
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);  /* 和主界面卡片一样 */
-    height: 100px;
-    display: flex;
-    flex-direction: column;
-}
-        .stat-card-header {
-            padding: 8px 12px;
-            font-weight: 600;
-            font-size: 14px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .stat-card-tasks {
-            flex: 1;
-            overflow-y: auto;
-            padding: 6px 10px;
-            font-size: 11px;
-        }
-        .stat-task-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            border-bottom: 1px solid #f0f2f5;
-            font-size: 11px;
-        }
-        .stat-task-text {
-            color: #1e293b;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100px;
-        }
-        .stat-task-time {
-            color: #94a3b8;
-            font-size: 10px;
-            white-space: nowrap;
-        }
-        .stat-empty {
-            color: #94a3b8;
-            font-size: 11px;
-            text-align: center;
-            padding: 12px 0;
-        }
-        .stats-header-bar {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .back-btn {
-            font-size: 28px;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
+        .action-menu button:active { background-color: #f5f3ef; }
+
+        /* 设置模态框 */
+        .settings-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(2px);
+            z-index: 1300;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.15s;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        .settings-modal.active { visibility: visible; opacity: 1; }
+        .settings-card {
             background: white;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            width: 90%;
+            max-width: 400px;
+            border-radius: 40px;
+            padding: 28px 24px;
+            border: 0.5px solid #eae6e0;
         }
-        .stats-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #0f172a;
+        .settings-card h3 { font-weight: 420; margin-bottom: 20px; }
+        .settings-card input { width: 100%; padding: 12px; border: 0.5px solid #ddd8d0; border-radius: 60px; margin: 12px 0; }
+        .settings-card button { margin-top: 8px; width: 100%; padding: 10px; border-radius: 60px; background: #efede8; border: none; cursor: pointer; }
+        .status-msg { font-size: 0.75rem; color: #8f8a82; margin-top: 12px; text-align: center; }
+        .print-fab {
+            position: fixed; bottom: 24px; right: 24px; width: 50px; height: 50px;
+            background: #e2ded7; border-radius: 60px; display: flex; align-items: center;
+            justify-content: center; cursor: pointer; border: 0.5px solid #cec7be;
+            color: #5c574f; font-size: 22px; z-index: 1100;
         }
+        .modal-mask, .dialog-card { position: fixed; z-index: 1250; }
+        .modal-mask { top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.15);backdrop-filter:blur(2px);visibility:hidden;opacity:0;transition:0.15s; }
+        .modal-mask.active { visibility:visible;opacity:1; }
+        .dialog-card { top:50%;left:50%;transform:translate(-50%,-50%);background:white;width:280px;max-width:85%;padding:24px 20px;border-radius:36px;text-align:center;visibility:hidden;opacity:0;transition:0.1s; }
+        .dialog-card.active { visibility:visible;opacity:1; }
+        .dialog-card input { width:100%;padding:12px;margin:16px 0;border:0.5px solid #ddd8d0;border-radius:60px; }
+        @media (max-width:680px) { .two-columns { flex-direction: column; } .col { width:100%; } }
+        @media print { body * { visibility:hidden; } .app, .sentence-page, .sentence-page * { visibility:visible; } .sentence-page { position:relative; opacity:1; background:white; } .toolbar,.print-fab,.settings-modal,.action-menu{ display:none; } }
     </style>
 </head>
 <body>
-
-    <!-- 主界面 -->
-    <div id="mainApp">
+<div class="app">
+    <div class="header-row">
         <div class="header">
-            <div class="week-title">
-                <span>≡ 第<span id="weekNumber">15</span>周</span>
-                <span class="month" id="monthDisplay">4月</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="week-nav-btn" id="prevWeekBtn" style="width: 32px; height: 32px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 18px; font-weight: 600;"><</div>
-                <div class="week-nav-btn" id="nextWeekBtn" style="width: 32px; height: 32px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 18px; font-weight: 600;">></div>
-                <div class="icon-btn">👀</div>
-                <div class="icon-btn">📋</div>
-            </div>
+            <h1>拾句·集藏</h1>
+            <div class="sub">素简字句 · 静默收录</div>
         </div>
-
-        <div class="plan-group">
-            <div class="group-row">
-                <div class="unscheduled-card" data-card-type="unscheduled" data-day-key="unscheduled">
-                    <div class="unscheduled-header">
-                        <div class="unscheduled-left">
-                            <span class="unscheduled-text">未排期</span>
-                        </div>
-                        <div class="unscheduled-add">+</div>
-                    </div>
-                    <div class="tasks" id="tasks-unscheduled"></div>
-                </div>
-                <div class="day-card" data-card-type="day" data-day-key="monday">
-                    <div class="day-header monday-bg">
-                        <div class="day-name-wrapper"><span class="day-name">周一</span><span class="day-number">6</span></div>
-                        <div class="day-add-btn">+</div>
-                    </div>
-                    <div class="tasks" id="tasks-monday"></div>
-                </div>
-            </div>
-            <div class="group-row">
-                <div class="day-card" data-card-type="day" data-day-key="tuesday">
-                    <div class="day-header tuesday-bg">
-                        <div class="day-name-wrapper"><span class="day-name">周二</span><span class="day-number">7</span></div>
-                        <div class="day-add-btn">+</div>
-                    </div>
-                    <div class="tasks" id="tasks-tuesday"></div>
-                </div>
-                <div class="day-card" data-card-type="day" data-day-key="wednesday">
-                    <div class="day-header wednesday-bg">
-                        <div class="day-name-wrapper"><span class="day-name">周三</span><span class="day-number">8</span></div>
-                        <div class="day-add-btn">+</div>
-                    </div>
-                    <div class="tasks" id="tasks-wednesday"></div>
-                </div>
-            </div>
-            <div class="group-row">
-                <div class="day-card" data-card-type="day" data-day-key="thursday">
-                    <div class="day-header thursday-bg">
-                        <div class="day-name-wrapper"><span class="day-name">周四</span><span class="day-number">9</span></div>
-                        <div class="day-add-btn">+</div>
-                    </div>
-                    <div class="tasks" id="tasks-thursday"></div>
-                </div>
-                <div class="day-card" data-card-type="day" data-day-key="friday">
-                    <div class="day-header friday-bg">
-                        <div class="day-name-wrapper"><span class="day-name">周五</span><span class="day-number">10</span></div>
-                        <div class="day-add-btn">+</div>
-                    </div>
-                    <div class="tasks" id="tasks-friday"></div>
-                </div>
-            </div>
-            <div class="group-row">
-                <div class="day-card" data-card-type="day" data-day-key="saturday">
-                    <div class="day-header saturday-bg">
-                        <div class="day-name-wrapper"><span class="day-name">周六</span><span class="day-number">11</span></div>
-                        <div class="day-add-btn">+</div>
-                    </div>
-                    <div class="tasks" id="tasks-saturday"></div>
-                </div>
-                <div class="day-card" data-card-type="day" data-day-key="sunday">
-                    <div class="day-header sunday-bg">
-                        <div class="day-name-wrapper"><span class="day-name">周天</span><span class="day-number">12</span></div>
-                        <div class="day-add-btn">+</div>
-                    </div>
-                    <div class="tasks" id="tasks-sunday"></div>
-                </div>
-            </div>
-        </div>
-        <div class="content-padding"></div>
+        <div id="settingsBtn" class="settings-icon">⚙️</div>
     </div>
-
- <!-- 标签统计全屏界面 -->
-<div id="statsPage" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f5f7fb; z-index: 3000; overflow-y: auto; padding: 20px 16px;">
-    <div class="stats-header-bar" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-    <div class="back-btn" id="backFromStatsBtn" style="font-size: 28px; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">←</div>
-    <div class="stats-title" style="font-size: 24px; font-weight: 700; color: #0f172a;">📊 标签完成统计</div>
-    <div style="display: flex; gap: 8px;">
-        <div class="archive-list-btn" id="showArchivedBtn" style="cursor: pointer; font-size: 20px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">📦</div>
-        <div class="add-tag-btn" id="addTagFromStatsBtn" style="cursor: pointer; font-size: 24px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">+</div>
+    <div class="toolbar">
+        <button id="addPrimaryBtn" class="btn-outline">+ 新增类别</button>
+        <button id="toggleEditBtn" class="btn-outline">编辑模式</button>
     </div>
+    <div id="categoriesContainer" class="two-columns"></div>
 </div>
-    <div id="statsPageContent" class="stats-grid"></div>
+<button class="print-fab" id="printBtn">🖨️</button>
 
-<!-- 归档任务弹窗 -->
-<div id="archivedModal" class="modal-overlay">
-    <div class="modal-container" style="max-width: 380px;">
-        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>📦 归档任务</span>
-            <div id="closeArchivedBtn" style="cursor: pointer; font-size: 24px;">&times;</div>
-        </div>
-        <div class="modal-body" id="archivedContent" style="max-height: 60vh; overflow-y: auto;">
-            <!-- 动态显示归档任务 -->
-        </div>
+<!-- 句子页面 -->
+<div id="sentencePage" class="sentence-page">
+    <div class="page-container">
+        <div class="page-header"><span class="page-title" id="pageCategoryTitle">——</span><button class="back-btn" id="closePageBtn">← 返回</button></div>
+        <div id="sentencePageList" class="sentence-list-page"></div>
+        <div class="add-form"><input type="text" id="pageSentenceInput" placeholder="写下一句好词好句..."><button id="pageAddSentenceBtn" class="small-round-btn">留存</button></div>
     </div>
 </div>
 
+<!-- 句子操作浮动菜单 (删除/编辑/复制) -->
+<div id="actionMenu" class="action-menu"><button id="menuEdit">✏️ 编辑</button><button id="menuDelete">🗑️ 删除</button><button id="menuCopy">📋 复制</button></div>
 
-<!-- 标签编辑弹窗 -->
-<div id="editTagModal" class="modal-overlay">
-    <div class="modal-container">
-        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>🏷️ 编辑标签</span>
-            <div id="archiveTagBtn" style="cursor: pointer; font-size: 14px; color: #64748b; padding: 4px 12px; border-radius: 20px; background: #f1f5f9;">📦 归档</div>
-        </div>
-        <div class="modal-body">
-            <div class="input-label">标签名称</div>
-            <input type="text" id="editTagName" class="task-input" placeholder="标签名称">
-            <div class="input-label">标签颜色</div>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
-                <div class="edit-color-option" data-color="#d9e6f5" style="width: 40px; height: 40px; background: #d9e6f5; border-radius: 50%; cursor: pointer; border: 2px solid transparent;"></div>
-                <div class="edit-color-option" data-color="#f5e0e8" style="width: 40px; height: 40px; background: #f5e0e8; border-radius: 50%; cursor: pointer;"></div>
-                <div class="edit-color-option" data-color="#e0f0e5" style="width: 40px; height: 40px; background: #e0f0e5; border-radius: 50%; cursor: pointer;"></div>
-                <div class="edit-color-option" data-color="#e6e0f0" style="width: 40px; height: 40px; background: #e6e0f0; border-radius: 50%; cursor: pointer;"></div>
-                <div class="edit-color-option" data-color="#ffe0b3" style="width: 40px; height: 40px; background: #ffe0b3; border-radius: 50%; cursor: pointer;"></div>
-            </div>
-            <div class="modal-actions">
-                <div class="modal-btn modal-cancel" id="cancelEditTagBtn">取消</div>
-                <div class="modal-btn modal-delete" id="deleteTagBtn" style="background: #fee2e2; color: #dc2626;">删除标签</div>
-                <div class="modal-btn modal-confirm" id="confirmEditTagBtn">保存</div>
-            </div>
-        </div>
-    </div>
-</div>
-    <!-- 添加新标签弹窗 - 放在 statsPage 内部 -->
-    <div id="addTagModal" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">🏷️ 添加新标签</div>
-            <div class="modal-body">
-                <div class="input-label">标签名称</div>
-                <input type="text" id="newTagName" class="task-input" placeholder="例如: 工作、运动、娱乐" autocomplete="off">
-                <div class="input-label">标签颜色</div>
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
-                    <div class="color-option" data-color="#d9e6f5" style="width: 40px; height: 40px; background: #d9e6f5; border-radius: 50%; cursor: pointer; border: 2px solid transparent;"></div>
-                    <div class="color-option" data-color="#f5e0e8" style="width: 40px; height: 40px; background: #f5e0e8; border-radius: 50%; cursor: pointer;"></div>
-                    <div class="color-option" data-color="#e0f0e5" style="width: 40px; height: 40px; background: #e0f0e5; border-radius: 50%; cursor: pointer;"></div>
-                    <div class="color-option" data-color="#e6e0f0" style="width: 40px; height: 40px; background: #e6e0f0; border-radius: 50%; cursor: pointer;"></div>
-                    <div class="color-option" data-color="#ffe0b3" style="width: 40px; height: 40px; background: #ffe0b3; border-radius: 50%; cursor: pointer;"></div>
-                </div>
-                <div class="modal-actions">
-                    <div class="modal-btn modal-cancel" id="cancelAddTagBtn">取消</div>
-                    <div class="modal-btn modal-confirm" id="confirmAddTagBtn">添加标签</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- 设置面板 -->
+<div id="settingsModal" class="settings-modal"><div class="settings-card"><h3>云端同步 · Gist</h3><input type="text" id="gistToken" placeholder="GitHub Personal Access Token"><input type="text" id="gistId" placeholder="Gist ID (可选)"><button id="syncToGist">☁️ 上传备份</button><button id="restoreFromGist">⬇️ 恢复云端</button><div id="syncStatus" class="status-msg"></div><button id="closeSettings" style="margin-top:20px;background:transparent;">关闭</button></div></div>
 
-    <!-- 新建待办弹窗 -->
-    <div id="taskModal" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">新建待办</div>
-            <div class="modal-body">
-                <div class="input-label">任务内容</div>
-                <input type="text" id="taskInput" class="task-input" placeholder="例如: 整理会议纪要" autocomplete="off">
-                <div class="input-label">标签分类</div>
-                <div class="tag-selector" id="tagSelector">
-                    <span data-tag="学习" class="tag-option">学习</span>
-                    <span data-tag="生活" class="tag-option">生活</span>
-                    <span data-tag="育儿" class="tag-option">育儿</span>
-                    <span data-tag="重要" class="tag-option">重要</span>
-                </div>
-                <div class="modal-actions">
-                    <div class="modal-btn modal-cancel" id="cancelModalBtn">取消</div>
-                    <div class="modal-btn modal-confirm" id="confirmModalBtn">添加</div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div id="modalMask" class="modal-mask"></div>
+<div id="commonDialog" class="dialog-card"><h4 id="dialogTitle">新建分类</h4><input type="text" id="dialogInput" placeholder="名称"><div class="dialog-buttons"><button id="dialogConfirmBtn" class="small-round-btn">确认</button><button id="dialogCancelBtn" class="small-round-btn">取消</button></div></div>
 
+<script>
+    // ---------- 数据结构 ----------
+    let categories = []; // [{ id, name, collapsed, children: [{ id, name, sentences:[] }] }]
+    let currentMenuContext = null; // { primaryId, secId, sentenceIndex, sentenceText }
 
-    <!-- 任务操作弹窗 -->
-    <div id="taskActionModal" class="modal-overlay">
-        <div class="modal-container" style="width: 75%; max-width: 280px;">
-            <div class="modal-header" style="padding: 16px 20px;">任务操作</div>
-            <div class="modal-body" style="padding: 8px 16px 20px;">
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <button id="taskEditBtn" style="padding: 12px; background: #f1f5f9; border: none; border-radius: 40px; font-size: 16px; font-weight: 500; cursor: pointer;">编辑</button>
-                    <button id="taskDeleteBtn" style="padding: 12px; background: #fee2e2; border: none; border-radius: 40px; font-size: 16px; font-weight: 500; cursor: pointer; color: #dc2626;">删除</button>
-                    <button id="taskCopyBtn" style="padding: 12px; background: #f1f5f9; border: none; border-radius: 40px; font-size: 16px; font-weight: 500; cursor: pointer;">复制副本</button>
-                    <button id="taskActionCancelBtn" style="padding: 10px; background: transparent; border: none; border-radius: 40px; font-size: 14px; cursor: pointer; color: #94a3b8;">取消</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    function genId() { return Date.now() + '-' + Math.random().toString(36).substring(2, 8); }
 
-    <!-- 标签筛选弹窗 -->
-    <div id="filterModal" class="modal-overlay filter-modal">
-        <div class="modal-container" style="width: 200px;">
-            <div class="modal-header" style="padding: 16px; text-align: center;">筛选标签</div>
-            <div class="modal-body" style="padding: 8px 16px 20px;">
-                <div class="filter-option" data-filter="all">全部任务</div>
-                <div class="filter-option" data-filter="学习">📖 学习</div>
-                <div class="filter-option" data-filter="生活">🏠 生活</div>
-                <div class="filter-option" data-filter="育儿">👧🏻 育儿</div>
-                <div class="filter-option" data-filter="重要">⭐ 重要</div>
-            </div>
-        </div>
-    </div>
+    // 默认数据
+    const defaultRaw = [
+        { id: genId(), name: "天气", collapsed: true, children: [{ id: genId(), name: "晴", sentences: ["晴空一鹤排云上，便引诗情到碧霄。","阳光清澈，万物可亲。"] },{ id: genId(), name: "雨", sentences: ["梧桐更兼细雨，到黄昏点点滴滴。","雨声潺潺，像住在溪边。"] },{ id: genId(), name: "雪", sentences: ["忽如一夜春风来，千树万树梨花开。","雪落无声，洗净尘嚣。"] },{ id: genId(), name: "风", sentences: ["吹面不寒杨柳风。","风声低语，穿堂而过。"] },{ id: genId(), name: "阴", sentences: ["霭霭停云，濛濛时雨。","天色沉静，内心安宁。"] }] },
+        { id: genId(), name: "天空", collapsed: true, children: [{ id: genId(), name: "太阳", sentences: ["日出江花红胜火。","太阳温柔沉没，余晖浸染。"] },{ id: genId(), name: "月亮", sentences: ["但愿人长久，千里共婵娟。","月色如水，照见孤影。"] },{ id: genId(), name: "星星", sentences: ["星垂平野阔。","满天星光，微芒不灭。"] },{ id: genId(), name: "云朵", sentences: ["云想衣裳花想容。","云朵舒卷，自在如风。"] },{ id: genId(), name: "彩虹", sentences: ["彩虹横跨，片刻绚烂。"] }] },
+        { id: genId(), name: "植物", collapsed: true, children: [{ id: genId(), name: "花", sentences: ["花开堪折直须折。","花朵不语，自有芬芳。"] },{ id: genId(), name: "树", sentences: ["树深时见鹿。","一棵树的沉默与生长。"] },{ id: genId(), name: "草", sentences: ["离离原上草。","野草坚韧，枯荣有时。"] },{ id: genId(), name: "果子", sentences: ["梅子金黄杏子肥。","果实坠枝，秋意饱满。"] },{ id: genId(), name: "叶子", sentences: ["一叶落而知秋。"] }] },
+        { id: genId(), name: "动物", collapsed: true, children: [{ id: genId(), name: "猫", sentences: ["猫步轻悄，悠然自得。","午后的猫，蜷成句号。"] },{ id: genId(), name: "狗", sentences: ["忠犬无声，陪伴长情。"] },{ id: genId(), name: "鱼", sentences: ["相濡以沫，不如相忘于江湖。"] },{ id: genId(), name: "鸟", sentences: ["山光悦鸟性。","飞鸟掠过，不留痕迹。"] },{ id: genId(), name: "虫", sentences: ["夏虫不可语冰。","虫鸣织夜，细碎热闹。"] }] },
+        { id: genId(), name: "心情", collapsed: true, children: [{ id: genId(), name: "开心", sentences: ["春风得意马蹄疾。","心底有光，眉目舒展。"] },{ id: genId(), name: "难过", sentences: ["此情无计可消除。","眼泪是沉默的雨。"] },{ id: genId(), name: "生气", sentences: ["怒发冲冠凭栏处。"] },{ id: genId(), name: "害怕", sentences: ["战战兢兢，如临深渊。"] }] },
+        { id: genId(), name: "四季", collapsed: true, children: [{ id: genId(), name: "春", sentences: ["春水初生，春林初盛。"] },{ id: genId(), name: "夏", sentences: ["绿树阴浓夏日长。"] },{ id: genId(), name: "秋", sentences: ["秋水共长天一色。"] },{ id: genId(), name: "冬", sentences: ["冬宜密雪，有碎玉声。"] }] },
+        { id: genId(), name: "自然", collapsed: true, children: [{ id: genId(), name: "水", sentences: ["上善若水。","流水不争先。"] },{ id: genId(), name: "山", sentences: ["会当凌绝顶。","山静无言。"] }] }
+    ];
 
-    <!-- 编辑任务弹窗 -->
-    <div id="editTaskModal" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">编辑任务</div>
-            <div class="modal-body">
-                <div class="input-label">任务内容</div>
-                <input type="text" id="editTaskInput" class="task-input" placeholder="例如: 整理会议纪要" autocomplete="off">
-                <div class="input-label">标签分类</div>
-                <div class="tag-selector" id="editTagSelector">
-                    <span data-tag="学习" class="tag-option">学习</span>
-                    <span data-tag="生活" class="tag-option">生活</span>
-                    <span data-tag="育儿" class="tag-option">育儿</span>
-                    <span data-tag="重要" class="tag-option">重要</span>
-                </div>
-                <div class="modal-actions">
-                    <div class="modal-btn modal-cancel" id="cancelEditBtn">取消</div>
-                    <div class="modal-btn modal-confirm" id="confirmEditBtn">保存</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 左侧弹窗遮罩 -->
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <!-- 左侧弹窗 -->
-    <div id="sidebarModal" class="sidebar-modal">
-        <div class="sidebar-header">
-            ⚙️ 设置
-        </div>
-       <div class="sidebar-content">
-    <div class="setting-item" id="statsEntryBtn" style="cursor: pointer;">
-        <span class="setting-label">📊 标签统计</span>
-        <span style="font-size: 18px; color: #FA8C57;">›</span>
-    </div>
-    <div class="setting-item">
-        <span class="setting-label">🎨 待办背景色</span>
-        <label class="switch">
-            <input type="checkbox" id="taskBgToggle">
-            <span class="slider"></span>
-        </label>
-    </div>
-    <!-- 新增功能按钮 -->
-    <div class="setting-item" id="backupNowBtn" style="cursor: pointer;">
-        <span class="setting-label">💾 立即备份</span>
-        <span style="font-size: 16px; color: #FA8C57;">›</span>
-    </div>
-    <div class="setting-item" id="exportDataBtn" style="cursor: pointer;">
-        <span class="setting-label">📤 导出数据</span>
-        <span style="font-size: 16px; color: #FA8C57;">›</span>
-    </div>
-    <div class="setting-item" id="importDataBtn" style="cursor: pointer;">
-        <span class="setting-label">📥 导入数据</span>
-        <span style="font-size: 16px; color: #FA8C57;">›</span>
-    </div>
-    <div class="setting-item" id="cloudSyncBtn" style="cursor: pointer;">
-    <span class="setting-label">⚙️ 云端设置</span>
-    <span style="font-size: 16px; color: #FA8C57;">›</span>
-</div>
-<div class="setting-item" id="cloudUploadBtn" style="cursor: pointer;">
-    <span class="setting-label">☁️ 云端同步</span>
-    <span style="font-size: 16px; color: #FA8C57;">›</span>
-</div>
-    <div class="setting-item" id="cloudRestoreBtn" style="cursor: pointer;">
-        <span class="setting-label">🔄 云端恢复</span>
-        <span style="font-size: 16px; color: #FA8C57;">›</span>
-    </div>
-</div>
-    </div>
-
-    <!-- GitHub Gist 设置弹窗 -->
-<div id="gistModal" class="modal-overlay">
-    <div class="modal-container">
-        <div class="modal-header">☁️ GitHub Gist 设置</div>
-        <div class="modal-body">
-            <div class="input-label">GitHub Token</div>
-            <input type="password" id="githubToken" class="task-input" placeholder="输入 GitHub Personal Access Token">
-            <div class="input-label">Gist ID（必填，从 GitHub Gist 获取）</div>
-            <input type="text" id="gistId" class="task-input" placeholder="留空自动创建新 Gist">
-            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">
-                <a href="https://github.com/settings/tokens" target="_blank" style="color: #FA8C57;">👉 获取 Token（需要 gist 权限）</a>
-            </div>
-            <div class="modal-actions">
-                <div class="modal-btn modal-cancel" id="cancelGistBtn">取消</div>
-                <div class="modal-btn modal-confirm" id="saveGistBtn">保存设置</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 导入数据弹窗 -->
-<div id="importModal" class="modal-overlay">
-    <div class="modal-container">
-        <div class="modal-header">📥 导入数据</div>
-        <div class="modal-body">
-            <div class="input-label">选择备份文件</div>
-            <input type="file" id="importFile" accept=".json" style="margin-bottom: 20px; width: 100%;">
-            <div class="modal-actions">
-                <div class="modal-btn modal-cancel" id="cancelImportBtn">取消</div>
-                <div class="modal-btn modal-confirm" id="confirmImportBtn">导入</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-    <script>
-        (function() {
-            // 数据存储
-            const tasksDB = {
-                unscheduled: [], monday: [], tuesday: [], wednesday: [],
-                thursday: [], friday: [], saturday: [], sunday: []
-            };
-            let hideCompleted = false;
-            let activeCardKey = null;
-            let selectedTag = '生活';
-            let currentYear = 2026;
-            let currentMonth = 4;
-            let currentWeek = 15;
-            let archivedTags = []; // 存储已归档的标签名称
-            let currentFilter = 'all';
-            let customTags = []; // 存储自定义标签
-            let taskBgEnabled = false;
-let archivedTasks = []; // 存储归档的任务 { id, text, tag, completedTime, archivedTime }
-            // 标签颜色映射
-            const tagColors = {
-                '学习': '#ABD7FA',
-                '生活': '#FBCDB3',
-                '育儿': '#D0E1AA',
-                '重要': '#FA8C57'
-            };
-
-            function getWeekDates(year, weekNum) {
-                const baseDate = new Date(2026, 3, 6);
-                const daysOffset = (weekNum - 15) * 7;
-                const monday = new Date(2026, 3, 6 + daysOffset);
-                return {
-                    monday: monday.getDate(),
-                    tuesday: monday.getDate() + 1,
-                    wednesday: monday.getDate() + 2,
-                    thursday: monday.getDate() + 3,
-                    friday: monday.getDate() + 4,
-                    saturday: monday.getDate() + 5,
-                    sunday: monday.getDate() + 6,
-                    month: monday.getMonth() + 1
-                };
-            }
-
-            function updateWeekDates() {
-                const dates = getWeekDates(currentYear, currentWeek);
-                document.querySelector('.day-card[data-day-key="monday"] .day-number').innerText = dates.monday;
-                document.querySelector('.day-card[data-day-key="tuesday"] .day-number').innerText = dates.tuesday;
-                document.querySelector('.day-card[data-day-key="wednesday"] .day-number').innerText = dates.wednesday;
-                document.querySelector('.day-card[data-day-key="thursday"] .day-number').innerText = dates.thursday;
-                document.querySelector('.day-card[data-day-key="friday"] .day-number').innerText = dates.friday;
-                document.querySelector('.day-card[data-day-key="saturday"] .day-number').innerText = dates.saturday;
-                document.querySelector('.day-card[data-day-key="sunday"] .day-number').innerText = dates.sunday;
-                document.getElementById('weekNumber').innerText = currentWeek;
-                document.getElementById('monthDisplay').innerText = dates.month + '月';
-                
-                const weekTitle = document.querySelector('.week-title');
-                const existingDot = document.querySelector('.week-dot');
-                if (existingDot) existingDot.remove();
-                if (currentWeek === 15) {
-                    const dot = document.createElement('span');
-                    dot.className = 'week-dot';
-                    dot.innerHTML = ' ●';
-                    dot.style.color = '#ef4444';
-                    dot.style.fontSize = '20px';
-                    dot.style.marginLeft = '6px';
-                    dot.style.verticalAlign = 'middle';
-                    weekTitle.appendChild(dot);
-                }
-            }
-
-            function goPrevWeek() { currentWeek--; updateWeekDates(); }
-            function goNextWeek() { currentWeek++; updateWeekDates(); }
-
-            function escapeHtml(str) {
-                return str.replace(/[&<>]/g, function(m) {
-                    if(m === '&') return '&amp;';
-                    if(m === '<') return '&lt;';
-                    if(m === '>') return '&gt;';
-                    return m;
-                });
-            }
-
-           function renderTasks(cardKey) {
-    const tasksContainer = document.getElementById(`tasks-${cardKey}`);
-    if (!tasksContainer) return;
-    let tasks = tasksDB[cardKey] || [];
-    if (hideCompleted) tasks = tasks.filter(task => !task.completed);
-    if (currentFilter !== 'all') tasks = tasks.filter(task => task.tag === currentFilter);
-    if (tasks.length === 0) {
-        tasksContainer.innerHTML = ``;
-        return;
+    function loadData() {
+        const stored = localStorage.getItem('dual_column_quote_hub');
+        if(stored) { try { categories = JSON.parse(stored); categories.forEach(c => { if(c.collapsed === undefined) c.collapsed = true; }); if(!categories.length) throw new Error(); } catch(e) { categories = JSON.parse(JSON.stringify(defaultRaw)); } } 
+        else { categories = JSON.parse(JSON.stringify(defaultRaw)); }
+        renderMain();
     }
-    const tagEmoji = { '学习': '📖', '生活': '🏠', '育儿': '👧🏻', '重要': '⭐' };
-   
-    let html = '';
-    tasks.forEach(task => {
-        const tagDisplay = task.tag ? `<span class="task-tag" data-tag="${task.tag}">${tagEmoji[task.tag] || task.tag}</span>` : '';
-        const checkedClass = task.completed ? 'completed' : '';
-        const textClass = task.completed ? 'task-text completed-text' : 'task-text';
-        // 根据开关和标签决定背景色
-        let bgStyle = '';
-        if (taskBgEnabled && task.tag && !task.completed) {
-            bgStyle = `style="background: ${tagBgColors[task.tag]} !important; border-radius: 10px;"`;
-        } else if (taskBgEnabled && !task.completed) {
-            bgStyle = `style="background: #fff7ed !important; border-radius: 10px;"`;
-        }
-        html += `
-            <div class="task-item" ${bgStyle} data-task-id="${task.id}" data-card-key="${cardKey}">
-                <div class="task-left">
-                    ${tagDisplay}
-                    <span class="${textClass}">${escapeHtml(task.text)}</span>
-                </div>
-                <div class="task-checkbox ${checkedClass}" data-task-id="${task.id}" data-card-key="${cardKey}"></div>
-            </div>
-        `;
-    });
-    tasksContainer.innerHTML = html;
-}
-            function renderAll() {
-                Object.keys(tasksDB).forEach(key => renderTasks(key));
-            }
+    function saveData() { localStorage.setItem('dual_column_quote_hub', JSON.stringify(categories)); }
 
-            function addTaskToCard(cardKey, taskText, tag) {
-                if (!taskText.trim()) {
-                    alert('请填写任务内容');
-                    return false;
-                }
-                const newTask = {
-                    id: Date.now() + Math.random() * 10000,
-                    text: taskText.trim(),
-                    completed: false,
-                    tag: tag,
-                    completedTime: null
-                };
-                tasksDB[cardKey].push(newTask);
-                renderTasks(cardKey);
-                return true;
-            }
+    function splitIntoColumns(arr) { const left=[], right=[]; arr.forEach((item,idx)=>{ if(idx%2===0) left.push(item); else right.push(item); }); return {left,right}; }
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m=> m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
 
-            function toggleTaskComplete(cardKey, taskId) {
-                const task = tasksDB[cardKey].find(t => t.id == taskId);
-                if (task) {
-                    task.completed = !task.completed;
-                    if (task.completed) {
-                        task.completedTime = Date.now();
-                    } else {
-                        task.completedTime = null;
-                    }
-                    renderTasks(cardKey);
-                }
-            }
-
-            function deleteTaskById(cardKey, taskId) {
-                const idx = tasksDB[cardKey].findIndex(t => t.id == taskId);
-                if (idx !== -1) {
-                    tasksDB[cardKey].splice(idx, 1);
-                    renderTasks(cardKey);
-                }
-            }
-
-function renderStatsPage() {
-    // 获取所有标签，排除已归档的标签
-    const allActiveTags = ['学习', '生活', '育儿', '重要', ...customTags.map(t => t.name)].filter(tag => !archivedTags.includes(tag));
-    let html = '';
-    for (let tag of allActiveTags) {
-        const completedTasks = [];
-        for (let key in tasksDB) {
-            tasksDB[key].forEach(task => {
-                if (task.tag === tag && task.completed === true && task.completedTime) {
-                    completedTasks.push({ text: task.text, time: task.completedTime });
-                }
-            });
-        }
-        completedTasks.sort((a, b) => b.time - a.time);
-        const bgColor = tagColors[tag] || tagBgColors[tag] || '#e2e8f0';
-        html += `
-            <div class="stat-card" data-tag="${tag}" style="cursor: pointer;">
-                <div class="stat-card-header" style="background: ${bgColor};">
-                    <span>🏷️ ${tag}</span>
-                    <span>✓ ${completedTasks.length}</span>
-                </div>
-                <div class="stat-card-tasks">
-        `;
-        if (completedTasks.length === 0) {
-            html += `<div class="stat-empty">暂无已完成任务</div>`;
-        } else {
-            completedTasks.forEach(task => {
-                const timeStr = new Date(task.time).toLocaleString('zh-CN', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
-                html += `
-                    <div class="stat-task-row">
-                        <span class="stat-task-text" title="${escapeHtml(task.text)}">${escapeHtml(task.text)}</span>
-                        <span class="stat-task-time">${timeStr}</span>
-                    </div>
-                `;
-            });
-        }
-        html += `</div></div>`;
+    function renderMain() {
+        const container = document.getElementById('categoriesContainer'); if(!container) return;
+        const isEditMode = document.body.classList.contains('edit-mode');
+        if(categories.length===0) { container.innerHTML='<div class="empty-placeholder">暂无分类</div>'; return; }
+        const {left,right}=splitIntoColumns(categories);
+        const renderCol = (items) => items.map(primary=>{
+            const collapsed=primary.collapsed; const icon=collapsed?'▶':'▼';
+            const childrenHtml = !collapsed ? `<div class="secondary-area">${primary.children?.length ? primary.children.map(sec=>`
+                <div class="secondary-item" data-pid="${primary.id}" data-secid="${sec.id}" data-secname="${escapeHtml(sec.name)}">
+                    <span class="secondary-name">${escapeHtml(sec.name)}</span>
+                    ${isEditMode?`<div class="edit-actions edit-mode-only"><button class="icon-btn edit-secondary" data-pid="${primary.id}" data-secid="${sec.id}">✏️</button><button class="icon-btn del-secondary" data-pid="${primary.id}" data-secid="${sec.id}">🗑️</button></div>`:''}
+                </div>`).join(''):'<div class="empty-sub">无子分类</div>'}</div>` : '';
+            return `<div class="primary-cat" data-pid="${primary.id}"><div class="primary-header" data-toggle-id="${primary.id}"><span class="primary-title"><span class="collapse-icon">${icon}</span> ${escapeHtml(primary.name)}</span><div class="primary-actions edit-mode-only"><button class="icon-btn edit-primary" data-id="${primary.id}">编辑</button><button class="icon-btn add-secondary" data-id="${primary.id}">+子类</button><button class="icon-btn del-primary" data-id="${primary.id}">删除</button></div></div>${childrenHtml}</div>`;
+        }).join('');
+        container.innerHTML=`<div class="col">${renderCol(left)}</div><div class="col">${renderCol(right)}</div>`;
+        attachMainEvents();
     }
-    document.getElementById('statsPageContent').innerHTML = html;
-}
 
-// 弹窗相关
-            const modal = document.getElementById('taskModal');
-            const taskInput = document.getElementById('taskInput');
-            const confirmBtn = document.getElementById('confirmModalBtn');
-            const cancelBtn = document.getElementById('cancelModalBtn');
-            const tagOptions = document.querySelectorAll('#tagSelector .tag-option');
-
-            let taskActionModal = null;
-            let activeTask = null;
-            let activeTaskCardKey = null;
-
-            let editModal = null;
-            let editTaskInput = null;
-            let confirmEditBtn = null;
-            let cancelEditBtn = null;
-            let editTagOptions = null;
-            let editingTask = null;
-            let editingTaskCardKey = null;
-            let editingSelectedTag = '生活';
-
-            function openModalForCard(cardKey) {
-                activeCardKey = cardKey;
-                taskInput.value = '';
-                selectedTag = '生活';
-                updateTagUI();
-                modal.classList.add('active');
-                taskInput.focus();
-            }
-
-            function closeModal() {
-                modal.classList.remove('active');
-                activeCardKey = null;
-            }
-
-            function updateTagUI() {
-                tagOptions.forEach(opt => {
-                    const tagVal = opt.getAttribute('data-tag');
-                    if (tagVal === selectedTag) opt.classList.add('active');
-                    else opt.classList.remove('active');
-                });
-            }
-
-            tagOptions.forEach(opt => {
-                opt.addEventListener('click', () => {
-                    const tagVal = opt.getAttribute('data-tag');
-                    if (tagVal) { selectedTag = tagVal; updateTagUI(); }
-                });
-            });
-
-            function handleConfirmAdd() {
-                if (!activeCardKey) { closeModal(); return; }
-                const content = taskInput.value.trim();
-                if (!content) { alert('请填写待办事项内容'); return; }
-                addTaskToCard(activeCardKey, content, selectedTag);
-                closeModal();
-            }
-
-            function bindAddButtons() {
-                const unscheduledAdd = document.querySelector('.unscheduled-add');
-                if (unscheduledAdd) {
-                    unscheduledAdd.addEventListener('click', (e) => { e.stopPropagation(); openModalForCard('unscheduled'); });
-                }
-                const dayAddBtns = document.querySelectorAll('.day-add-btn');
-                dayAddBtns.forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const dayCard = btn.closest('.day-card');
-                        if (dayCard) {
-                            const dayKey = dayCard.getAttribute('data-day-key');
-                            if (dayKey && tasksDB[dayKey] !== undefined) openModalForCard(dayKey);
-                        }
-                    });
-                });
-            }
-
-            function showTaskActionModal(cardKey, task) {
-                activeTask = task;
-                activeTaskCardKey = cardKey;
-                if (taskActionModal) taskActionModal.classList.add('active');
-            }
-
-            function closeTaskActionModal() {
-                if (taskActionModal) taskActionModal.classList.remove('active');
-                activeTask = null;
-                activeTaskCardKey = null;
-            }
-
-            function copyTask() {
-                if (!activeTask || !activeTaskCardKey) return;
-                const newTask = {
-                    id: Date.now() + Math.random() * 10000,
-                    text: activeTask.text,
-                    completed: false,
-                    tag: activeTask.tag,
-                    completedTime: null
-                };
-                tasksDB[activeTaskCardKey].push(newTask);
-                renderTasks(activeTaskCardKey);
-                closeTaskActionModal();
-            }
-
-            function deleteTask() {
-                if (!activeTask || !activeTaskCardKey) return;
-                if (confirm('确定要删除这个任务吗？')) {
-                    const idx = tasksDB[activeTaskCardKey].findIndex(t => t.id === activeTask.id);
-                    if (idx !== -1) {
-                        tasksDB[activeTaskCardKey].splice(idx, 1);
-                        renderTasks(activeTaskCardKey);
-                    }
-                }
-                closeTaskActionModal();
-            }
-
-            function openEditModal(cardKey, task) {
-                editingTask = task;
-                editingTaskCardKey = cardKey;
-                editingSelectedTag = task.tag;
-                if (editTaskInput) editTaskInput.value = task.text;
-                updateEditTagUI();
-                if (editModal) editModal.classList.add('active');
-                if (editTaskInput) editTaskInput.focus();
-            }
-
-            function closeEditModal() {
-                if (editModal) editModal.classList.remove('active');
-                editingTask = null;
-                editingTaskCardKey = null;
-            }
-
-            function updateEditTagUI() {
-                if (!editTagOptions) return;
-                editTagOptions.forEach(opt => {
-                    const tagVal = opt.getAttribute('data-tag');
-                    if (tagVal === editingSelectedTag) opt.classList.add('active');
-                    else opt.classList.remove('active');
-                });
-            }
-
-            function saveEditTask() {
-                if (!editingTask || !editingTaskCardKey) return;
-                const newText = editTaskInput ? editTaskInput.value.trim() : '';
-                if (!newText) { alert('请填写任务内容'); return; }
-                editingTask.text = newText;
-                editingTask.tag = editingSelectedTag;
-                renderTasks(editingTaskCardKey);
-                closeEditModal();
-            }
-
-            function editTask() {
-                const taskToEdit = activeTask;
-                const cardKeyForEdit = activeTaskCardKey;
-                if (!taskToEdit || !cardKeyForEdit) return;
-                closeTaskActionModal();
-                openEditModal(cardKeyForEdit, taskToEdit);
-            }
-
-            confirmBtn.addEventListener('click', handleConfirmAdd);
-            cancelBtn.addEventListener('click', closeModal);
-            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-            taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleConfirmAdd(); });
-
-
-document.addEventListener('click', (e) => {
-    const checkbox = e.target.closest('.task-checkbox');
-    if (checkbox) {
-        e.stopPropagation();
-        const taskId = checkbox.getAttribute('data-task-id');
-        const cardKey = checkbox.getAttribute('data-card-key');
-        if (taskId && cardKey) toggleTaskComplete(cardKey, taskId);
-        return;
+    function attachMainEvents() {
+        document.querySelectorAll('.primary-header[data-toggle-id]').forEach(h=>{ h.removeEventListener('click',toggleCollapse); h.addEventListener('click',toggleCollapse); });
+        document.querySelectorAll('.secondary-item').forEach(it=>{ it.removeEventListener('click',onSecondaryClick); it.addEventListener('click',onSecondaryClick); });
+        document.querySelectorAll('.edit-primary').forEach(btn=>btn.addEventListener('click',(e)=>{ e.stopPropagation(); handleEditPrimary(btn.dataset.id); }));
+        document.querySelectorAll('.add-secondary').forEach(btn=>btn.addEventListener('click',(e)=>{ e.stopPropagation(); handleAddSecondary(btn.dataset.id); }));
+        document.querySelectorAll('.del-primary').forEach(btn=>btn.addEventListener('click',(e)=>{ e.stopPropagation(); handleDelPrimary(btn.dataset.id); }));
+        document.querySelectorAll('.edit-secondary').forEach(btn=>btn.addEventListener('click',(e)=>{ e.stopPropagation(); handleEditSecondary(btn.dataset.pid, btn.dataset.secid); }));
+        document.querySelectorAll('.del-secondary').forEach(btn=>btn.addEventListener('click',(e)=>{ e.stopPropagation(); handleDelSecondary(btn.dataset.pid, btn.dataset.secid); }));
     }
-    
-    // 只有精确点击 .task-text 元素本身才弹窗
-    if (e.target.classList && e.target.classList.contains('task-text')) {
-        const taskItem = e.target.closest('.task-item');
-        if (taskItem) {
-            const taskId = taskItem.getAttribute('data-task-id');
-            const cardKey = taskItem.getAttribute('data-card-key');
-            if (taskId && cardKey) {
-                const task = tasksDB[cardKey]?.find(t => t.id == taskId);
-                if (task) showTaskActionModal(cardKey, task);
-            }
-        }
-        return;
-    }
-    
-    const emptyDiv = e.target.closest('.empty-tasks');
-    if (emptyDiv) {
-        const tasksContainer = emptyDiv.closest('.tasks');
-        if (tasksContainer) {
-            let cardKey = tasksContainer.id.replace('tasks-', '');
-            if (tasksDB[cardKey] !== undefined) openModalForCard(cardKey);
-        }
-    }
-});
-
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                    alert(`切换到「${this.querySelector('.nav-text')?.innerText}」视图 (演示)`);
-                });
-            });
-
-            let filterModal = document.getElementById('filterModal');
-            const headerIcons = document.querySelectorAll('.icon-btn');
-            headerIcons.forEach(icon => {
-                icon.addEventListener('click', function() {
-                    if (this.innerText === '👀') {
-                        hideCompleted = !hideCompleted;
-                        renderAll();
-                        if (hideCompleted) { this.style.opacity = '0.5'; this.style.backgroundColor = '#e2e8f0'; }
-                        else { this.style.opacity = '1'; this.style.backgroundColor = '#ffffff'; }
-                    } else if (this.innerText === '📋') {
-                        if (filterModal) filterModal.classList.add('active');
-                    }
-                });
-            });
-
-            if (filterModal) {
-                filterModal.addEventListener('click', (e) => { if (e.target === filterModal) filterModal.classList.remove('active'); });
-                const filterOptions = document.querySelectorAll('.filter-option');
-                filterOptions.forEach(opt => {
-                    opt.addEventListener('click', () => {
-                        const filterValue = opt.getAttribute('data-filter');
-                        currentFilter = filterValue === 'clear' || filterValue === 'all' ? 'all' : filterValue;
-                        renderAll();
-                        filterModal.classList.remove('active');
-                        const listIcon = document.querySelector('.icon-btn:last-child');
-                        if (currentFilter !== 'all') { listIcon.style.backgroundColor = '#FA8C57'; listIcon.style.color = 'white'; }
-                        else { listIcon.style.backgroundColor = '#ffffff'; listIcon.style.color = 'inherit'; }
-                    });
-                });
-            }
-
-            taskActionModal = document.getElementById('taskActionModal');
-            document.getElementById('taskEditBtn')?.addEventListener('click', editTask);
-            document.getElementById('taskDeleteBtn')?.addEventListener('click', deleteTask);
-            document.getElementById('taskCopyBtn')?.addEventListener('click', copyTask);
-            document.getElementById('taskActionCancelBtn')?.addEventListener('click', closeTaskActionModal);
-            if (taskActionModal) {
-                taskActionModal.addEventListener('click', (e) => { if (e.target === taskActionModal) closeTaskActionModal(); });
-            }
-
-            editModal = document.getElementById('editTaskModal');
-            editTaskInput = document.getElementById('editTaskInput');
-            confirmEditBtn = document.getElementById('confirmEditBtn');
-            cancelEditBtn = document.getElementById('cancelEditBtn');
-            editTagOptions = document.querySelectorAll('#editTagSelector .tag-option');
-            if (editTagOptions) {
-                editTagOptions.forEach(opt => {
-                    opt.addEventListener('click', () => {
-                        const tagVal = opt.getAttribute('data-tag');
-                        if (tagVal) { editingSelectedTag = tagVal; updateEditTagUI(); }
-                    });
-                });
-            }
-            confirmEditBtn?.addEventListener('click', saveEditTask);
-            cancelEditBtn?.addEventListener('click', closeEditModal);
-            if (editModal) { editModal.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); }); }
-            if (editTaskInput) { editTaskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveEditTask(); }); }
-
-            // 侧边栏
-            const sidebarModal = document.getElementById('sidebarModal');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            const taskBgToggle = document.getElementById('taskBgToggle');
-            const weekTitle = document.querySelector('.week-title');
-            if (weekTitle) {
-                weekTitle.addEventListener('click', function(e) {
-                    if (e.target.classList && e.target.classList.contains('week-dot')) return;
-                    if (sidebarModal) sidebarModal.classList.add('active');
-                    if (sidebarOverlay) sidebarOverlay.classList.add('active');
-                });
-            }
-            function closeSidebar() {
-                if (sidebarModal) sidebarModal.classList.remove('active');
-                if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-            }
-            if (sidebarOverlay) { sidebarOverlay.addEventListener('click', closeSidebar); }
-            if (taskBgToggle) {
-                taskBgToggle.addEventListener('change', function(e) { taskBgEnabled = e.target.checked; renderAll(); });
-            }
-
-            // 标签统计入口 - 切换到统计界面（不是弹窗）
-            const statsEntryBtn = document.getElementById('statsEntryBtn');
-            const statsPage = document.getElementById('statsPage');
-            const backFromStatsBtn = document.getElementById('backFromStatsBtn');
-            const mainApp = document.getElementById('mainApp');
-
-            if (statsEntryBtn) {
-                statsEntryBtn.addEventListener('click', () => {
-                    renderStatsPage();
-                    mainApp.style.display = 'none';
-                    statsPage.style.display = 'block';
-                    closeSidebar();
-                });
-            }
-            if (backFromStatsBtn) {
-                backFromStatsBtn.addEventListener('click', () => {
-                    statsPage.style.display = 'none';
-                    mainApp.style.display = 'block';
-                    renderAll();
-                });
-            }
-
-// 标签统计界面添加标签按钮 - 打开添加标签弹窗
-
-let selectedColor = '#d9e6f5';
-
-// 标签背景色映射（扩展支持自定义标签）
-const tagBgColors = {
-    '学习': '#d9e6f5',
-    '生活': '#f5e0e8',
-    '育儿': '#e0f0e5',
-    '重要': '#e6e0f0'
-};
-
-const addTagFromStatsBtn = document.getElementById('addTagFromStatsBtn');
-const addTagModal = document.getElementById('addTagModal');
-const newTagName = document.getElementById('newTagName');
-const confirmAddTagBtn = document.getElementById('confirmAddTagBtn');
-const cancelAddTagBtn = document.getElementById('cancelAddTagBtn');
-const colorOptions = document.querySelectorAll('.color-option');
-
-if (addTagFromStatsBtn) {
-    addTagFromStatsBtn.addEventListener('click', () => {
-        if (addTagModal) addTagModal.classList.add('active');
-        if (newTagName) newTagName.value = '';
-        selectedColor = '#d9e6f5';
-        updateColorSelection();
-    });
-}
-
-function updateColorSelection() {
-    colorOptions.forEach(opt => {
-        if (opt.getAttribute('data-color') === selectedColor) {
-            opt.style.border = '2px solid #333';
-        } else {
-            opt.style.border = '2px solid transparent';
-        }
-    });
-}
-
-colorOptions.forEach(opt => {
-    opt.addEventListener('click', () => {
-        selectedColor = opt.getAttribute('data-color');
-        updateColorSelection();
-    });
-});
-
-if (confirmAddTagBtn) {
-    confirmAddTagBtn.addEventListener('click', () => {
-        const tagName = newTagName.value.trim();
-        if (!tagName) {
-            alert('请输入标签名称');
-            return;
-        }
-        const allTags = ['学习', '生活', '育儿', '重要', ...customTags.map(t => t.name)];
-        if (allTags.includes(tagName)) {
-            alert('标签已存在');
-            return;
-        }
-        customTags.push({ name: tagName, color: selectedColor });
-        tagColors[tagName] = selectedColor;
-        tagBgColors[tagName] = selectedColor;
-        renderStatsPage();
-        addTagModal.classList.remove('active');
-    });
-}
-
-if (cancelAddTagBtn) {
-    cancelAddTagBtn.addEventListener('click', () => {
-        addTagModal.classList.remove('active');
-    });
-}
-// ==================== 数据存储和同步功能 ====================
-
-// 保存数据到 localStorage
-function saveToLocalStorage() {
-    const exportData = {
-        tasksDB: tasksDB,
-        customTags: customTags,
-        tagColors: tagColors,
-        tagBgColors: tagBgColors,
-        archivedTags: archivedTags,
-        archivedTasks: archivedTasks,
-        version: '1.0',
-        lastBackup: new Date().toISOString()
-    };
-    localStorage.setItem('weekPlannerData', JSON.stringify(exportData));
-    console.log('数据已保存到本地');
-}
-
-// 从 localStorage 加载数据
-function loadFromLocalStorage() {
-    const savedData = localStorage.getItem('weekPlannerData');
-    if (savedData) {
-        try {
-            const data = JSON.parse(savedData);
-            Object.assign(tasksDB, data.tasksDB);
-            if (data.customTags) customTags.length = 0;
-            if (data.customTags) customTags.push(...data.customTags);
-            if (data.tagColors) Object.assign(tagColors, data.tagColors);
-            if (data.tagBgColors) Object.assign(tagBgColors, data.tagBgColors);
-            if (data.archivedTags) archivedTags.length = 0;
-            if (data.archivedTags) archivedTags.push(...data.archivedTags);
-            if (data.archivedTasks) archivedTasks.length = 0;
-            if (data.archivedTasks) archivedTasks.push(...data.archivedTasks);
-            
-            renderAll();
-            console.log('数据已从本地加载，备份时间：' + data.lastBackup);
-            return true;
-        } catch(e) {
-            console.error('加载数据失败', e);
-            return false;
-        }
-    }
-    return false;
-}
-
-// 立即备份
-function backupNow() {
-    saveToLocalStorage();
-    alert('✅ 备份完成！数据已保存到本地');
-}
-
-// 导出数据
-function exportData() {
-    const exportData = {
-        tasksDB: tasksDB,
-        customTags: customTags,
-        tagColors: tagColors,
-        tagBgColors: tagBgColors,
-        archivedTags: archivedTags,
-        archivedTasks: archivedTasks,
-        exportTime: new Date().toISOString(),
-        version: '1.0'
-    };
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `weekplanner_backup_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    alert('✅ 数据已导出');
-}
-
-// 导入数据
-function importData(file, callback) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = JSON.parse(e.target.result);
-            for (let key in tasksDB) {
-                tasksDB[key] = [];
-            }
-            customTags.length = 0;
-            archivedTags.length = 0;
-            archivedTasks.length = 0;
-            
-            Object.assign(tasksDB, data.tasksDB);
-            if (data.customTags) customTags.push(...data.customTags);
-            if (data.tagColors) Object.assign(tagColors, data.tagColors);
-            if (data.tagBgColors) Object.assign(tagBgColors, data.tagBgColors);
-            if (data.archivedTags) archivedTags.push(...data.archivedTags);
-            if (data.archivedTasks) archivedTasks.push(...data.archivedTasks);
-            
-            renderAll();
-            saveToLocalStorage();
-            alert('✅ 数据导入成功！');
-            if (callback) callback();
-        } catch(e) {
-            alert('❌ 导入失败：文件格式错误');
-        }
-    };
-    reader.readAsText(file);
-}
-
-// GitHub Gist 同步
-let githubToken = localStorage.getItem('githubToken') || '';
-let gistId = localStorage.getItem('gistId') || '';
-
-function saveGistSettings(token, id) {
-    githubToken = token;
-    gistId = id;
-    localStorage.setItem('githubToken', token);
-    if (id) localStorage.setItem('gistId', id);
-}
-
-async function syncToGist() {
-    if (!githubToken) {
-        alert('请先设置 GitHub Token');
-        return false;
-    }
-    if (!gistId) {
-        alert('请先填写 Gist ID（在 GitHub Gist 页面获取）');
-        return false;
-    }
-    
-    const exportData = {
-        tasksDB: tasksDB,
-        customTags: customTags,
-        tagColors: tagColors,
-        tagBgColors: tagBgColors,
-        archivedTags: archivedTags,
-        archivedTasks: archivedTasks,
-        syncTime: new Date().toISOString(),
-        version: '1.0'
-    };
-    const content = JSON.stringify(exportData, null, 2);
-    
-    try {
-        const url = `https://api.github.com/gists/${gistId}`;
-        const response = await fetch(url, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `token ${githubToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                files: {
-                    'weekplanner_data.json': {
-                        content: content
-                    }
-                }
-            })
-        });
-        
-        if (!response.ok) {
-            if (response.status === 404) {
-                alert('❌ Gist ID 不存在，请检查是否正确');
-            } else {
-                alert('❌ 同步失败：HTTP ' + response.status);
-            }
-            return false;
-        }
-        alert('✅ 云端同步成功！');
-        return true;
-    } catch(e) {
-        alert('❌ 同步失败：' + e.message);
-        return false;
-    }
-}
-
-async function restoreFromGist() {
-    if (!githubToken) {
-        alert('请先设置 GitHub Token');
-        return false;
-    }
-    if (!gistId) {
-        alert('请先设置 Gist ID 或先进行一次同步');
-        return false;
-    }
-    
-    try {
-        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-            headers: {
-                'Authorization': `token ${githubToken}`
-            }
-        });
-        if (!response.ok) throw new Error('获取失败');
-        const gist = await response.json();
-        const content = gist.files['weekplanner_data.json']?.content;
-        if (!content) throw new Error('未找到备份文件');
-        
-        const data = JSON.parse(content);
-        for (let key in tasksDB) {
-            tasksDB[key] = [];
-        }
-        customTags.length = 0;
-        archivedTags.length = 0;
-        archivedTasks.length = 0;
-        
-        Object.assign(tasksDB, data.tasksDB);
-        if (data.customTags) customTags.push(...data.customTags);
-        if (data.tagColors) Object.assign(tagColors, data.tagColors);
-        if (data.tagBgColors) Object.assign(tagBgColors, data.tagBgColors);
-        if (data.archivedTags) archivedTags.push(...data.archivedTags);
-        if (data.archivedTasks) archivedTasks.push(...data.archivedTasks);
-        
-        renderAll();
-        saveToLocalStorage();
-        alert('✅ 云端恢复成功！同步时间：' + data.syncTime);
-        return true;
-    } catch(e) {
-        alert('❌ 恢复失败：' + e.message);
-        return false;
-    }
-}
-
-// 自动备份
-let autoBackupInterval = null;
-function startAutoBackup() {
-    if (autoBackupInterval) clearInterval(autoBackupInterval);
-    autoBackupInterval = setInterval(() => {
-        saveToLocalStorage();
-        console.log('自动备份完成', new Date().toLocaleString());
-    }, 60 * 60 * 1000);
-}
-
-// 绑定功能按钮事件
-document.getElementById('backupNowBtn')?.addEventListener('click', () => {
-    backupNow();
-    closeSidebar();
-});
-
-document.getElementById('exportDataBtn')?.addEventListener('click', () => {
-    exportData();
-    closeSidebar();
-});
-
-document.getElementById('importDataBtn')?.addEventListener('click', () => {
-    document.getElementById('importModal').classList.add('active');
-    closeSidebar();
-});
-
-
-// 云端设置按钮 - 打开设置弹窗
-document.getElementById('cloudSyncBtn')?.addEventListener('click', () => {
-    document.getElementById('gistModal').classList.add('active');
-    closeSidebar();
-});
-
-// 云端同步按钮 - 直接同步
-document.getElementById('cloudUploadBtn')?.addEventListener('click', async () => {
-    closeSidebar();
-    await syncToGist();
-});
-
-// 云端恢复按钮
-document.getElementById('cloudRestoreBtn')?.addEventListener('click', async () => {
-    closeSidebar();
-    if (confirm('确定要从云端恢复数据吗？当前数据将被覆盖！')) {
-        await restoreFromGist();
-    }
-});
-
-
-// Gist 弹窗事件
-const gistModal = document.getElementById('gistModal');
-const githubTokenInput = document.getElementById('githubToken');
-const gistIdInput = document.getElementById('gistId');
-const saveGistBtn = document.getElementById('saveGistBtn');
-const cancelGistBtn = document.getElementById('cancelGistBtn');
-
-if (githubTokenInput) githubTokenInput.value = localStorage.getItem('githubToken') || '';
-if (gistIdInput) gistIdInput.value = localStorage.getItem('gistId') || '';
-
-if (saveGistBtn) {
-    saveGistBtn.addEventListener('click', () => {
-        const token = githubTokenInput.value.trim();
-        const id = gistIdInput.value.trim();
-        if (!token) {
-            alert('请输入 GitHub Token');
-            return;
-        }
-        if (!id) {
-            alert('请输入 Gist ID');
-            return;
-        }
-        saveGistSettings(token, id);
-        alert('✅ 设置已保存');
-        gistModal.classList.remove('active');
-    });
-}
-
-if (cancelGistBtn) {
-    cancelGistBtn.addEventListener('click', () => {
-        gistModal.classList.remove('active');
-    });
-}
-
-if (gistModal) {
-    gistModal.addEventListener('click', (e) => {
-        if (e.target === gistModal) gistModal.classList.remove('active');
-    });
-}
-
-// 导入弹窗事件
-const importModal = document.getElementById('importModal');
-const importFile = document.getElementById('importFile');
-const confirmImportBtn = document.getElementById('confirmImportBtn');
-const cancelImportBtn = document.getElementById('cancelImportBtn');
-
-if (confirmImportBtn) {
-    confirmImportBtn.addEventListener('click', () => {
-        if (importFile.files.length === 0) {
-            alert('请选择文件');
-            return;
-        }
-        if (confirm('导入将覆盖当前数据，确定继续吗？')) {
-            importData(importFile.files[0], () => {
-                importModal.classList.remove('active');
-                importFile.value = '';
-            });
-        }
-    });
-}
-
-if (cancelImportBtn) {
-    cancelImportBtn.addEventListener('click', () => {
-        importModal.classList.remove('active');
-        importFile.value = '';
-    });
-}
-
-if (importModal) {
-    importModal.addEventListener('click', (e) => {
-        if (e.target === importModal) importModal.classList.remove('active');
-    });
-}
-
-window.addEventListener('beforeunload', () => {
-    saveToLocalStorage();
-});
-
-startAutoBackup();
-
-// 加载本地数据
-if (!loadFromLocalStorage()) {
-    console.log('首次使用，使用默认数据');
-}
-
-            // 初始化
-            renderAll();
-            bindAddButtons();
-            updateWeekDates();
-            document.getElementById('prevWeekBtn').addEventListener('click', goPrevWeek);
-            document.getElementById('nextWeekBtn').addEventListener('click', goNextWeek);
-
-// 标签编辑相关变量
-let currentEditingTag = null;
-let currentEditingColor = '#d9e6f5';
-
-const editTagModal = document.getElementById('editTagModal');
-const editTagName = document.getElementById('editTagName');
-const confirmEditTagBtn = document.getElementById('confirmEditTagBtn');
-const cancelEditTagBtn = document.getElementById('cancelEditTagBtn');
-const deleteTagBtn = document.getElementById('deleteTagBtn');
-const editColorOptions = document.querySelectorAll('.edit-color-option');
-
-
-
-// 点击统计卡片，打开编辑弹窗
-document.getElementById('statsPageContent').addEventListener('click', (e) => {
-    const statCard = e.target.closest('.stat-card');
-    if (!statCard) return;
-    const tagName = statCard.getAttribute('data-tag');
-    currentEditingTag = tagName;
-    // 查找当前标签的颜色（先从 customTags 找，再从 tagColors 找）
-    const customTag = customTags.find(t => t.name === tagName);
-    if (customTag) {
-        currentEditingColor = customTag.color;
-    } else {
-        currentEditingColor = tagColors[tagName] || tagBgColors[tagName] || '#d9e6f5';
-    }
-    if (editTagName) editTagName.value = tagName;
-    updateEditColorSelection();
-    if (editTagModal) editTagModal.classList.add('active');
-});
-
-function updateEditColorSelection() {
-    editColorOptions.forEach(opt => {
-        if (opt.getAttribute('data-color') === currentEditingColor) {
-            opt.style.border = '2px solid #333';
-        } else {
-            opt.style.border = '2px solid transparent';
-        }
-    });
-}
-
-editColorOptions.forEach(opt => {
-    opt.addEventListener('click', () => {
-        currentEditingColor = opt.getAttribute('data-color');
-        updateEditColorSelection();
-    });
-});
-
-// 保存编辑标签
-if (confirmEditTagBtn) {
-    confirmEditTagBtn.addEventListener('click', () => {
-        const newName = editTagName.value.trim();
-        if (!newName) {
-            alert('请输入标签名称');
-            return;
-        }
-        const allTags = ['学习', '生活', '育儿', '重要', ...customTags.map(t => t.name).filter(n => n !== currentEditingTag)];
-        if (allTags.includes(newName)) {
-            alert('标签名称已存在');
-            return;
-        }
-        for (let key in tasksDB) {
-            tasksDB[key].forEach(task => {
-                if (task.tag === currentEditingTag) {
-                    task.tag = newName;
-                }
-            });
-        }
-        const tagIndex = customTags.findIndex(t => t.name === currentEditingTag);
-        if (tagIndex !== -1) {
-            customTags[tagIndex].name = newName;
-            customTags[tagIndex].color = currentEditingColor;
-        }
-        tagColors[newName] = currentEditingColor;
-        tagBgColors[newName] = currentEditingColor;
-        delete tagColors[currentEditingTag];
-        delete tagBgColors[currentEditingTag];
-        
-        renderStatsPage();
-        renderAll();
-        editTagModal.classList.remove('active');
-    });
-}
-
-// 删除标签
-if (deleteTagBtn) {
-    deleteTagBtn.addEventListener('click', () => {
-        if (confirm(`确定要删除标签「${currentEditingTag}」吗？`)) {
-            for (let key in tasksDB) {
-                tasksDB[key].forEach(task => {
-                    if (task.tag === currentEditingTag) {
-                        task.tag = null;
-                    }
-                });
-            }
-            customTags = customTags.filter(t => t.name !== currentEditingTag);
-            delete tagColors[currentEditingTag];
-            delete tagBgColors[currentEditingTag];
-            
-            renderStatsPage();
-            renderAll();
-            editTagModal.classList.remove('active');
-        }
-    });
-}
-
-// 归档标签（将标签下所有已完成任务归档，并隐藏标签）
-const archiveTagBtn = document.getElementById('archiveTagBtn');
-if (archiveTagBtn) {
-    archiveTagBtn.addEventListener('click', () => {
-        if (confirm(`确定要归档标签「${currentEditingTag}」吗？归档后该标签将不再显示在统计中。`)) {
-            let archivedCount = 0;
-            for (let key in tasksDB) {
-                const tasksToRemove = [];
-                tasksDB[key].forEach((task, index) => {
-                    if (task.tag === currentEditingTag && task.completed === true && task.completedTime) {
-                        archivedTasks.push({
-                            id: task.id,
-                            text: task.text,
-                            tag: task.tag,
-                            completedTime: task.completedTime,
-                            archivedTime: Date.now(),
-                            originalCard: key
-                        });
-                        tasksToRemove.push(index);
-                        archivedCount++;
-                    }
-                });
-                for (let i = tasksToRemove.length - 1; i >= 0; i--) {
-                    tasksDB[key].splice(tasksToRemove[i], 1);
-                }
-            }
-            // 将标签加入归档列表，不再显示在统计界面
-            archivedTags.push(currentEditingTag);
-            
-            renderAll();
-            renderStatsPage();
-            editTagModal.classList.remove('active');
-            if (archivedCount > 0) {
-                alert(`已归档 ${archivedCount} 个任务，标签「${currentEditingTag}」已隐藏`);
-            } else {
-                alert(`标签「${currentEditingTag}」已隐藏（该标签下没有已完成任务）`);
-            }
-        }
-    });
-}
-
-
-
-
-if (cancelEditTagBtn) {
-    cancelEditTagBtn.addEventListener('click', () => {
-        editTagModal.classList.remove('active');
-    });
-}
-
-// 显示归档任务弹窗（放在这里！）
-const showArchivedBtn = document.getElementById('showArchivedBtn');
-const archivedModal = document.getElementById('archivedModal');
-const archivedContent = document.getElementById('archivedContent');
-const closeArchivedBtn = document.getElementById('closeArchivedBtn');
-
-function renderArchivedTasks() {
-    if (!archivedContent) return;
-    if (archivedTasks.length === 0) {
-        archivedContent.innerHTML = '<div style="text-align: center; padding: 20px; color: #94a3b8;">暂无归档任务</div>';
-        return;
-    }
-    let html = '';
-    archivedTasks.sort((a, b) => b.archivedTime - a.archivedTime).forEach(task => {
-        const timeStr = new Date(task.completedTime).toLocaleString('zh-CN', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
-        html += `
-            <div class="archived-task-item" data-task-id="${task.id}">
-                <div style="flex: 1;">
-                    <div class="archived-task-text">${escapeHtml(task.text)}</div>
-                    <div style="display: flex; gap: 8px; margin-top: 4px;">
-                        <span class="archived-task-tag" style="background: ${tagBgColors[task.tag] || '#e2e8f0'};">🏷️ ${task.tag}</span>
-                        <span class="archived-task-time">完成于 ${timeStr}</span>
-                    </div>
-                </div>
-                <div class="unarchive-btn" data-task-id="${task.id}">↩️ 恢复</div>
-            </div>
-        `;
-    });
-    archivedContent.innerHTML = html;
-    
-    
-    document.querySelectorAll('.unarchive-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const taskId = parseInt(btn.getAttribute('data-task-id'));
-        const taskIndex = archivedTasks.findIndex(t => t.id === taskId);
-        if (taskIndex !== -1) {
-            const task = archivedTasks[taskIndex];
-            const targetCard = tasksDB[task.originalCard] ? task.originalCard : 'unscheduled';
-            tasksDB[targetCard].push({
-                id: task.id,
-                text: task.text,
-                completed: true,
-                tag: task.tag,
-                completedTime: task.completedTime
-            });
-            archivedTasks.splice(taskIndex, 1);
-            
-            // 检查该标签是否还有其他归档任务，如果没有则从 archivedTags 中移除
-            const hasOtherArchivedTasks = archivedTasks.some(t => t.tag === task.tag);
-            if (!hasOtherArchivedTasks && archivedTags.includes(task.tag)) {
-                archivedTags = archivedTags.filter(t => t !== task.tag);
-            }
-            
-            renderArchivedTasks();
-            renderAll();
-            renderStatsPage();  // 重新渲染统计界面，标签会重新出现
-        }
-    });
-});
-}
-
-if (showArchivedBtn) {
-    showArchivedBtn.addEventListener('click', () => {
-        renderArchivedTasks();
-        if (archivedModal) archivedModal.classList.add('active');
-    });
-}
-
-if (closeArchivedBtn) {
-    closeArchivedBtn.addEventListener('click', () => {
-        if (archivedModal) archivedModal.classList.remove('active');
-    });
-}
-
-if (archivedModal) {
-    archivedModal.addEventListener('click', (e) => {
-        if (e.target === archivedModal) archivedModal.classList.remove('active');
-    });
-}
-
-
-
-           // 示例任务 - 仅在完全没有数据时添加
-if (tasksDB.monday.length === 0 && tasksDB.tuesday.length === 0 && tasksDB.wednesday.length === 0) {
-    tasksDB.monday.push({ id: 1001, text: '团队周会准备', completed: false, tag: '重要', completedTime: null });
-    tasksDB.monday.push({ id: 1002, text: '阅读《深度工作》', completed: false, tag: '学习', completedTime: null });
-    tasksDB.wednesday.push({ id: 1003, text: '健身房打卡', completed: false, tag: '生活', completedTime: null });
-    tasksDB.unscheduled.push({ id: 1004, text: '整理二季度目标', completed: false, tag: '重要', completedTime: null });
-    tasksDB.friday.push({ id: 1005, text: '家庭采购清单', completed: false, tag: '生活', completedTime: null });
-    tasksDB.tuesday.push({ id: 1006, text: '完成项目报告', completed: true, tag: '重要', completedTime: Date.now() - 86400000 });
-    tasksDB.thursday.push({ id: 1007, text: '亲子阅读', completed: true, tag: '育儿', completedTime: Date.now() - 172800000 });
-    tasksDB.saturday.push({ id: 1008, text: '背单词30个', completed: true, tag: '学习', completedTime: Date.now() - 259200000 });
-    renderAll();
-    saveToLocalStorage();
-}
-        })();
-    </script>
+    function toggleCollapse(e){ const id=e.currentTarget.dataset.toggleId; const cat=categories.find(c=>c.id===id); if(cat){ cat.collapsed=!cat.collapsed; saveData(); renderMain(); } }
+
+    // 句子页面逻辑
+    let currentPageRef = null; // { primaryId, secId }
+    const sentencePageDiv = document.getElementById('sentencePage');
+    function onSecondaryClick(e){ if(e.target.closest('.icon-btn')) return; const item=e.currentTarget; const pid=item.dataset.pid, secid=item.dataset.secid; const primary=categories.find(p=>p.id===pid); if(primary){ const sec=primary.children.find(c=>c.id===secid); if(sec){ currentPageRef={primaryId:pid, secId:secid}; document.getElementById('pageCategoryTitle').innerText=`${primary.name} · ${sec.name}`; renderSentencePage(sec.sentences); sentencePageDiv.classList.add('open'); sentencePageDiv.scrollTop=0; } } }
+    function renderSentencePage(sentences){ const container=document.getElementById('sentencePageList'); if(!sentences.length){ container.innerHTML='<div class="empty-placeholder">✧ 暂无句子，添加第一条 ✧</div>'; return; } let html=''; sentences.forEach((sent,idx)=>{ html+=`<div class="sentence-card" data-idx="${idx}"><div class="sentence-index">${(idx+1).toString().padStart(2,'0')}.</div><div class="sentence-text">${escapeHtml(sent)}</div></div>`; }); container.innerHTML=html; document.querySelectorAll('.sentence-card').forEach(card=>{ card.removeEventListener('click',onSentenceCardClick); card.addEventListener('click',onSentenceCardClick); }); }
+    function onSentenceCardClick(e){ e.stopPropagation(); const card=e.currentTarget; const idx=parseInt(card.dataset.idx); if(isNaN(idx)||!currentPageRef) return; const primary=categories.find(p=>p.id===currentPageRef.primaryId); if(primary){ const sec=primary.children.find(c=>c.id===currentPageRef.secId); if(sec&&sec.sentences[idx]){ currentMenuContext={ primaryId:currentPageRef.primaryId, secId:currentPageRef.secId, sentenceIndex:idx, sentenceText:sec.sentences[idx] }; const rect=card.getBoundingClientRect(); const menu=document.getElementById('actionMenu'); menu.style.top=`${rect.bottom+5}px`; menu.style.left=`${rect.left+10}px`; menu.classList.add('active'); } } }
+    function closeMenu(){ document.getElementById('actionMenu').classList.remove('active'); currentMenuContext=null; }
+    document.getElementById('menuEdit').onclick=()=>{ if(currentMenuContext){ const newText=prompt('编辑句子', currentMenuContext.sentenceText); if(newText && newText.trim()){ const primary=categories.find(p=>p.id===currentMenuContext.primaryId); if(primary){ const sec=primary.children.find(c=>c.id===currentMenuContext.secId); if(sec) sec.sentences[currentMenuContext.sentenceIndex]=newText.trim(); saveData(); if(currentPageRef) renderSentencePage(sec.sentences); renderMain(); } } } closeMenu(); };
+    document.getElementById('menuDelete').onclick=()=>{ if(currentMenuContext && confirm('删除此句子？')){ const primary=categories.find(p=>p.id===currentMenuContext.primaryId); if(primary){ const sec=primary.children.find(c=>c.id===currentMenuContext.secId); if(sec) sec.sentences.splice(currentMenuContext.sentenceIndex,1); saveData(); if(currentPageRef) renderSentencePage(sec.sentences); renderMain(); } } closeMenu(); };
+    document.getElementById('menuCopy').onclick=()=>{ if(currentMenuContext){ navigator.clipboard.writeText(currentMenuContext.sentenceText); alert('已复制句子'); } closeMenu(); };
+    document.addEventListener('click',(e)=>{ if(!e.target.closest('.action-menu') && !e.target.closest('.sentence-card')) closeMenu(); });
+    document.getElementById('pageAddSentenceBtn').onclick=()=>{ const input=document.getElementById('pageSentenceInput'); const text=input.value.trim(); if(!text||!currentPageRef) return; const primary=categories.find(p=>p.id===currentPageRef.primaryId); if(primary){ const sec=primary.children.find(c=>c.id===currentPageRef.secId); if(sec){ sec.sentences.push(text); saveData(); renderSentencePage(sec.sentences); input.value=''; renderMain(); } } };
+    document.getElementById('closePageBtn').onclick=()=>{ sentencePageDiv.classList.remove('open'); currentPageRef=null; closeMenu(); };
+
+    // 分类 CRUD
+    function showDialog(title,def,cb){ const dlg=document.getElementById('commonDialog'); const titleEl=document.getElementById('dialogTitle'); const input=document.getElementById('dialogInput'); titleEl.innerText=title; input.value=def||''; window.dialogCallback=cb; document.getElementById('modalMask').classList.add('active'); dlg.classList.add('active'); }
+    function closeDialog(){ document.getElementById('commonDialog').classList.remove('active'); document.getElementById('modalMask').classList.remove('active'); window.dialogCallback=null; }
+    document.getElementById('dialogConfirmBtn').onclick=()=>{ const val=document.getElementById('dialogInput').value.trim(); if(val && window.dialogCallback) window.dialogCallback(val); closeDialog(); saveData(); renderMain(); };
+    document.getElementById('dialogCancelBtn').onclick=closeDialog;
+    document.getElementById('modalMask').addEventListener('click',closeDialog);
+    function handleEditPrimary(id){ const cat=categories.find(c=>c.id===id); if(cat) showDialog('编辑分类',cat.name,(newName)=>{ cat.name=newName; }); }
+    function handleAddSecondary(pid){ showDialog('新增子分类','',(newName)=>{ const parent=categories.find(p=>p.id===pid); if(parent){ if(!parent.children) parent.children=[]; parent.children.push({id:genId(),name:newName,sentences:[]}); } }); }
+    function handleDelPrimary(id){ if(confirm('删除整个分类？')){ categories=categories.filter(c=>c.id!==id); saveData(); renderMain(); if(sentencePageDiv.classList.contains('open')) sentencePageDiv.classList.remove('open'); } }
+    function handleEditSecondary(pid,secid){ const primary=categories.find(p=>p.id===pid); if(primary){ const sec=primary.children.find(s=>s.id===secid); if(sec) showDialog('重命名子分类',sec.name,(newName)=>{ sec.name=newName; }); } }
+    function handleDelSecondary(pid,secid){ if(confirm('删除子分类及所有句子？')){ const primary=categories.find(p=>p.id===pid); if(primary){ primary.children=primary.children.filter(s=>s.id!==secid); saveData(); renderMain(); if(currentPageRef?.primaryId===pid && currentPageRef?.secId===secid) sentencePageDiv.classList.remove('open'); } } }
+    document.getElementById('addPrimaryBtn').onclick=()=>{ showDialog('新增一级分类','',(name)=>{ categories.push({id:genId(),name:name,collapsed:true,children:[]}); }); };
+    document.getElementById('toggleEditBtn').onclick=()=>{ document.body.classList.toggle('edit-mode'); const isEdit=document.body.classList.contains('edit-mode'); document.getElementById('toggleEditBtn').innerText=isEdit?'退出编辑':'编辑模式'; if(isEdit) document.getElementById('toggleEditBtn').classList.add('active'); else document.getElementById('toggleEditBtn').classList.remove('active'); renderMain(); };
+    document.getElementById('printBtn').onclick=()=>window.print();
+
+    // 云端Gist同步
+    const settingsModal=document.getElementById('settingsModal');
+    document.getElementById('settingsBtn').onclick=()=>settingsModal.classList.add('active');
+    document.getElementById('closeSettings').onclick=()=>settingsModal.classList.remove('active');
+    async function syncToGist(){ const token=document.getElementById('gistToken').value.trim(); let gistId=document.getElementById('gistId').value.trim(); if(!token){ document.getElementById('syncStatus').innerText='请输入 GitHub Token'; return; } const data={description:'拾句集备份',public:false,files:{'quotes_backup.json':{content:JSON.stringify(categories,null,2)}}}; try{ let url='https://api.github.com/gists'; let method='POST'; if(gistId){ url=`https://api.github.com/gists/${gistId}`; method='PATCH'; } const res=await fetch(url,{method,headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(data)}); if(res.ok){ const json=await res.json(); if(!gistId) document.getElementById('gistId').value=json.id; document.getElementById('syncStatus').innerText='✓ 备份成功！'; }else{ const err=await res.text(); document.getElementById('syncStatus').innerText=`失败: ${err}`; } }catch(e){ document.getElementById('syncStatus').innerText='网络错误'; } }
+    async function restoreFromGist(){ const token=document.getElementById('gistToken').value.trim(); const gistId=document.getElementById('gistId').value.trim(); if(!token||!gistId){ document.getElementById('syncStatus').innerText='需要 Token 和 Gist ID'; return; } try{ const res=await fetch(`https://api.github.com/gists/${gistId}`,{headers:{'Authorization':`Bearer ${token}`}}); if(res.ok){ const json=await res.json(); const content=json.files['quotes_backup.json']?.content; if(content){ const loaded=JSON.parse(content); if(loaded && Array.isArray(loaded)){ categories=loaded; saveData(); renderMain(); document.getElementById('syncStatus').innerText='✓ 恢复成功，已刷新'; if(sentencePageDiv.classList.contains('open')) sentencePageDiv.classList.remove('open'); }else throw new Error(); }else throw new Error(); }else throw new Error(); }catch(e){ document.getElementById('syncStatus').innerText='恢复失败，请检查ID/Token'; } }
+    document.getElementById('syncToGist').onclick=syncToGist;
+    document.getElementById('restoreFromGist').onclick=restoreFromGist;
+    loadData();
+</script>
 </body>
 </html>
