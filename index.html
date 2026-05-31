@@ -20,14 +20,12 @@
             min-height: 100vh;
         }
 
-        /* 主容器 */
         .app, .page-container {
             max-width: 600px;
             margin: 0 auto;
             width: 100%;
         }
 
-        /* 头部区域 - 参考图片的清爽风格 */
         .header-row {
             display: flex;
             justify-content: space-between;
@@ -51,47 +49,42 @@
             font-weight: 400;
         }
 
-        /* 右侧按钮组 */
         .header-actions-right {
             display: flex;
             align-items: center;
             gap: 6px;
         }
         .icon-circle {
-    background: transparent;
-    border: none;
-    width: 38px;
-    height: 38px;
-    border-radius: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: #007aff;
-    transition: all 0.1s ease;
-}
+            background: transparent;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #007aff;
+            transition: all 0.1s ease;
+        }
         .icon-circle:active {
             background-color: #e5e5ea;
             transform: scale(0.96);
         }
 
-        /* 分类区块卡片样式 - 参考图片中的仓库/衣柜卡片 */
         .section-card {
-            background: transparent;  /* 改为透明，透出页面灰色 */
-            border-radius: 20px;
+            background: transparent;
             margin-bottom: 20px;
             overflow: hidden;
-            
         }
         .section-header-custom {
             display: flex;
             align-items: center;
             justify-content: space-between;
-             padding: 16px 4px 4px 4px;  /* 原来的 12px 改成 4px */
+            padding: 16px 4px 4px 4px;
             cursor: pointer;
-           background: transparent;  /* 透明，不显示白色块 */
-            
+            background: transparent;
         }
         .section-title-group {
             display: flex;
@@ -115,7 +108,6 @@
             color: #6c6c70;
         }
 
-        /* 两列网格布局 */
         .two-columns {
             display: flex;
             gap: 12px;
@@ -130,7 +122,6 @@
             gap: 12px;
         }
 
-        /* 一级分类卡片 - 类似图片中的物品卡片 */
         .primary-cat {
             background: #f8f8fc;
             border-radius: 16px;
@@ -164,44 +155,36 @@
             width: 18px;
         }
 
-        /* 子分类区域 - 紧凑列表 */
         .secondary-area {
-    background: #ffffff;
-    display: flex;
-    flex-direction: column;
-    gap: 0px;
-    background-color: transparent;
-    position: relative;
-}
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 0px;
+            background-color: transparent;
+            position: relative;
+        }
 
+        .secondary-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px 12px 28px;
+            cursor: pointer;
+            position: relative;
+            font-weight: 400;
+            min-height: 48px;
+            background: #ffffff;
+        }
 
-.secondary-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px 12px 28px;
-    cursor: pointer;
-    position: relative;
-    font-weight: 400;
-    min-height: 48px;
-    background: #ffffff;
-}
-
-/* 子类别上方的分割线（两头留空） */
-.secondary-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 16px;
-    right: 16px;
-    height: 0.5px;
-    background-color: #e5e5ea;
-}
-
-/* 第一个子分类上方的分割线保留，如果需要去掉可以加这个 */
-/* .secondary-item:first-child::before {
-    display: none;
-} */
+        .secondary-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 16px;
+            right: 16px;
+            height: 0.5px;
+            background-color: #e5e5ea;
+        }
 
         .secondary-item:active {
             background-color: #f2f2f6;
@@ -223,7 +206,6 @@
             padding: 12px;
         }
 
-        /* 标签区域 */
         .tag-list {
             display: flex;
             flex-wrap: wrap;
@@ -259,7 +241,6 @@
             background: #ffffff;
         }
 
-        /* 弹窗通用 */
         .sentence-dialog {
             position: fixed;
             top: 0;
@@ -291,7 +272,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 
-        /* 句子页面 */
         .sentence-page {
             position: fixed;
             top: 0;
@@ -375,17 +355,17 @@
         }
 
         .cat-manage-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    padding: 4px 0;
-}
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 4px 0;
+        }
         .cat-card {
-    background: #f8f8fc;
-    border-radius: 16px;
-    overflow: hidden;
-    break-inside: avoid;  /* 防止卡片被截断 */
-}
+            background: #f8f8fc;
+            border-radius: 16px;
+            overflow: hidden;
+            break-inside: avoid;
+        }
         .cat-card-header {
             display: flex;
             align-items: center;
@@ -426,9 +406,9 @@
             color: white;
         }
         .sub-list {
-    padding: 8px 12px 8px 16px;
-    background: #fafafd;
-}
+            padding: 8px 12px 8px 16px;
+            background: #fafafd;
+        }
         .sub-item {
             display: flex;
             justify-content: space-between;
@@ -442,153 +422,127 @@
             }
         }
 
-.add-sub-btn {
-    background: transparent;
-    border: none;
-    font-size: 1.2rem;
-    width: 35px;
-    height: 35px;
-    border-radius: 20px;
-    color: #8f8e8e;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.add-sub-btn:active {
-    background-color: #e5e5ea;
-}
+        .add-sub-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            width: 35px;
+            height: 35px;
+            border-radius: 20px;
+            color: #8f8e8e;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .add-sub-btn:active {
+            background-color: #e5e5ea;
+        }
 
-@media print {
-    @page {
-        size: A4 portrait;
-        margin: 1.5cm;
-    }
-    
-    /* 隐藏所有不需要打印的元素 */
-    .toolbar, .settings-modal, .add-form, .header-actions, .section-header, .tags-area,
-    .sentence-dialog, .settings-icon, .btn-outline, .type-switch, .back-btn, .print-btn-page,
-    .header-row, .app > .toolbar, .app > .section-header, .app > .tags-area,
-    #categorySectionContent, #tagSectionContent, .add-form,
-    #batchAddBtn, #printPageBtn, #closePageBtn, .app, .section-card,
-    #categorySectionHeader, #tagSectionHeader {
-        display: none !important;
-    }
-    
-    /* 显示整个 page-header（包含标题） */
-    .page-header {
-        display: block !important;
-        background: white !important;
-        padding: 0 0 16px 0 !important;
-        margin: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-    
-    /* 显示标题，隐藏切换按钮区域 */
-    .title-with-switch {
-        display: block !important;
-    }
-    
-    /* 类别标题样式 */
-    .page-title {
-        display: block !important;
-        font-size: 14pt !important;
-        font-weight: 600 !important;
-        color: black !important;
-        text-align: center !important;
-        margin-bottom: 20px !important;
-    }
-    
-    /* 隐藏好句/好词切换按钮 */
-    .type-switch {
-        display: none !important;
-    }
-    
-    /* 只显示句子页面内容 */
-    .sentence-page {
-        position: relative !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        display: block !important;
-        height: auto !important;
-        overflow: visible !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        background: white !important;
-    }
-    
-    /* 句子列表容器 */
-    .sentence-list-page {
-        display: block !important;
-        background: white !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-    
-    /* 每个句子卡片 */
-    .sentence-card {
-        padding: 0 !important;
-        margin: 0 0 6px 0 !important;
-        border: none !important;
-        background: white !important;
-        break-inside: avoid;
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-    }
-    
-    /* 序号 */
-    .sentence-index {
-        font-size: 11pt !important;
-        font-weight: normal !important;
-        color: black !important;
-        min-width: 32px;
-    }
-    
-    /* 句子内容 */
-    .sentence-text {
-        font-size: 11pt !important;
-        line-height: 2.2 !important;
-        color: black !important;
-        flex: 1;
-    }
-    
-    /* 去掉所有边框、分割线、阴影 */
-    * {
-        box-shadow: none !important;
-        background: transparent !important;
-    }
-    
-    /* 确保没有分割线 */
-    .sentence-card::after {
-        display: none !important;
-    }
-}
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 1.5cm;
+            }
+            .toolbar, .settings-modal, .add-form, .header-actions, .section-header, .tags-area,
+            .sentence-dialog, .settings-icon, .btn-outline, .type-switch, .back-btn, .print-btn-page,
+            .header-row, .app > .toolbar, .app > .section-header, .app > .tags-area,
+            #categorySectionContent, #tagSectionContent, .add-form,
+            #batchAddBtn, #printPageBtn, #closePageBtn, .app, .section-card,
+            #categorySectionHeader, #tagSectionHeader {
+                display: none !important;
+            }
+            .page-header {
+                display: block !important;
+                background: white !important;
+                padding: 0 0 16px 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .title-with-switch {
+                display: block !important;
+            }
+            .page-title {
+                display: block !important;
+                font-size: 14pt !important;
+                font-weight: 600 !important;
+                color: black !important;
+                text-align: center !important;
+                margin-bottom: 20px !important;
+            }
+            .type-switch {
+                display: none !important;
+            }
+            .sentence-page {
+                position: relative !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                display: block !important;
+                height: auto !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
+            }
+            .sentence-list-page {
+                display: block !important;
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .sentence-card {
+                padding: 0 !important;
+                margin: 0 0 6px 0 !important;
+                border: none !important;
+                background: white !important;
+                break-inside: avoid;
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .sentence-index {
+                font-size: 11pt !important;
+                font-weight: normal !important;
+                color: black !important;
+                min-width: 32px;
+            }
+            .sentence-text {
+                font-size: 11pt !important;
+                line-height: 2.2 !important;
+                color: black !important;
+                flex: 1;
+            }
+            * {
+                box-shadow: none !important;
+                background: transparent !important;
+            }
+            .sentence-card::after {
+                display: none !important;
+            }
+        }
 
-.secondary-count {
-    font-size: 0.7rem;
-    color: #8e8e93;
-    
-    padding: 2px 8px;
-    border-radius: 20px;
-    flex-shrink: 0;
-    margin-left: 8px;
-    letter-spacing: 1px;  /* 添加字间距 */
-}
+        .secondary-count {
+            font-size: 0.7rem;
+            color: #8e8e93;
+            padding: 2px 8px;
+            border-radius: 20px;
+            flex-shrink: 0;
+            margin-left: 8px;
+            letter-spacing: 1px;
+        }
 
-.empty-placeholder {
-    text-align: center;
-    padding: 14px 16px;
-    color: #8e8e93;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    background: #ffffff;
-    border-radius: 12px;
-}
-
+        .empty-placeholder {
+            text-align: center;
+            padding: 14px 16px;
+            color: #8e8e93;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            background: #ffffff;
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body>
@@ -596,7 +550,6 @@
     <div class="header-row">
         <div class="header">
             <h1>拾句</h1>
-            
         </div>
         <div class="header-actions-right">
             <button id="manageCategoryBtn" class="icon-circle" style="font-size:1rem;">📋</button>
@@ -604,7 +557,6 @@
         </div>
     </div>
 
-    <!-- 分类区块 -->
     <div class="section-card">
         <div class="section-header-custom" id="categorySectionHeader">
             <div class="section-title-group">
@@ -618,7 +570,6 @@
         </div>
     </div>
 
-    <!-- 标签区块 -->
     <div class="section-card">
         <div class="section-header-custom" id="tagSectionHeader">
             <div class="section-title-group">
@@ -636,7 +587,6 @@
     </div>
 </div>
 
-<!-- 句子页面 -->
 <div id="sentencePage" class="sentence-page">
     <div class="page-container">
         <div class="page-header">
@@ -661,7 +611,6 @@
     </div>
 </div>
 
-<!-- 类别管理弹窗 -->
 <div id="categoryManageDialog" class="sentence-dialog">
     <div class="dialog-content">
         <h4 style="margin-bottom: 16px;">📁 管理类别</h4>
@@ -676,10 +625,9 @@
     </div>
 </div>
 
-<!-- 编辑子分类弹窗（名称+Emoji 同时编辑） -->
 <div id="editSubDialog" class="sentence-dialog">
-    <div class="dialog-content" style="max-width: 320px;">
-        <h4 style="margin-bottom: 16px;">编辑子分类</h4>
+    <div class="dialog-content" style="max-width: 360px; max-height: 80vh; overflow-y: auto;">
+        <h4 style="margin-bottom: 16px;">✏️ 编辑子分类</h4>
         <div style="margin-bottom: 16px;">
             <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 6px;">子分类名称</div>
             <input type="text" id="editSubName" placeholder="名称" style="width:100%; padding:10px; border:0.5px solid #e5e5ea; border-radius: 12px;">
@@ -688,17 +636,31 @@
             <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 6px;">图标 Emoji</div>
             <input type="text" id="editSubEmoji" placeholder="例如: ☀️ 📝 🌸" value="📝" style="width:100%; padding:10px; border:0.5px solid #e5e5ea; border-radius: 12px;">
         </div>
-        <div class="dialog-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
-            <button id="editSubCancelBtn" style="background: #e9e9ef; border: none; padding: 8px 18px; border-radius: 30px;">取消</button>
-            <button id="editSubConfirmBtn" style="background: #007aff; color: white; border: none; padding: 8px 18px; border-radius: 30px;">保存</button>
+        <div style="margin-bottom: 20px; border-top: 0.5px solid #e5e5ea; padding-top: 16px;">
+            <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 8px;">🏷️ 关联标签</div>
+            <div style="font-size: 0.7rem; color: #007aff; margin-bottom: 8px; background: #e8f0fe; padding: 6px 10px; border-radius: 12px;">
+                📌 默认标签：<strong id="defaultTagDisplay"></strong>（与子分类同名）
+            </div>
+            <div style="font-size: 0.7rem; color: #6c6c70; margin: 8px 0 4px;">额外标签：</div>
+            <div id="editSubCustomTagsList" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 32px;"></div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+                <input type="text" id="editSubNewTag" placeholder="添加额外标签" style="flex: 1; padding: 8px 12px; border: 0.5px solid #e5e5ea; border-radius: 20px; font-size: 0.8rem;">
+                <button id="editSubAddTagBtn" style="background: #e9e9ef; border: none; width: 36px; height: 36px; border-radius: 30px; font-size: 1rem; color: #007aff; cursor: pointer;">+</button>
+            </div>
+            <div style="font-size: 0.65rem; color: #8e8e93; margin-top: 8px;">💡 句子加上这些标签后，会自动出现在本分类中</div>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; border-top: 0.5px solid #e5e5ea; padding-top: 16px;">
+            <button id="editSubDeleteBtn" style="background: #fff0ef; border: none; padding: 8px 18px; border-radius: 30px; color: #ff3b30; font-weight: 500; cursor: pointer;">🗑️ 删除</button>
+            <button id="editSubCancelBtn" style="background: #e9e9ef; border: none; padding: 8px 18px; border-radius: 30px; cursor: pointer;">取消</button>
+            <button id="editSubConfirmBtn" style="background: #007aff; color: white; border: none; padding: 8px 18px; border-radius: 30px; cursor: pointer;">保存</button>
         </div>
     </div>
 </div>
-<!-- 批量添加弹窗 -->
+
 <div id="batchAddDialog" class="sentence-dialog">
     <div class="dialog-content">
-        <h4 style="margin-bottom: 12px;">添加</h4>
-        <textarea id="batchAddTextarea" rows="8" placeholder="" style="width:100%; padding:12px; border-radius:16px; border:0.5px solid #ddd;"></textarea>
+        <h4 style="margin-bottom: 12px;">批量添加</h4>
+        <textarea id="batchAddTextarea" rows="8" placeholder="每行一条内容" style="width:100%; padding:12px; border-radius:16px; border:0.5px solid #ddd;"></textarea>
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px;">
             <button id="batchAddCancelBtn" style="background:#e9e9ef; border:none; padding:8px 18px; border-radius:30px;">取消</button>
             <button id="batchAddConfirmBtn" style="background:#007aff; color:white; border:none; padding:8px 18px; border-radius:30px;">确认添加</button>
@@ -706,21 +668,16 @@
     </div>
 </div>
 
-<!-- 句子编辑弹窗 - 重新设计 -->
 <div id="sentenceDialog" class="sentence-dialog">
     <div class="dialog-content" style="max-width: 400px; padding: 20px; border-radius: 28px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h4 style="font-size: 1.1rem; font-weight: 590; color: #1c1c1e;">编辑内容</h4>
             <button id="dialogCloseBtn" style="background: transparent; border: none; font-size: 1.2rem; color: #8e8e93; cursor: pointer; width: 32px; height: 32px; border-radius: 20px;">✕</button>
         </div>
-        
-        <!-- 内容输入区 -->
         <div style="margin-bottom: 20px;">
             <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 8px;">内容</div>
             <textarea id="dialogSentenceText" rows="4" placeholder="写下你的句子或词语..." style="width:100%; padding: 14px; border: 0.5px solid #e2e2e6; border-radius: 20px; font-size: 0.9rem; font-family: inherit; background: #f8f8fa; resize: vertical;"></textarea>
         </div>
-        
-        <!-- 标签区域 -->
         <div style="margin-bottom: 24px;">
             <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 8px;">标签</div>
             <div id="dialogTagList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; min-height: 36px;"></div>
@@ -729,8 +686,6 @@
                 <button id="dialogAddTagBtn" style="background: #e9e9ef; border: none; width: 36px; height: 36px; border-radius: 30px; font-size: 1rem; color: #007aff; cursor: pointer;">+</button>
             </div>
         </div>
-        
-        <!-- 操作按钮 -->
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
             <button id="dialogCopyBtn" style="background: #e9e9ef; border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; color: #8e8e93; cursor: pointer;">📋 复制</button>
             <button id="dialogDeleteBtn" style="background: #fff0ef; border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; color: #ff3b30; cursor: pointer;">🗑️ 删除</button>
@@ -739,32 +694,25 @@
     </div>
 </div>
 
-
-<!-- 设置面板 - 重新设计 -->
 <div id="settingsModal" class="sentence-dialog">
     <div class="dialog-content" style="max-width: 360px; padding: 24px; border-radius: 28px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="font-size: 1.2rem; font-weight: 600; color: #1c1c1e;">☁️ 云端同步</h3>
             <button id="closeSettings" style="background: transparent; border: none; font-size: 1.2rem; color: #8e8e93; cursor: pointer; width: 32px; height: 32px; border-radius: 20px;">✕</button>
         </div>
-        
         <p style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 20px; line-height: 1.4;">使用 GitHub Gist 备份和恢复数据</p>
-        
         <div style="margin-bottom: 16px;">
             <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 6px;">GitHub Token</div>
             <input type="text" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="width:100%; padding: 12px; border: 0.5px solid #e2e2e6; border-radius: 14px; font-size: 0.85rem; background: #f8f8fa;">
         </div>
-        
         <div style="margin-bottom: 20px;">
             <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 6px;">Gist ID</div>
             <input type="text" id="gistId" placeholder="xxxxxxxxxxxx" style="width:100%; padding: 12px; border: 0.5px solid #e2e2e6; border-radius: 14px; font-size: 0.85rem; background: #f8f8fa;">
         </div>
-        
         <div style="display: flex; gap: 12px; margin-bottom: 16px;">
             <button id="syncToGist" style="flex: 1; background: #007aff; border: none; padding: 12px; border-radius: 30px; font-size: 0.85rem; color: white; font-weight: 500; cursor: pointer;">☁️ 上传备份</button>
             <button id="restoreFromGist" style="flex: 1; background: #e9e9ef; border: none; padding: 12px; border-radius: 30px; font-size: 0.85rem; color: #007aff; font-weight: 500; cursor: pointer;">⬇️ 恢复云端</button>
         </div>
-        
         <div id="syncStatus" style="font-size: 0.7rem; color: #8e8e93; text-align: center; padding: 8px; background: #f8f8fa; border-radius: 12px;"></div>
     </div>
 </div>
@@ -775,40 +723,110 @@
     let currentDialogContext = null;
     let currentPageRef = null;
     let currentListType = 'good';
+    let currentEditSubData = null;
 
     function genId() { return Date.now() + '-' + Math.random().toString(36).substring(2, 8); }
-
-    const defaultRaw = [
-        { id: genId(), name: "天气", emoji: "☁️", collapsed: true, children: [{ id: genId(), name: "晴", emoji: "☀️", goodSentences: ["晴空一鹤排云上，便引诗情到碧霄。"], wordSentences: ["万里无云"], tagsMap: {} }] },
-        { id: genId(), name: "天空", emoji: "🌤️", collapsed: true, children: [{ id: genId(), name: "太阳", emoji: "☀️", goodSentences: ["日出江花红胜火。"], wordSentences: ["旭日东升"], tagsMap: {} }] },
-        { id: genId(), name: "植物", emoji: "🌿", collapsed: true, children: [{ id: genId(), name: "花", emoji: "🌸", goodSentences: ["花开堪折直须折。"], wordSentences: ["芬芳馥郁"], tagsMap: {} }] }
-    ];
 
     function ensureArrays(sec) {
         if(!sec.goodSentences) sec.goodSentences = [];
         if(!sec.wordSentences) sec.wordSentences = [];
         if(!sec.tagsMap) sec.tagsMap = {};
         if(!sec.emoji) sec.emoji = '📝';
+        if(!sec.customTags) sec.customTags = [];
     }
 
-    function loadData() {
-        const stored = localStorage.getItem('quote_hub_ios');
-        if(stored) { try { const data = JSON.parse(stored); categories = data.categories || []; globalTags = data.globalTags || []; if(!categories.length) throw new Error(); } catch(e) { initDefault(); } }
-        else { initDefault(); }
-        categories.forEach(c => { if(c.collapsed === undefined) c.collapsed = true; if(!c.emoji) c.emoji = '📁'; c.children?.forEach(ensureArrays); });
-        renderMain(); renderGlobalTags(); updateCategoryCount();
-    }
+    const defaultRaw = [
+        { id: genId(), name: "天气", emoji: "☁️", collapsed: true, children: [{ id: genId(), name: "晴", emoji: "☀️", goodSentences: ["晴空一鹤排云上，便引诗情到碧霄。"], wordSentences: ["万里无云"], tagsMap: {}, customTags: [] }] },
+        { id: genId(), name: "天空", emoji: "🌤️", collapsed: true, children: [{ id: genId(), name: "太阳", emoji: "☀️", goodSentences: ["日出江花红胜火。"], wordSentences: ["旭日东升"], tagsMap: {}, customTags: [] }] },
+        { id: genId(), name: "植物", emoji: "🌿", collapsed: true, children: [{ id: genId(), name: "花", emoji: "🌸", goodSentences: ["花开堪折直须折。"], wordSentences: ["芬芳馥郁"], tagsMap: {}, customTags: [] }] }
+    ];
+
     function initDefault() { categories = JSON.parse(JSON.stringify(defaultRaw)); globalTags = ["生活", "哲思"]; categories.forEach(c => c.children?.forEach(ensureArrays)); }
     function saveData() { localStorage.setItem('quote_hub_ios', JSON.stringify({ categories, globalTags })); updateCategoryCount(); }
-
-    function updateCategoryCount() {
-        const count = categories.length;
-        const span = document.getElementById('categoryCount');
-        if(span) span.innerText = count;
-    }
-
+    function updateCategoryCount() { const span = document.getElementById('categoryCount'); if(span) span.innerText = categories.length; }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m=> m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
     function splitIntoColumns(arr) { const left=[], right=[]; arr.forEach((item,idx)=>{ if(idx%2===0) left.push(item); else right.push(item); }); return {left,right}; }
+
+
+
+  function loadData() {
+    const stored = localStorage.getItem('quote_hub_ios');
+    if(stored) { 
+        try { 
+            const data = JSON.parse(stored); 
+            categories = data.categories || []; 
+            globalTags = data.globalTags || []; 
+            if(!categories.length) throw new Error(); 
+        } catch(e) { 
+            initDefault(); 
+        } 
+    } else { 
+        initDefault(); 
+    }
+    categories.forEach(c => { 
+        if(c.collapsed === undefined) c.collapsed = true; 
+        if(!c.emoji) c.emoji = '📁'; 
+        c.children?.forEach(ensureArrays); 
+    });
+    renderMain(); 
+    renderGlobalTags(); 
+    updateCategoryCount();
+    
+    // 【新增】迁移现有数据，给所有句子添加默认分类标签
+    migrateAddDefaultTags();
+}
+
+// 迁移函数：给所有已有句子添加其所在子分类名称作为默认标签（放在 loadData 函数后面）
+function migrateAddDefaultTags() {
+    let changed = false;
+    for(const primary of categories) {
+        for(const sub of (primary.children || [])) {
+            const defaultTag = sub.name;
+            
+            // 确保默认标签存在于全局标签中
+            if(!globalTags.includes(defaultTag)) {
+                globalTags.push(defaultTag);
+                changed = true;
+            }
+            
+            // 处理好句
+            if(sub.goodSentences) {
+                for(let i = 0; i < sub.goodSentences.length; i++) {
+                    if(!sub.tagsMap) sub.tagsMap = {};
+                    const tags = sub.tagsMap[i] || [];
+                    if(!tags.includes(defaultTag)) {
+                        tags.push(defaultTag);
+                        sub.tagsMap[i] = tags;
+                        changed = true;
+                    }
+                }
+            }
+            
+            // 处理词语
+            if(sub.wordSentences) {
+                for(let i = 0; i < sub.wordSentences.length; i++) {
+                    if(!sub.tagsMap) sub.tagsMap = {};
+                    const tags = sub.tagsMap[i] || [];
+                    if(!tags.includes(defaultTag)) {
+                        tags.push(defaultTag);
+                        sub.tagsMap[i] = tags;
+                        changed = true;
+                    }
+                }
+            }
+        }
+    }
+    
+    if(changed) {
+        saveData();
+        renderMain();
+        renderGlobalTags();
+        console.log('已为所有句子添加默认分类标签');
+    }
+}
+
+
+
 
     function renderMain() {
         const container = document.getElementById('categoriesContainer');
@@ -822,7 +840,7 @@
                 <div class="secondary-item" data-pid="${primary.id}" data-secid="${sec.id}">
                     <span class="secondary-emoji">${sec.emoji || '📝'}</span>
                     <span class="secondary-name">${escapeHtml(sec.name)}</span>
-                     <span class="secondary-count">${sec.goodSentences?.length || 0}|${sec.wordSentences?.length || 0}</span>
+                    <span class="secondary-count">${sec.goodSentences?.length || 0}|${sec.wordSentences?.length || 0}</span>
                 </div>`).join(''):'<div class="empty-sub">无子分类</div>'}</div>` : '';
             return `<div class="primary-cat">
                 <div class="primary-header" data-toggle-id="${primary.id}">
@@ -842,140 +860,304 @@
     function toggleCollapse(e){ const id=e.currentTarget.dataset.toggleId; const cat=categories.find(c=>c.id===id); if(cat){ cat.collapsed=!cat.collapsed; saveData(); renderMain(); } }
     function onSecondaryClick(e){ const item=e.currentTarget; const pid=item.dataset.pid, secid=item.dataset.secid; const primary=categories.find(p=>p.id===pid); if(primary){ const sec=primary.children.find(c=>c.id===secid); if(sec){ currentPageRef = { type:'category', primaryId:pid, secId:secid, secName:sec.name, primaryName:primary.name, goodSentences:sec.goodSentences||[], wordSentences:sec.wordSentences||[], tagsMap:sec.tagsMap||{} }; openSentencePage(); } } }
 
-    function renderCategoryManageList() {
-        const container = document.getElementById('catManageList');
-        if(!container) return;
-        if(categories.length===0){ container.innerHTML='<div style="padding:20px; text-align:center;">暂无类别</div>'; return; }
-        container.innerHTML = categories.map(cat => `
-            <div class="cat-card">
-                <div class="cat-card-header">
-                    <span class="cat-name">${escapeHtml(cat.name)} <span style="font-size:0.7rem; color:#aaa;">(${cat.children?.length||0})</span></span>
-                    <div>
-                        <button class="icon-mini edit-cat-btn" data-id="${cat.id}">✎</button>
-                        <button class="icon-mini del-cat-btn" data-id="${cat.id}">✕</button>
-                    </div>
-                </div>
-                <div class="sub-list">
-                    ${cat.children?.map(sub => `<div class="sub-item"><span>${sub.emoji||'📝'} ${escapeHtml(sub.name)}</span><div><button class="icon-mini edit-sub-btn" data-cat="${cat.id}" data-sub="${sub.id}" style="font-size:0.75rem;">✎</button><button class="icon-mini del-sub-btn" data-cat="${cat.id}" data-sub="${sub.id}" style="font-size:0.75rem;">✕</button></div></div>`).join('')}
-                    <div style="display:flex; gap:6px; margin-top:8px;"><input type="text" id="newSub-${cat.id}" placeholder="新子分类" style="width:120px; padding:6px 10px; border-radius:20px; border:0.5px solid #e5e5ea; background:#f8f8fa;"><button class="add-sub-btn" data-cat="${cat.id}">+</button></div>
-                </div>
-            </div>
-        `).join('');
-        document.querySelectorAll('.edit-cat-btn').forEach(btn=>btn.onclick=()=>{ const id=btn.dataset.id; const cat=categories.find(c=>c.id===id); if(cat){ let newName=prompt('类别名',cat.name); if(newName) cat.name=newName; saveData(); renderCategoryManageList(); renderMain(); } });
-        document.querySelectorAll('.del-cat-btn').forEach(btn=>btn.onclick=()=>{ if(confirm('删除类别？')){ const id=btn.dataset.id; categories=categories.filter(c=>c.id!==id); saveData(); renderCategoryManageList(); renderMain(); if(sentencePageDiv.classList.contains('open')) sentencePageDiv.classList.remove('open'); } });
-document.querySelectorAll('.edit-sub-btn').forEach(btn=>btn.onclick=()=>{ 
-    const catId=btn.dataset.cat, subId=btn.dataset.sub; 
-    const cat=categories.find(c=>c.id===catId); 
-    const sub=cat?.children.find(s=>s.id===subId); 
-    if(sub){ 
-        // 打开自定义弹窗
-        openEditSubDialog(sub, catId, subId);
-    } 
-});
-        document.querySelectorAll('.del-sub-btn').forEach(btn=>btn.onclick=()=>{ const catId=btn.dataset.cat, subId=btn.dataset.sub; const cat=categories.find(c=>c.id===catId); if(cat){ cat.children=cat.children.filter(s=>s.id!==subId); saveData(); renderCategoryManageList(); renderMain(); } });
-        document.querySelectorAll('.add-sub-btn').forEach(btn=>btn.onclick=()=>{ const catId=btn.dataset.cat; const input=document.getElementById(`newSub-${catId}`); const name=input?.value.trim(); if(name){ const cat=categories.find(c=>c.id===catId); if(cat){ if(!cat.children) cat.children=[]; cat.children.push({id:genId(),name:name,emoji:'📝',goodSentences:[],wordSentences:[],tagsMap:{}}); saveData(); renderCategoryManageList(); renderMain(); input.value=''; } } });
+    function openSentencePage() { updateSentencePageByType(); document.getElementById('sentencePage').classList.add('open'); }
+    function updateSentencePageByType() {
+        if (!currentPageRef) return;
+        let title = '', sentences = [];
+        if (currentPageRef.type === 'category') { title = `${currentPageRef.primaryName} · ${currentPageRef.secName}`; sentences = currentListType === 'good' ? currentPageRef.goodSentences : currentPageRef.wordSentences; }
+        else if (currentPageRef.type === 'tag') { title = `标签 · ${currentPageRef.tagName}`; sentences = currentPageRef.sentences || []; }
+        document.getElementById('pageCategoryTitle').innerText = title;
+        renderSentencePage(sentences);
     }
-
-    // 批量添加
-    document.getElementById('batchAddBtn')?.addEventListener('click',()=>{ document.getElementById('batchAddTextarea').value=''; document.getElementById('batchAddDialog').classList.add('active'); });
-    document.getElementById('batchAddCancelBtn')?.addEventListener('click',()=>{ document.getElementById('batchAddDialog').classList.remove('active'); });
-    document.getElementById('batchAddConfirmBtn')?.addEventListener('click',()=>{ const val=document.getElementById('batchAddTextarea').value; if(!val.trim()) return; const lines=val.split(/\r?\n/).filter(l=>l.trim().length); if(lines.length===0) return; if(!currentPageRef||currentPageRef.type!=='category'){ alert('请先打开子分类'); return; } const primary=categories.find(p=>p.id===currentPageRef.primaryId); if(primary){ const sec=primary.children.find(c=>c.id===currentPageRef.secId); if(sec){ const arr=currentListType==='good'?sec.goodSentences:sec.wordSentences; lines.forEach(l=>arr.push(l.trim())); saveData(); updateSentencePageByType(); renderMain(); } } document.getElementById('batchAddDialog').classList.remove('active'); });
-
-    // 其他已有功能
-    const sentencePageDiv = document.getElementById('sentencePage');
-    function openSentencePage() { updateSentencePageByType(); sentencePageDiv.classList.add('open'); }
-function updateSentencePageByType() {
-    if (!currentPageRef) return;
-    let title = '', sentences = [];
-    if (currentPageRef.type === 'category') {
-        title = `${currentPageRef.primaryName} · ${currentPageRef.secName}`;
-        sentences = currentListType === 'good' ? currentPageRef.goodSentences : currentPageRef.wordSentences;
-    } else if (currentPageRef.type === 'tag') {
-        title = `标签 · ${currentPageRef.tagName}`;
-        sentences = currentPageRef.sentences || [];
-    }
-    document.getElementById('pageCategoryTitle').innerText = title;
-    renderSentencePage(sentences);
-}
-
-
     function renderSentencePage(sentences){ const container=document.getElementById('sentencePageList'); if(!sentences.length){ container.innerHTML='<div class="empty-placeholder">暂无内容</div>'; return; } let html=''; sentences.forEach((s,i)=>{ html+=`<div class="sentence-card" data-idx="${i}"><div>${i+1}.</div><div>${escapeHtml(s)}</div></div>`; }); container.innerHTML=html; document.querySelectorAll('.sentence-card').forEach(c=>c.addEventListener('click',(e)=>{ const idx=c.dataset.idx; if(currentPageRef.type==='category'){ const p=categories.find(p=>p.id===currentPageRef.primaryId); const sec=p?.children.find(s=>s.id===currentPageRef.secId); if(sec){ const arr=currentListType==='good'?sec.goodSentences:sec.wordSentences; currentDialogContext={type:'category',primaryId:currentPageRef.primaryId,secId:currentPageRef.secId,sentenceIndex:parseInt(idx),sentenceText:arr[idx],tags:sec.tagsMap?.[idx]||[],listType:currentListType}; openDialog(); } } })); }
     function openDialog(){ document.getElementById('dialogSentenceText').value=currentDialogContext.sentenceText; renderDialogTags(); document.getElementById('sentenceDialog').classList.add('active'); }
-    function renderDialogTags() {
+    
+
+function renderDialogTags() {
     const container = document.getElementById('dialogTagList');
     const tags = currentDialogContext.tags || [];
-    if (tags.length === 0) {
-        container.innerHTML = '<span style="font-size:0.7rem; color:#c6c6c8;">暂无标签，点击 + 添加</span>';
-        return;
-    }
-    container.innerHTML = tags.map(tag => `
-        <span style="background: #e9e9ef; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px;">
-            ${escapeHtml(tag)}
-            <button class="dialog-tag-remove" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.7rem; color: #8e8e93; cursor: pointer; padding: 0; margin: 0;">✕</button>
-        </span>
-    `).join('');
     
-    document.querySelectorAll('.dialog-tag-remove').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tag = btn.dataset.tag;
-            currentDialogContext.tags = currentDialogContext.tags.filter(t => t !== tag);
-            renderDialogTags();
-        });
+    // 获取当前子分类的名称（作为默认标签标识）
+    let currentSubName = '';
+    if(currentDialogContext.type === 'category') {
+        const primary = categories.find(p => p.id === currentDialogContext.primaryId);
+        const sec = primary?.children.find(s => s.id === currentDialogContext.secId);
+        if(sec) currentSubName = sec.name;
+    }
+    
+    if (tags.length === 0) { 
+        container.innerHTML = '<span style="font-size:0.7rem; color:#c6c6c8;">暂无标签，点击 + 添加</span>'; 
+        return; 
+    }
+    
+    container.innerHTML = tags.map(tag => {
+        // 如果是默认标签（当前子分类名称），添加特殊样式
+        const isDefaultTag = (tag === currentSubName);
+        const defaultStyle = isDefaultTag ? 'background: #007aff20; border: 0.5px solid #007aff;' : '';
+        return `<span style="background: #e9e9ef; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px; ${defaultStyle}">
+            ${escapeHtml(tag)}
+            ${!isDefaultTag ? `<button class="dialog-tag-remove" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.7rem; color: #8e8e93; cursor: pointer; padding: 0;">✕</button>` : '<span style="font-size:0.65rem; color:#007aff; margin-left:4px;">📌</span>'}
+        </span>`;
+    }).join('');
+    
+    document.querySelectorAll('.dialog-tag-remove').forEach(btn => { 
+        btn.addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            const tag = btn.dataset.tag; 
+            currentDialogContext.tags = currentDialogContext.tags.filter(t => t !== tag); 
+            renderDialogTags(); 
+        }); 
     });
 }
-    
-    document.getElementById('dialogSaveBtn').onclick = () => {
-    const newText = document.getElementById('dialogSentenceText').value.trim();
-    if (!newText) return;
-    const primary = categories.find(p => p.id === currentDialogContext.primaryId);
-    if (primary) {
-        const sec = primary.children.find(c => c.id === currentDialogContext.secId);
-        if (sec) {
-            const targetArr = currentDialogContext.listType === 'good' ? sec.goodSentences : sec.wordSentences;
-            targetArr[currentDialogContext.sentenceIndex] = newText;
-            if (!sec.tagsMap) sec.tagsMap = {};
-            sec.tagsMap[currentDialogContext.sentenceIndex] = currentDialogContext.tags;
-            saveData();
-            updateSentencePageByType();
-            renderMain();
-        }
+
+
+    function renderGlobalTags(){
+        const c=document.getElementById('globalTagsContainer'); if(!c) return;
+        c.innerHTML=globalTags.map(t=>`<div class="tag-item" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</div>`).join('');
+        document.querySelectorAll('.tag-item').forEach(el=>el.addEventListener('click',()=>{
+            const tag = el.dataset.tag;
+            let matchedSub = null, matchedPrimary = null;
+            for(const primary of categories) for(const sub of (primary.children || [])) if(sub.name === tag || (sub.customTags && sub.customTags.includes(tag))) { matchedSub = sub; matchedPrimary = primary; break; }
+            const sentencesList = []; const tagsMapRef = {}; let idx = 0;
+            categories.forEach(primary => { primary.children?.forEach(sec => { Object.entries(sec.tagsMap||{}).forEach(([sid,stags])=>{ if(stags && stags.includes(tag)){ const sIdx=parseInt(sid); let text='', type=''; if(sec.goodSentences && sec.goodSentences[sIdx]) { text=sec.goodSentences[sIdx]; type='good'; } else if(sec.wordSentences && sec.wordSentences[sIdx]) { text=sec.wordSentences[sIdx]; type='word'; } if(text){ sentencesList.push(text); tagsMapRef[idx]={ primaryId:primary.id, secId:sec.id, sentenceIndex:sIdx, type:type }; idx++; } } }); }); });
+            let displayTagName = tag; if(matchedSub && matchedPrimary) displayTagName = `${matchedPrimary.name} · ${matchedSub.name} (${tag})`;
+            currentPageRef = { type:'tag', tagName:displayTagName, rawTagName:tag, sentences:sentencesList, tagsMapRef:tagsMapRef }; openSentencePage();
+        }));
     }
-    document.getElementById('sentenceDialog').classList.remove('active');
+
+    function renderCategoryManageList() {
+        const container = document.getElementById('catManageList'); if(!container) return;
+        if(categories.length===0){ container.innerHTML='<div style="padding:20px; text-align:center;">暂无类别</div>'; return; }
+        container.innerHTML = categories.map(cat => `<div class="cat-card"><div class="cat-card-header"><span class="cat-name">${escapeHtml(cat.name)} <span style="font-size:0.7rem; color:#aaa;">(${cat.children?.length||0})</span></span><div><button class="icon-mini edit-cat-btn" data-id="${cat.id}" title="编辑类别">✎</button></div></div><div class="sub-list">${cat.children?.map(sub => `<div class="sub-item"><span>${sub.emoji||'📝'} ${escapeHtml(sub.name)}</span><div><button class="icon-mini edit-sub-btn" data-cat="${cat.id}" data-sub="${sub.id}" title="编辑子分类" style="font-size:0.75rem;">✎</button></div></div>`).join('')}<div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;"><input type="text" id="newSub-${cat.id}" placeholder="新子分类" style="flex: 1; min-width: 0; padding: 8px 12px; border-radius: 20px; border: 0.5px solid #e5e5ea; background: #f8f8fa; font-size: 0.8rem;"><button class="add-sub-btn" data-cat="${cat.id}" style="background: #007aff; border: none; width: 36px; height: 36px; border-radius: 30px; color: white; font-size: 1.2rem; cursor: pointer; flex-shrink: 0;">+</button></div></div></div>`).join('');
+        document.querySelectorAll('.edit-cat-btn').forEach(btn=>btn.onclick=()=>{ const id=btn.dataset.id; const cat=categories.find(c=>c.id===id); if(cat){ let newName=prompt('类别名',cat.name); if(newName) cat.name=newName; saveData(); renderCategoryManageList(); renderMain(); } });
+        document.querySelectorAll('.edit-sub-btn').forEach(btn=>btn.onclick=()=>{ const catId=btn.dataset.cat, subId=btn.dataset.sub; const cat=categories.find(c=>c.id===catId); const sub=cat?.children.find(s=>s.id===subId); if(sub) openEditSubDialog(sub, catId, subId); });
+        document.querySelectorAll('.add-sub-btn').forEach(btn=>{ btn.onclick=()=>{ const catId=btn.dataset.cat; const input=document.getElementById(`newSub-${catId}`); const name=input?.value.trim(); if(name){ const cat=categories.find(c=>c.id===catId); if(cat){ if(!cat.children) cat.children=[]; const newSub={ id:genId(), name:name, emoji:'📝', goodSentences:[], wordSentences:[], tagsMap:{}, customTags:[] }; cat.children.push(newSub); if(!globalTags.includes(name)) globalTags.push(name); saveData(); renderCategoryManageList(); renderMain(); renderGlobalTags(); input.value=''; } } }; });
+    }
+
+    function openEditSubDialog(sub, catId, subId) {
+        currentEditSubData = { catId, subId, sub };
+        const dialog = document.getElementById('editSubDialog');
+        document.getElementById('editSubName').value = sub.name || '';
+        document.getElementById('editSubEmoji').value = sub.emoji || '📝';
+        document.getElementById('defaultTagDisplay').innerText = sub.name;
+        if(!sub.customTags) sub.customTags = [];
+        function renderCustomTags() {
+            const container = document.getElementById('editSubCustomTagsList');
+            const tags = sub.customTags || [];
+            if(tags.length === 0) { container.innerHTML = '<span style="font-size:0.7rem; color:#c6c6c8;">暂无额外标签</span>'; return; }
+            container.innerHTML = tags.map(tag => `<span style="background: #e9e9ef; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 6px;">${escapeHtml(tag)}<button class="remove-custom-tag" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.7rem; color: #ff3b30; cursor: pointer; padding: 0;">✕</button></span>`).join('');
+            document.querySelectorAll('.remove-custom-tag').forEach(btn => { btn.onclick = (e) => { e.stopPropagation(); const tagToRemove = btn.dataset.tag; sub.customTags = sub.customTags.filter(t => t !== tagToRemove); renderCustomTags(); }; });
+        }
+        renderCustomTags();
+        document.getElementById('editSubAddTagBtn').onclick = () => { const input = document.getElementById('editSubNewTag'); const newTag = input.value.trim(); if(newTag && !sub.customTags.includes(newTag) && newTag !== sub.name) { sub.customTags.push(newTag); if(!globalTags.includes(newTag)) { globalTags.push(newTag); renderGlobalTags(); } renderCustomTags(); input.value = ''; } else if(newTag === sub.name) alert('不能添加与子分类同名的标签（已自动关联）'); };
+        const confirmBtn = document.getElementById('editSubConfirmBtn'); const newConfirm = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+        newConfirm.onclick = () => { const newName = document.getElementById('editSubName').value.trim(); const newEmoji = document.getElementById('editSubEmoji').value.trim(); if(newName && newName !== sub.name) { if(!globalTags.includes(newName)) globalTags.push(newName); sub.name = newName; document.getElementById('defaultTagDisplay').innerText = newName; } if(newEmoji) sub.emoji = newEmoji; saveData(); renderCategoryManageList(); renderMain(); renderGlobalTags(); dialog.classList.remove('active'); currentEditSubData = null; };
+        const deleteBtn = document.getElementById('editSubDeleteBtn'); const newDelete = deleteBtn.cloneNode(true); deleteBtn.parentNode.replaceChild(newDelete, deleteBtn);
+        newDelete.onclick = () => { if(confirm(`确定删除子分类“${sub.name}”及其所有内容吗？`)) { const cat = categories.find(c => c.id === catId); if(cat) { cat.children = cat.children.filter(s => s.id !== subId); saveData(); renderCategoryManageList(); renderMain(); renderGlobalTags(); if(currentPageRef && currentPageRef.type === 'category' && currentPageRef.secId === subId) document.getElementById('sentencePage').classList.remove('open'); dialog.classList.remove('active'); currentEditSubData = null; } } };
+        const cancelBtn = document.getElementById('editSubCancelBtn'); const newCancel = cancelBtn.cloneNode(true); cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+        newCancel.onclick = () => { dialog.classList.remove('active'); currentEditSubData = null; };
+        dialog.classList.add('active');
+    }
+
+    document.getElementById('batchAddBtn')?.addEventListener('click',()=>{ document.getElementById('batchAddTextarea').value=''; document.getElementById('batchAddDialog').classList.add('active'); });
+    document.getElementById('batchAddCancelBtn')?.addEventListener('click',()=>{ document.getElementById('batchAddDialog').classList.remove('active'); });
+    
+document.getElementById('batchAddConfirmBtn')?.addEventListener('click',()=>{ 
+    const val=document.getElementById('batchAddTextarea').value; 
+    if(!val.trim()) return; 
+    const lines=val.split(/\r?\n/).filter(l=>l.trim().length); 
+    if(lines.length===0) return; 
+    if(!currentPageRef||currentPageRef.type!=='category'){ 
+        alert('请先打开子分类'); 
+        return; 
+    } 
+    const primary=categories.find(p=>p.id===currentPageRef.primaryId); 
+    if(primary){ 
+        const sec=primary.children.find(c=>c.id===currentPageRef.secId); 
+        if(sec){ 
+            const arr=currentListType==='good'?sec.goodSentences:sec.wordSentences; 
+            // 【关键修改】获取默认标签
+            const defaultTag = sec.name;
+            if(!globalTags.includes(defaultTag)) {
+                globalTags.push(defaultTag);
+            }
+            
+            lines.forEach(l=>{
+                arr.push(l.trim());
+                if(!sec.tagsMap) sec.tagsMap = {};
+                sec.tagsMap[arr.length - 1] = [defaultTag];
+            }); 
+            saveData(); 
+            updateSentencePageByType(); 
+            renderMain();
+            renderGlobalTags();
+        } 
+    } 
+    document.getElementById('batchAddDialog').classList.remove('active'); 
+});
+
+
+
+document.getElementById('dialogSaveBtn').onclick = () => { 
+    const newText = document.getElementById('dialogSentenceText').value.trim(); 
+    if(!newText) return; 
+    const primary = categories.find(p => p.id === currentDialogContext.primaryId); 
+    if(primary) { 
+        const sec = primary.children.find(c => c.id === currentDialogContext.secId); 
+        if(sec) { 
+            const targetArr = currentDialogContext.listType === 'good' ? sec.goodSentences : sec.wordSentences; 
+            targetArr[currentDialogContext.sentenceIndex] = newText; 
+            if(!sec.tagsMap) sec.tagsMap = {}; 
+            sec.tagsMap[currentDialogContext.sentenceIndex] = currentDialogContext.tags; 
+            
+            // 【新增】保存后，检查当前句子的所有标签，自动归类到匹配的子分类
+            const sentenceText = newText;
+            const tags = currentDialogContext.tags || [];
+            
+            for(const tag of tags) {
+                // 查找匹配的子分类
+                for(const primaryOther of categories) {
+                    for(const subOther of (primaryOther.children || [])) {
+                        if((subOther.name === tag || (subOther.customTags && subOther.customTags.includes(tag))) &&
+                           !(subOther.id === sec.id && primaryOther.id === primary.id)) { // 避免添加到自身
+                            
+                            const targetArrOther = currentDialogContext.listType === 'good' ? subOther.goodSentences : subOther.wordSentences;
+                            if(!targetArrOther.includes(sentenceText)) {
+                                targetArrOther.push(sentenceText);
+                                if(!subOther.tagsMap) subOther.tagsMap = {};
+                                const newIdx = targetArrOther.length - 1;
+                                subOther.tagsMap[newIdx] = [...tags];
+                            }
+                        }
+                    }
+                }
+            }
+            
+            saveData(); 
+            updateSentencePageByType(); 
+            renderMain(); 
+        } 
+    } 
+    document.getElementById('sentenceDialog').classList.remove('active'); 
 };
+
+
+
     document.getElementById('dialogDeleteBtn').onclick=()=>{ if(confirm('删除？')){ const p=categories.find(p=>p.id===currentDialogContext.primaryId); const sec=p?.children.find(s=>s.id===currentDialogContext.secId); if(sec){ const arr=currentDialogContext.listType==='good'?sec.goodSentences:sec.wordSentences; arr.splice(currentDialogContext.sentenceIndex,1); if(sec.tagsMap) delete sec.tagsMap[currentDialogContext.sentenceIndex]; saveData(); updateSentencePageByType(); renderMain(); } document.getElementById('sentenceDialog').classList.remove('active'); } };
     document.getElementById('dialogCloseBtn').onclick=()=>document.getElementById('sentenceDialog').classList.remove('active');
-document.getElementById('dialogAddTagBtn').onclick = () => {
-    const input = document.getElementById('dialogNewTagInput');
-    const tag = input.value.trim();
+
+document.getElementById('dialogAddTagBtn').onclick = () => { 
+    const input = document.getElementById('dialogNewTagInput'); 
+    const tag = input.value.trim(); 
     if(tag && !currentDialogContext.tags.includes(tag)) {
+        // 检查这个标签是否匹配某个子分类
+        let matchedSubInfo = null;
+        let matchedPrimary = null;
+        let matchedSub = null;
+        
+        for(const primary of categories) {
+            for(const sub of (primary.children || [])) {
+                // 检查默认标签（子分类名称）或额外标签
+                if(sub.name === tag || (sub.customTags && sub.customTags.includes(tag))) {
+                    matchedSubInfo = `${primary.name} · ${sub.name}`;
+                    matchedPrimary = primary;
+                    matchedSub = sub;
+                    break;
+                }
+            }
+            if(matchedSubInfo) break;
+        }
+        
+        // 添加标签到当前句子
         currentDialogContext.tags.push(tag);
-        // 添加到全局标签（如果不存在）
         if(!globalTags.includes(tag)) {
             globalTags.push(tag);
         }
-        saveData();                    // 保存到 localStorage
-        renderDialogTags();            // 刷新弹窗内的标签显示
-        renderGlobalTags();            // 刷新主界面的标签列表
+        
+        // 获取当前编辑的句子内容和类型
+        const sentenceText = currentDialogContext.sentenceText;
+        const sourceListType = currentDialogContext.listType; // 'good' 或 'word'
+        
+        // 【核心修复】无论当前在哪个分类，只要匹配到子分类，就把句子添加到匹配的子分类中
+        if(matchedSub && matchedPrimary) {
+            const targetArr = sourceListType === 'good' ? matchedSub.goodSentences : matchedSub.wordSentences;
+            // 避免重复添加相同的句子
+            if(!targetArr.includes(sentenceText)) {
+                targetArr.push(sentenceText);
+                if(!matchedSub.tagsMap) matchedSub.tagsMap = {};
+                const newIdx = targetArr.length - 1;
+                // 复制当前的标签列表到新位置
+                matchedSub.tagsMap[newIdx] = [...(currentDialogContext.tags || [])];
+                
+                // 刷新数据
+                saveData();
+                renderMain();
+                
+                // 如果当前打开的子分类就是匹配到的子分类，刷新页面
+                if(currentPageRef && currentPageRef.type === 'category' && 
+                   currentPageRef.secId === matchedSub.id) {
+                    updateSentencePageByType();
+                }
+            }
+        }
+        
+        // 保存当前句子的标签更新
+        saveData();
+        renderDialogTags();
+        renderGlobalTags();
         input.value = '';
-    }
+        
+        // 显示提示（可选，让用户知道自动归类发生了）
+        if(matchedSubInfo && !currentDialogContext.tags.includes(tag)) {
+            // 静默处理，不弹窗避免打扰
+            console.log(`句子已自动归类到: ${matchedSubInfo}`);
+        }
+    } 
 };
 
+document.getElementById('dialogCopyBtn').onclick=()=>{ navigator.clipboard.writeText(currentDialogContext.sentenceText); alert('已复制'); };
+    
 
-    document.getElementById('dialogCopyBtn').onclick=()=>{ navigator.clipboard.writeText(currentDialogContext.sentenceText); alert('已复制'); };
-    document.getElementById('pageAddSentenceBtn').onclick=()=>{ const inp=document.getElementById('pageSentenceInput'); const text=inp.value.trim(); if(!text||currentPageRef?.type!=='category')return; const p=categories.find(p=>p.id===currentPageRef.primaryId); const sec=p?.children.find(s=>s.id===currentPageRef.secId); if(sec){ const arr=currentListType==='good'?sec.goodSentences:sec.wordSentences; arr.push(text); saveData(); updateSentencePageByType(); inp.value=''; renderMain(); } };
+  document.getElementById('pageAddSentenceBtn').onclick = () => { 
+    const inp = document.getElementById('pageSentenceInput'); 
+    const text = inp.value.trim(); 
+    if(!text || currentPageRef?.type !== 'category') return; 
+    const p = categories.find(p => p.id === currentPageRef.primaryId); 
+    const sec = p?.children.find(s => s.id === currentPageRef.secId); 
+    if(sec){ 
+        const arr = currentListType === 'good' ? sec.goodSentences : sec.wordSentences; 
+        arr.push(text); 
+        
+        if(!sec.tagsMap) sec.tagsMap = {};
+        // 【关键修改】默认标签：当前子分类的名称
+        const defaultTag = sec.name;
+        const initialTags = [defaultTag];
+        
+        // 同时确保默认标签存在于全局标签中
+        if(!globalTags.includes(defaultTag)) {
+            globalTags.push(defaultTag);
+        }
+        
+        sec.tagsMap[arr.length - 1] = initialTags;
+        
+        saveData(); 
+        updateSentencePageByType(); 
+        inp.value = ''; 
+        renderMain(); 
+        renderGlobalTags();
+    } 
+};
+    
     document.querySelectorAll('.type-btn').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); currentListType=btn.dataset.type; if(currentPageRef?.type==='category')updateSentencePageByType(); }));
-    document.getElementById('closePageBtn').onclick=()=>{ sentencePageDiv.classList.remove('open'); currentPageRef=null; };
+    document.getElementById('closePageBtn').onclick=()=>{ document.getElementById('sentencePage').classList.remove('open'); currentPageRef=null; };
     document.getElementById('printPageBtn').onclick=()=>window.print();
-
-    function renderGlobalTags(){ const c=document.getElementById('globalTagsContainer'); if(!c)return; c.innerHTML=globalTags.map(t=>`<div class="tag-item" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</div>`).join(''); document.querySelectorAll('.tag-item').forEach(el=>el.addEventListener('click',()=>{ const tag=el.dataset.tag; const list=[]; const ref={}; let idx=0; categories.forEach(p=>p.children?.forEach(sec=>{ Object.entries(sec.tagsMap||{}).forEach(([sid,tags])=>{ if(tags.includes(tag)){ const sIdx=parseInt(sid); const text=sec.goodSentences?.[sIdx]||sec.wordSentences?.[sIdx]; if(text){ list.push(text); ref[idx]={primaryId:p.id,secId:sec.id,sentenceIndex:sIdx,type:sec.goodSentences?.[sIdx]?'good':'word'}; idx++; } } }); })); currentPageRef={type:'tag',tagName:tag,sentences:list,tagsMapRef:ref}; openSentencePage(); })); }
     document.getElementById('addTagBtn').onclick=()=>{ const inp=document.getElementById('newTagInput'); const tag=inp.value.trim(); if(tag&&!globalTags.includes(tag)){ globalTags.push(tag); saveData(); renderGlobalTags(); inp.value=''; } };
     let categoryCollapsed=false,tagCollapsed=false;
     document.getElementById('categorySectionHeader').onclick=()=>{ categoryCollapsed=!categoryCollapsed; document.getElementById('categorySectionContent').style.display=categoryCollapsed?'none':'block'; document.getElementById('categoryToggleIcon').innerText=categoryCollapsed?'▶':'▼'; };
     document.getElementById('tagSectionHeader').onclick=()=>{ tagCollapsed=!tagCollapsed; document.getElementById('tagSectionContent').style.display=tagCollapsed?'none':'block'; document.getElementById('tagToggleIcon').innerText=tagCollapsed?'▶':'▼'; };
     document.getElementById('manageCategoryBtn').onclick=()=>{ renderCategoryManageList(); document.getElementById('categoryManageDialog').classList.add('active'); };
     document.getElementById('closeManageDialogBtn').onclick=()=>document.getElementById('categoryManageDialog').classList.remove('active');
-    document.getElementById('doAddCategoryBtn').onclick=()=>{ const name=document.getElementById('newCatName').value.trim(); if(name){ categories.push({id:genId(),name:name,emoji:'📁',collapsed:true,children:[]}); saveData(); renderCategoryManageList(); renderMain(); document.getElementById('newCatName').value=''; } };
+    document.getElementById('doAddCategoryBtn').onclick=()=>{ const name=document.getElementById('newCatName').value.trim(); if(name){ categories.push({id:genId(),name:name,emoji:'📁',collapsed:true,children:[], customTags:[]}); saveData(); renderCategoryManageList(); renderMain(); document.getElementById('newCatName').value=''; } };
     const settingsModal=document.getElementById('settingsModal');
     document.getElementById('settingsBtn').onclick=()=>settingsModal.classList.add('active');
     document.getElementById('closeSettings').onclick=()=>settingsModal.classList.remove('active');
@@ -984,91 +1166,64 @@ document.getElementById('dialogAddTagBtn').onclick = () => {
     document.getElementById('syncToGist').onclick=syncToGist;
     document.getElementById('restoreFromGist').onclick=restoreFromGist;
     
-    let currentEditSubData = null;
-
-function openEditSubDialog(sub, catId, subId) {
-    currentEditSubData = { catId, subId, sub };
-    document.getElementById('editSubName').value = sub.name || '';
-    document.getElementById('editSubEmoji').value = sub.emoji || '📝';
-    document.getElementById('editSubDialog').classList.add('active');
-}
-
-// 保存编辑
-document.getElementById('editSubConfirmBtn')?.addEventListener('click', () => {
-    if (currentEditSubData) {
-        const newName = document.getElementById('editSubName').value.trim();
-        const newEmoji = document.getElementById('editSubEmoji').value.trim();
-        if (newName) currentEditSubData.sub.name = newName;
-        if (newEmoji) currentEditSubData.sub.emoji = newEmoji;
-        saveData();
-        renderCategoryManageList();
-        renderMain();
-        document.getElementById('editSubDialog').classList.remove('active');
-        currentEditSubData = null;
-    }
-});
-
-// 取消编辑
-document.getElementById('editSubCancelBtn')?.addEventListener('click', () => {
-    document.getElementById('editSubDialog').classList.remove('active');
-    currentEditSubData = null;
-});
+    // 同步所有句子：根据句子已有的标签，自动将其添加到匹配的子分类中
+function syncAllSentencesToMatchingSubs() {
+    let changed = false;
     
-
-function onTagClick(e) {
-    const tag = e.currentTarget.dataset.tag;
-    if (!tag) return;
-    
-    const sentencesList = [];
-    const tagsMapRef = {};
-    let idx = 0;
-    
-    // 遍历所有类别和子分类
-    categories.forEach(primary => {
-        primary.children?.forEach(sec => {
-            const tagsMap = sec.tagsMap || {};
-            // 遍历 tagsMap 中的所有句子索引
-            Object.keys(tagsMap).forEach(sentenceIdx => {
-                const sentenceTags = tagsMap[sentenceIdx];
-                if (sentenceTags && sentenceTags.includes(tag)) {
-                    const sIdx = parseInt(sentenceIdx);
-                    let text = '';
-                    let type = '';
-                    if (sec.goodSentences && sec.goodSentences[sIdx]) {
-                        text = sec.goodSentences[sIdx];
-                        type = 'good';
-                    } else if (sec.wordSentences && sec.wordSentences[sIdx]) {
-                        text = sec.wordSentences[sIdx];
-                        type = 'word';
+    // 遍历所有子分类
+    for(const primary of categories) {
+        for(const sub of (primary.children || [])) {
+            const defaultTag = sub.name;
+            const extraTags = sub.customTags || [];
+            const allRelatedTags = [defaultTag, ...extraTags];
+            
+            // 遍历所有其他子分类中的句子，检查是否带有相关标签
+            for(const otherPrimary of categories) {
+                for(const otherSub of (otherPrimary.children || [])) {
+                    if(otherSub === sub) continue; // 跳过自身
+                    
+                    const tagsMap = otherSub.tagsMap || {};
+                    for(let idx = 0; idx < (otherSub.goodSentences || []).length; idx++) {
+                        const sentence = otherSub.goodSentences[idx];
+                        const tags = tagsMap[idx] || [];
+                        const hasMatchingTag = tags.some(t => allRelatedTags.includes(t));
+                        
+                        if(hasMatchingTag && sentence && !sub.goodSentences.includes(sentence)) {
+                            sub.goodSentences.push(sentence);
+                            if(!sub.tagsMap) sub.tagsMap = {};
+                            sub.tagsMap[sub.goodSentences.length - 1] = tags;
+                            changed = true;
+                        }
                     }
-                    if (text) {
-                        sentencesList.push(text);
-                        tagsMapRef[idx] = {
-                            primaryId: primary.id,
-                            secId: sec.id,
-                            sentenceIndex: sIdx,
-                            type: type
-                        };
-                        idx++;
+                    
+                    for(let idx = 0; idx < (otherSub.wordSentences || []).length; idx++) {
+                        const sentence = otherSub.wordSentences[idx];
+                        const tags = tagsMap[idx] || [];
+                        const hasMatchingTag = tags.some(t => allRelatedTags.includes(t));
+                        
+                        if(hasMatchingTag && sentence && !sub.wordSentences.includes(sentence)) {
+                            sub.wordSentences.push(sentence);
+                            if(!sub.tagsMap) sub.tagsMap = {};
+                            sub.tagsMap[sub.wordSentences.length - 1] = tags;
+                            changed = true;
+                        }
                     }
                 }
-            });
-        });
-    });
-    
-    if (sentencesList.length === 0) {
-        alert('没有包含该标签的句子');
-        return;
+            }
+        }
     }
     
-    currentPageRef = {
-        type: 'tag',
-        tagName: tag,
-        sentences: sentencesList,
-        tagsMapRef: tagsMapRef
-    };
-    openSentencePage();
+    if(changed) {
+        saveData();
+        renderMain();
+        console.log('同步完成，句子已自动归类');
+    }
 }
+
+// 在 loadData 后调用一次，处理已有数据
+// 取消注释下面这行即可启用
+// setTimeout(() => syncAllSentencesToMatchingSubs(), 500);
+    
     
     loadData();
 </script>
