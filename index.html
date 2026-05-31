@@ -212,19 +212,21 @@
             gap: 10px;
             padding: 14px 16px;
         }
-        .tag-item {
-            background: #ffffff;
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 0.75rem;
-            color: #1c1c1e;
-            cursor: pointer;
-            transition: 0.05s linear;
-        }
-        .tag-item:active {
-            background: #e2e2e8;
-            transform: scale(0.96);
-        }
+.tag-item {
+    background: #e9e9ef;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: #1c1c1e;
+    cursor: pointer;
+    transition: 0.05s linear;
+    line-height: 1.3;
+}
+.tag-item:active {
+    background: #d1d1d6;
+    transform: scale(0.96);
+}
+        
         .add-tag-form {
             display: flex;
             gap: 8px;
@@ -329,15 +331,21 @@
             margin: 8px 0 20px;
         }
         .sentence-card {
-            padding: 14px 16px;
-            border-bottom: 0.5px solid #efeff4;
-            display: flex;
-            gap: 12px;
-            cursor: pointer;
-        }
-        .sentence-card:active {
-            background: #f9f9fb;
-        }
+    padding: 14px 16px;
+    border-bottom: 0.5px solid #efeff4;
+    display: flex;
+    gap: 12px;
+    cursor: pointer;
+    align-items: center; 
+}
+.sentence-card:active {
+    background: #f9f9fb;
+}
+/* 新增：序号灰色样式 */
+.sentence-card > div:first-child {
+    color: #8e8e93;
+    font-size: 0.85rem;
+}
         .add-form {
             background: #ffffff;
             border-radius: 20px;
@@ -589,20 +597,23 @@
 
 <div id="sentencePage" class="sentence-page">
     <div class="page-container">
-        <div class="page-header">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <span class="page-title" id="pageCategoryTitle">——</span>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <div class="type-switch">
-                        <button class="type-btn active" data-type="good">✨ 好句</button>
-                        <button class="type-btn" data-type="word">📖 好词</button>
-                    </div>
-                    <button id="batchAddBtn" style="background:transparent; border:none; font-size:1.1rem; color:#007aff;">📋</button>
-                    <button id="printPageBtn" style="background:transparent; border:none; font-size:1.1rem; color:#007aff;">🖨️</button>
-                    <button id="closePageBtn" class="back-btn" style="background:transparent; border:none; font-size:0.9rem; color:#007aff;">←</button>
-                </div>
+<div class="page-header">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="page-title" id="pageCategoryTitle">——</span>
+            <div class="type-switch">
+                <button class="type-btn active" data-type="good">好句</button>
+                <button class="type-btn" data-type="word">好词</button>
             </div>
         </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="batchAddBtn" style="background:transparent; border:none; font-size:1.1rem; color:#007aff;">📋</button>
+            <button id="printPageBtn" style="background:transparent; border:none; font-size:1.1rem; color:#007aff;">🖨️</button>
+            <button id="closePageBtn" class="back-btn" style="background:transparent; border:none; font-size:0.9rem; color:#007aff;">←</button>
+        </div>
+    </div>
+</div>
+
         <div id="sentencePageList" class="sentence-list-page"></div>
         <div class="add-form" style="display: none;">
             <input type="text" id="pageSentenceInput" placeholder="根据当前类型添加内容...">
@@ -687,8 +698,8 @@
             </div>
         </div>
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button id="dialogCopyBtn" style="background: #e9e9ef; border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; color: #8e8e93; cursor: pointer;">📋 复制</button>
-            <button id="dialogDeleteBtn" style="background: #fff0ef; border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; color: #ff3b30; cursor: pointer;">🗑️ 删除</button>
+            <button id="dialogCopyBtn" style="background: #e9e9ef; border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; color: #8e8e93; cursor: pointer;">复制</button>
+            <button id="dialogDeleteBtn" style="background: #fff0ef; border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; color: #ff3b30; cursor: pointer;">删除</button>
             <button id="dialogSaveBtn" style="background: #007aff; border: none; padding: 10px 24px; border-radius: 30px; font-size: 0.85rem; color: white; cursor: pointer; font-weight: 500;">保存</button>
         </div>
     </div>
@@ -858,7 +869,29 @@ function migrateAddDefaultTags() {
         document.querySelectorAll('.secondary-item').forEach(it=>{ it.removeEventListener('click',onSecondaryClick); it.addEventListener('click',onSecondaryClick); });
     }
     function toggleCollapse(e){ const id=e.currentTarget.dataset.toggleId; const cat=categories.find(c=>c.id===id); if(cat){ cat.collapsed=!cat.collapsed; saveData(); renderMain(); } }
-    function onSecondaryClick(e){ const item=e.currentTarget; const pid=item.dataset.pid, secid=item.dataset.secid; const primary=categories.find(p=>p.id===pid); if(primary){ const sec=primary.children.find(c=>c.id===secid); if(sec){ currentPageRef = { type:'category', primaryId:pid, secId:secid, secName:sec.name, primaryName:primary.name, goodSentences:sec.goodSentences||[], wordSentences:sec.wordSentences||[], tagsMap:sec.tagsMap||{} }; openSentencePage(); } } }
+    
+
+function onSecondaryClick(e){ 
+    const item=e.currentTarget; 
+    const pid=item.dataset.pid, secid=item.dataset.secid; 
+    const primary=categories.find(p=>p.id===pid); 
+    if(primary){ 
+        const sec=primary.children.find(c=>c.id===secid); 
+        if(sec){ 
+            currentPageRef = { 
+                type:'category', 
+                primaryId:pid, 
+                secId:secid, 
+                secName:sec.name, 
+                primaryName:primary.name, 
+                goodSentences:sec.goodSentences||[], 
+                wordSentences:sec.wordSentences||[], 
+                tagsMap:sec.tagsMap||{}  // 确保传递 tagsMap
+            }; 
+            openSentencePage(); 
+        } 
+    } 
+}
 
     function openSentencePage() { updateSentencePageByType(); document.getElementById('sentencePage').classList.add('open'); }
     function updateSentencePageByType() {
@@ -869,36 +902,89 @@ function migrateAddDefaultTags() {
         document.getElementById('pageCategoryTitle').innerText = title;
         renderSentencePage(sentences);
     }
-    function renderSentencePage(sentences){ const container=document.getElementById('sentencePageList'); if(!sentences.length){ container.innerHTML='<div class="empty-placeholder">暂无内容</div>'; return; } let html=''; sentences.forEach((s,i)=>{ html+=`<div class="sentence-card" data-idx="${i}"><div>${i+1}.</div><div>${escapeHtml(s)}</div></div>`; }); container.innerHTML=html; document.querySelectorAll('.sentence-card').forEach(c=>c.addEventListener('click',(e)=>{ const idx=c.dataset.idx; if(currentPageRef.type==='category'){ const p=categories.find(p=>p.id===currentPageRef.primaryId); const sec=p?.children.find(s=>s.id===currentPageRef.secId); if(sec){ const arr=currentListType==='good'?sec.goodSentences:sec.wordSentences; currentDialogContext={type:'category',primaryId:currentPageRef.primaryId,secId:currentPageRef.secId,sentenceIndex:parseInt(idx),sentenceText:arr[idx],tags:sec.tagsMap?.[idx]||[],listType:currentListType}; openDialog(); } } })); }
+
+function renderSentencePage(sentences){ 
+    const container = document.getElementById('sentencePageList'); 
+    if(!sentences.length){ 
+        container.innerHTML='<div class="empty-placeholder">暂无内容</div>'; 
+        return; 
+    } 
+    let html=''; 
+    sentences.forEach((s,i)=>{ 
+        html+=`<div class="sentence-card" data-idx="${i}"><div>${i+1}.</div><div>${escapeHtml(s)}</div></div>`; 
+    }); 
+    container.innerHTML=html; 
+    
+    document.querySelectorAll('.sentence-card').forEach(c=>{
+        c.addEventListener('click',(e)=>{ 
+            const idx = c.dataset.idx; 
+            
+            if(currentPageRef.type === 'category'){
+                // 从分类进入的编辑
+                const p = categories.find(p => p.id === currentPageRef.primaryId); 
+                const sec = p?.children.find(s => s.id === currentPageRef.secId); 
+                if(sec){ 
+                    const arr = currentListType === 'good' ? sec.goodSentences : sec.wordSentences;
+                    const tags = (sec.tagsMap && sec.tagsMap[idx]) ? sec.tagsMap[idx] : [];
+                    currentDialogContext = {
+                        type: 'category',
+                        primaryId: currentPageRef.primaryId,
+                        secId: currentPageRef.secId,
+                        sentenceIndex: parseInt(idx),
+                        sentenceText: arr[idx],
+                        tags: tags,
+                        listType: currentListType
+                    }; 
+                    openDialog(); 
+                } 
+            } 
+            else if(currentPageRef.type === 'tag'){
+                // 从标签进入的编辑
+                const ref = currentPageRef.tagsMapRef && currentPageRef.tagsMapRef[idx];
+                if(ref){
+                    const p = categories.find(p => p.id === ref.primaryId);
+                    const sec = p?.children.find(s => s.id === ref.secId);
+                    if(sec){
+                        const arr = ref.type === 'good' ? sec.goodSentences : sec.wordSentences;
+                        const tags = (sec.tagsMap && sec.tagsMap[ref.sentenceIndex]) ? sec.tagsMap[ref.sentenceIndex] : [];
+                        currentDialogContext = {
+                            type: 'category',  // 注意：这里还是 category，因为编辑的是原始分类下的句子
+                            primaryId: ref.primaryId,
+                            secId: ref.secId,
+                            sentenceIndex: ref.sentenceIndex,
+                            sentenceText: arr[ref.sentenceIndex],
+                            tags: tags,
+                            listType: ref.type
+                        };
+                        openDialog();
+                    }
+                }
+            }
+        });
+    });
+}
     function openDialog(){ document.getElementById('dialogSentenceText').value=currentDialogContext.sentenceText; renderDialogTags(); document.getElementById('sentenceDialog').classList.add('active'); }
     
 
 function renderDialogTags() {
     const container = document.getElementById('dialogTagList');
-    const tags = currentDialogContext.tags || [];
+    let tags = currentDialogContext.tags || [];
     
-    // 获取当前子分类的名称（作为默认标签标识）
-    let currentSubName = '';
-    if(currentDialogContext.type === 'category') {
-        const primary = categories.find(p => p.id === currentDialogContext.primaryId);
-        const sec = primary?.children.find(s => s.id === currentDialogContext.secId);
-        if(sec) currentSubName = sec.name;
-    }
+    // 显示所有标签，不过滤任何标签
+    const displayTags = tags;
     
-    if (tags.length === 0) { 
-        container.innerHTML = '<span style="font-size:0.7rem; color:#c6c6c8;">暂无标签，点击 + 添加</span>'; 
+    if (displayTags.length === 0) { 
+        container.innerHTML = '<span style="font-size:0.7rem; color:#c6c6c8;">暂无标签</span>'; 
         return; 
     }
     
-    container.innerHTML = tags.map(tag => {
-        // 如果是默认标签（当前子分类名称），添加特殊样式
-        const isDefaultTag = (tag === currentSubName);
-        const defaultStyle = isDefaultTag ? 'background: #007aff20; border: 0.5px solid #007aff;' : '';
-        return `<span style="background: #e9e9ef; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px; ${defaultStyle}">
+    // 矮标签样式
+    container.innerHTML = displayTags.map(tag => `
+        <span style="background: #e9e9ef; padding: 0 6px; border-radius: 3px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 3px; line-height: 1.5; height: 20px;">
             ${escapeHtml(tag)}
-            ${!isDefaultTag ? `<button class="dialog-tag-remove" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.7rem; color: #8e8e93; cursor: pointer; padding: 0;">✕</button>` : '<span style="font-size:0.65rem; color:#007aff; margin-left:4px;">📌</span>'}
-        </span>`;
-    }).join('');
+            <button class="dialog-tag-remove" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.6rem; color: #8e8e93; cursor: pointer; padding: 0; margin-left: 1px; line-height: 1;">✕</button>
+        </span>
+    `).join('');
     
     document.querySelectorAll('.dialog-tag-remove').forEach(btn => { 
         btn.addEventListener('click', (e) => { 
@@ -911,7 +997,7 @@ function renderDialogTags() {
 }
 
 
-    function renderGlobalTags(){
+function renderGlobalTags(){
         const c=document.getElementById('globalTagsContainer'); if(!c) return;
         c.innerHTML=globalTags.map(t=>`<div class="tag-item" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</div>`).join('');
         document.querySelectorAll('.tag-item').forEach(el=>el.addEventListener('click',()=>{
@@ -941,14 +1027,37 @@ function renderDialogTags() {
         document.getElementById('editSubEmoji').value = sub.emoji || '📝';
         document.getElementById('defaultTagDisplay').innerText = sub.name;
         if(!sub.customTags) sub.customTags = [];
+   
+
         function renderCustomTags() {
-            const container = document.getElementById('editSubCustomTagsList');
-            const tags = sub.customTags || [];
-            if(tags.length === 0) { container.innerHTML = '<span style="font-size:0.7rem; color:#c6c6c8;">暂无额外标签</span>'; return; }
-            container.innerHTML = tags.map(tag => `<span style="background: #e9e9ef; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 6px;">${escapeHtml(tag)}<button class="remove-custom-tag" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.7rem; color: #ff3b30; cursor: pointer; padding: 0;">✕</button></span>`).join('');
-            document.querySelectorAll('.remove-custom-tag').forEach(btn => { btn.onclick = (e) => { e.stopPropagation(); const tagToRemove = btn.dataset.tag; sub.customTags = sub.customTags.filter(t => t !== tagToRemove); renderCustomTags(); }; });
-        }
-        renderCustomTags();
+    const container = document.getElementById('editSubCustomTagsList');
+    const tags = sub.customTags || [];
+    if(tags.length === 0) { 
+        container.innerHTML = '<span style="font-size:0.65rem; color:#c6c6c8;">暂无</span>'; 
+        return; 
+    }
+    // 统一为矮标签样式：padding: 0 6px, height: 20px
+    container.innerHTML = tags.map(tag => `
+        <span style="background: #e9e9ef; padding: 0 6px; border-radius: 3px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 3px; line-height: 1.5; height: 20px;">
+            ${escapeHtml(tag)}
+            <button class="remove-custom-tag" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.6rem; color: #8e8e93; cursor: pointer; padding: 0;">✕</button>
+        </span>
+    `).join('');
+    
+    document.querySelectorAll('.remove-custom-tag').forEach(btn => { 
+        btn.onclick = (e) => { 
+            e.stopPropagation(); 
+            const tagToRemove = btn.dataset.tag; 
+            sub.customTags = sub.customTags.filter(t => t !== tagToRemove); 
+            renderCustomTags(); 
+        }; 
+    });
+}
+      
+
+
+
+renderCustomTags();
         document.getElementById('editSubAddTagBtn').onclick = () => { const input = document.getElementById('editSubNewTag'); const newTag = input.value.trim(); if(newTag && !sub.customTags.includes(newTag) && newTag !== sub.name) { sub.customTags.push(newTag); if(!globalTags.includes(newTag)) { globalTags.push(newTag); renderGlobalTags(); } renderCustomTags(); input.value = ''; } else if(newTag === sub.name) alert('不能添加与子分类同名的标签（已自动关联）'); };
         const confirmBtn = document.getElementById('editSubConfirmBtn'); const newConfirm = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
         newConfirm.onclick = () => { const newName = document.getElementById('editSubName').value.trim(); const newEmoji = document.getElementById('editSubEmoji').value.trim(); if(newName && newName !== sub.name) { if(!globalTags.includes(newName)) globalTags.push(newName); sub.name = newName; document.getElementById('defaultTagDisplay').innerText = newName; } if(newEmoji) sub.emoji = newEmoji; saveData(); renderCategoryManageList(); renderMain(); renderGlobalTags(); dialog.classList.remove('active'); currentEditSubData = null; };
@@ -1008,24 +1117,32 @@ document.getElementById('dialogSaveBtn').onclick = () => {
             const targetArr = currentDialogContext.listType === 'good' ? sec.goodSentences : sec.wordSentences; 
             targetArr[currentDialogContext.sentenceIndex] = newText; 
             if(!sec.tagsMap) sec.tagsMap = {}; 
-            sec.tagsMap[currentDialogContext.sentenceIndex] = currentDialogContext.tags; 
             
-            // 【新增】保存后，检查当前句子的所有标签，自动归类到匹配的子分类
+            // 【关键修复】确保当前分类的默认标签始终存在
+            let finalTags = [...currentDialogContext.tags];
+            const currentDefaultTag = sec.name;
+            if(!finalTags.includes(currentDefaultTag)) {
+                finalTags.push(currentDefaultTag);
+                console.log(`添加默认标签: ${currentDefaultTag}`);
+            }
+            sec.tagsMap[currentDialogContext.sentenceIndex] = finalTags;
+            
+            // 检查当前句子的所有标签，自动归类到匹配的子分类
             const sentenceText = newText;
-            const tags = currentDialogContext.tags || [];
+            const tags = finalTags;
             
             for(const tag of tags) {
-                // 查找匹配的子分类
                 for(const primaryOther of categories) {
                     for(const subOther of (primaryOther.children || [])) {
                         if((subOther.name === tag || (subOther.customTags && subOther.customTags.includes(tag))) &&
-                           !(subOther.id === sec.id && primaryOther.id === primary.id)) { // 避免添加到自身
+                           !(subOther.id === sec.id && primaryOther.id === primary.id)) {
                             
                             const targetArrOther = currentDialogContext.listType === 'good' ? subOther.goodSentences : subOther.wordSentences;
                             if(!targetArrOther.includes(sentenceText)) {
                                 targetArrOther.push(sentenceText);
                                 if(!subOther.tagsMap) subOther.tagsMap = {};
                                 const newIdx = targetArrOther.length - 1;
+                                // 复制完整的标签列表
                                 subOther.tagsMap[newIdx] = [...tags];
                             }
                         }
@@ -1040,9 +1157,6 @@ document.getElementById('dialogSaveBtn').onclick = () => {
     } 
     document.getElementById('sentenceDialog').classList.remove('active'); 
 };
-
-
-
     document.getElementById('dialogDeleteBtn').onclick=()=>{ if(confirm('删除？')){ const p=categories.find(p=>p.id===currentDialogContext.primaryId); const sec=p?.children.find(s=>s.id===currentDialogContext.secId); if(sec){ const arr=currentDialogContext.listType==='good'?sec.goodSentences:sec.wordSentences; arr.splice(currentDialogContext.sentenceIndex,1); if(sec.tagsMap) delete sec.tagsMap[currentDialogContext.sentenceIndex]; saveData(); updateSentencePageByType(); renderMain(); } document.getElementById('sentenceDialog').classList.remove('active'); } };
     document.getElementById('dialogCloseBtn').onclick=()=>document.getElementById('sentenceDialog').classList.remove('active');
 
@@ -1057,7 +1171,6 @@ document.getElementById('dialogAddTagBtn').onclick = () => {
         
         for(const primary of categories) {
             for(const sub of (primary.children || [])) {
-                // 检查默认标签（子分类名称）或额外标签
                 if(sub.name === tag || (sub.customTags && sub.customTags.includes(tag))) {
                     matchedSubInfo = `${primary.name} · ${sub.name}`;
                     matchedPrimary = primary;
@@ -1076,24 +1189,35 @@ document.getElementById('dialogAddTagBtn').onclick = () => {
         
         // 获取当前编辑的句子内容和类型
         const sentenceText = currentDialogContext.sentenceText;
-        const sourceListType = currentDialogContext.listType; // 'good' 或 'word'
+        const sourceListType = currentDialogContext.listType;
         
-        // 【核心修复】无论当前在哪个分类，只要匹配到子分类，就把句子添加到匹配的子分类中
+        // 获取当前子分类的默认标签（当前句子的原始分类名）
+        let sourceDefaultTag = '';
+        if(currentDialogContext.type === 'category') {
+            const primary = categories.find(p => p.id === currentDialogContext.primaryId);
+            const sec = primary?.children.find(s => s.id === currentDialogContext.secId);
+            if(sec) sourceDefaultTag = sec.name;
+        }
+        
+        // 构建完整的标签列表（包含当前分类的默认标签）
+        let fullTags = [...currentDialogContext.tags];
+        if(sourceDefaultTag && !fullTags.includes(sourceDefaultTag)) {
+            fullTags.push(sourceDefaultTag);
+        }
+        
+        // 无论当前在哪个分类，只要匹配到子分类，就把句子添加到匹配的子分类中
         if(matchedSub && matchedPrimary) {
             const targetArr = sourceListType === 'good' ? matchedSub.goodSentences : matchedSub.wordSentences;
-            // 避免重复添加相同的句子
             if(!targetArr.includes(sentenceText)) {
                 targetArr.push(sentenceText);
                 if(!matchedSub.tagsMap) matchedSub.tagsMap = {};
                 const newIdx = targetArr.length - 1;
-                // 复制当前的标签列表到新位置
-                matchedSub.tagsMap[newIdx] = [...(currentDialogContext.tags || [])];
+                // 复制完整的标签列表（包含所有标签）
+                matchedSub.tagsMap[newIdx] = [...fullTags];
                 
-                // 刷新数据
                 saveData();
                 renderMain();
                 
-                // 如果当前打开的子分类就是匹配到的子分类，刷新页面
                 if(currentPageRef && currentPageRef.type === 'category' && 
                    currentPageRef.secId === matchedSub.id) {
                     updateSentencePageByType();
@@ -1101,16 +1225,28 @@ document.getElementById('dialogAddTagBtn').onclick = () => {
             }
         }
         
-        // 保存当前句子的标签更新
+        // 确保当前句子的标签也包含默认标签并保存
+        if(currentDialogContext.type === 'category') {
+            const primary = categories.find(p => p.id === currentDialogContext.primaryId);
+            const sec = primary?.children.find(s => s.id === currentDialogContext.secId);
+            if(sec) {
+                // 确保当前句子的标签包含默认标签
+                const currentFullTags = [...currentDialogContext.tags];
+                if(!currentFullTags.includes(sourceDefaultTag)) {
+                    currentFullTags.push(sourceDefaultTag);
+                }
+                sec.tagsMap[currentDialogContext.sentenceIndex] = currentFullTags;
+            }
+        }
+        
         saveData();
         renderDialogTags();
         renderGlobalTags();
         input.value = '';
         
-        // 显示提示（可选，让用户知道自动归类发生了）
-        if(matchedSubInfo && !currentDialogContext.tags.includes(tag)) {
-            // 静默处理，不弹窗避免打扰
-            console.log(`句子已自动归类到: ${matchedSubInfo}`);
+        // 刷新当前页面显示
+        if(currentPageRef && currentPageRef.type === 'category') {
+            updateSentencePageByType();
         }
     } 
 };
