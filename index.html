@@ -406,13 +406,23 @@
             border: 0.5px solid #e2e2e6;
             border-radius: 30px;
         }
-        .add-cat-submit {
-            background: #007aff;
-            border: none;
-            padding: 0 20px;
-            border-radius: 30px;
-            color: white;
-        }
+   
+   .add-cat-submit {
+    background: transparent;
+    border: transparent;
+    width: 36px;
+    height: 36px;
+    border-radius: 30px;
+    color: #8e8e93;
+    cursor: pointer;
+    font-size: 1.2rem;  /* 新增这行 */
+    padding: 0;
+}
+    padding: 0 20px;
+    border-radius: 20px;
+    color: #8e8e93;
+    cursor: pointer;
+}
         .sub-list {
             padding: 8px 12px 8px 16px;
             background: #fafafd;
@@ -606,11 +616,11 @@
                 <button class="type-btn" data-type="word">好词</button>
             </div>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-            <button id="batchAddBtn" style="background:transparent; border:none; font-size:1.1rem; color:#007aff;">📋</button>
-            <button id="printPageBtn" style="background:transparent; border:none; font-size:1.1rem; color:#007aff;">🖨️</button>
-            <button id="closePageBtn" class="back-btn" style="background:transparent; border:none; font-size:0.9rem; color:#007aff;">←</button>
-        </div>
+        <div style="display: flex; gap: 24px; align-items: center;">
+    <button id="batchAddBtn" style="background:transparent; border:none; font-size:1.1rem; color:#007aff;">📋</button>
+    <button id="printPageBtn" style="background:transparent; border:none; font-size:1.1rem; color:#007aff;">🖨️</button>
+    <button id="closePageBtn" class="back-btn" style="background:transparent; border:none; font-size:0.9rem; color:#007aff;">←</button>
+</div>
     </div>
 </div>
 
@@ -623,16 +633,14 @@
 </div>
 
 <div id="categoryManageDialog" class="sentence-dialog">
-    <div class="dialog-content">
-        <h4 style="margin-bottom: 16px;">📁 管理类别</h4>
+    <div class="dialog-content" style="position: relative;">
+        <button id="closeManageDialogBtn" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; font-size: 0.9rem; color: #8e8e93; cursor: pointer; width: 32px; height: 32px; border-radius: 20px;">✕</button>
+        <h4 style="margin-bottom: 16px;">类别管理</h4>
         <div class="add-cat-section">
             <input type="text" id="newCatName" class="add-cat-input" placeholder="新类别名称">
-            <button id="doAddCategoryBtn" class="add-cat-submit">添加</button>
+            <button id="doAddCategoryBtn" class="add-cat-submit">+</button>
         </div>
         <div id="catManageList" class="cat-manage-container"></div>
-        <div style="display: flex; justify-content: center; margin-top: 16px;">
-            <button id="closeManageDialogBtn" style="background:#e9e9ef; border:none; padding:8px 24px; border-radius:30px;">关闭</button>
-        </div>
     </div>
 </div>
 
@@ -998,27 +1006,157 @@ function renderDialogTags() {
 
 
 function renderGlobalTags(){
-        const c=document.getElementById('globalTagsContainer'); if(!c) return;
-        c.innerHTML=globalTags.map(t=>`<div class="tag-item" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</div>`).join('');
-        document.querySelectorAll('.tag-item').forEach(el=>el.addEventListener('click',()=>{
-            const tag = el.dataset.tag;
-            let matchedSub = null, matchedPrimary = null;
-            for(const primary of categories) for(const sub of (primary.children || [])) if(sub.name === tag || (sub.customTags && sub.customTags.includes(tag))) { matchedSub = sub; matchedPrimary = primary; break; }
-            const sentencesList = []; const tagsMapRef = {}; let idx = 0;
-            categories.forEach(primary => { primary.children?.forEach(sec => { Object.entries(sec.tagsMap||{}).forEach(([sid,stags])=>{ if(stags && stags.includes(tag)){ const sIdx=parseInt(sid); let text='', type=''; if(sec.goodSentences && sec.goodSentences[sIdx]) { text=sec.goodSentences[sIdx]; type='good'; } else if(sec.wordSentences && sec.wordSentences[sIdx]) { text=sec.wordSentences[sIdx]; type='word'; } if(text){ sentencesList.push(text); tagsMapRef[idx]={ primaryId:primary.id, secId:sec.id, sentenceIndex:sIdx, type:type }; idx++; } } }); }); });
-            let displayTagName = tag; if(matchedSub && matchedPrimary) displayTagName = `${matchedPrimary.name} · ${matchedSub.name} (${tag})`;
-            currentPageRef = { type:'tag', tagName:displayTagName, rawTagName:tag, sentences:sentencesList, tagsMapRef:tagsMapRef }; openSentencePage();
-        }));
+    const c = document.getElementById('globalTagsContainer'); 
+    if(!c) return;
+    
+    // 1. 收集所有子分类的名称 (这些是“默认标签”，不显示在汇总区)
+    const defaultTagNames = new Set();
+    for(const primary of categories) {
+        for(const sub of (primary.children || [])) {
+            if(sub.name) {
+                defaultTagNames.add(sub.name);
+            }
+        }
     }
+    
+    // 2. 过滤 globalTags: 只保留那些不是子分类名称的标签
+    const filteredTags = globalTags.filter(tag => !defaultTagNames.has(tag));
+    
+    // 3. 渲染过滤后的标签
+    c.innerHTML = filteredTags.map(t => `<div class="tag-item" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</div>`).join('');
+    
+    // 4. 绑定点击事件 (保持不变)
+    document.querySelectorAll('.tag-item').forEach(el => el.addEventListener('click',()=>{
+        const tag = el.dataset.tag;
+        // ... 后面的代码完全不用动，原样保留 ...
+        let matchedSub = null, matchedPrimary = null;
+        for(const primary of categories) for(const sub of (primary.children || [])) if(sub.name === tag || (sub.customTags && sub.customTags.includes(tag))) { matchedSub = sub; matchedPrimary = primary; break; }
+        const sentencesList = []; const tagsMapRef = {}; let idx = 0;
+        categories.forEach(primary => { primary.children?.forEach(sec => { Object.entries(sec.tagsMap||{}).forEach(([sid,stags])=>{ if(stags && stags.includes(tag)){ const sIdx=parseInt(sid); let text='', type=''; if(sec.goodSentences && sec.goodSentences[sIdx]) { text=sec.goodSentences[sIdx]; type='good'; } else if(sec.wordSentences && sec.wordSentences[sIdx]) { text=sec.wordSentences[sIdx]; type='word'; } if(text){ sentencesList.push(text); tagsMapRef[idx]={ primaryId:primary.id, secId:sec.id, sentenceIndex:sIdx, type:type }; idx++; } } }); }); });
+        let displayTagName = tag; if(matchedSub && matchedPrimary) displayTagName = `${matchedPrimary.name} · ${matchedSub.name} (${tag})`;
+        currentPageRef = { type:'tag', tagName:displayTagName, rawTagName:tag, sentences:sentencesList, tagsMapRef:tagsMapRef }; openSentencePage();
+    }));
+}
+   function renderCategoryManageList() {
+    const container = document.getElementById('catManageList'); 
+    if(!container) return;
+    if(categories.length === 0) { 
+        container.innerHTML = '<div style="padding:20px; text-align:center;">暂无类别</div>'; 
+        return; 
+    }
+    
+    container.innerHTML = categories.map(cat => `
+        <div class="cat-card">
+            <div class="cat-card-header" style="cursor: pointer;" data-cat-id="${cat.id}">
+                <span class="cat-name">${escapeHtml(cat.name)} <span style="font-size:0.7rem; color:#aaa;">(${cat.children?.length || 0})</span></span>
+                <div>
+                    <button class="icon-mini edit-cat-btn" data-id="${cat.id}" title="编辑类别" style="font-size:0.75rem;">✎</button>
+                    <span class="cat-expand-icon" style="font-size:0.7rem; color:#8e8e93; margin-left:6px;">▶</span>
+                </div>
+            </div>
+            <div class="sub-list" id="subList-${cat.id}" style="display: none;">
+                ${cat.children?.map(sub => `
+                    <div class="sub-item">
+                        <span>${sub.emoji || '📝'} ${escapeHtml(sub.name)}</span>
+                        <div>
+                            <button class="icon-mini edit-sub-btn" data-cat="${cat.id}" data-sub="${sub.id}" title="编辑子分类" style="font-size:0.75rem;">✎</button>
+                        </div>
+                    </div>
+                `).join('')}
+                <div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;">
+                    <input type="text" id="newSub-${cat.id}" placeholder="新子分类" style="flex: 1; min-width: 0; padding: 8px 12px; border-radius: 20px; border: 0.5px solid #e5e5ea; background: #f8f8fa; font-size: 0.8rem;">
+                    <button class="add-sub-btn" data-cat="${cat.id}" style="background: transparent; border: none; width: 36px; height: 36px; border-radius: 30px; color: #8e8e93; font-size: 1.2rem; cursor: pointer; flex-shrink: 0;">+</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // 绑定展开/收起事件
+    document.querySelectorAll('.cat-card-header').forEach(header => {
+        header.removeEventListener('click', toggleSubList);
+        header.addEventListener('click', toggleSubList);
+    });
+    
+    // 编辑类别
+    document.querySelectorAll('.edit-cat-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            const cat = categories.find(c => c.id === id);
+            if(cat) {
+                let newName = prompt('类别名', cat.name);
+                if(newName) cat.name = newName;
+                saveData();
+                renderCategoryManageList();
+                renderMain();
+            }
+        };
+    });
+    
+    // 编辑子分类
+    document.querySelectorAll('.edit-sub-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const catId = btn.dataset.cat, subId = btn.dataset.sub;
+            const cat = categories.find(c => c.id === catId);
+            const sub = cat?.children.find(s => s.id === subId);
+            if(sub) openEditSubDialog(sub, catId, subId);
+        };
+    });
+    
+    // 添加子分类
+    document.querySelectorAll('.add-sub-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const catId = btn.dataset.cat;
+            const input = document.getElementById(`newSub-${catId}`);
+            const name = input?.value.trim();
+            if(name) {
+                const cat = categories.find(c => c.id === catId);
+                if(cat) {
+                    if(!cat.children) cat.children = [];
+                    const newSub = { 
+                        id: genId(), 
+                        name: name, 
+                        emoji: '📝', 
+                        goodSentences: [], 
+                        wordSentences: [], 
+                        tagsMap: {}, 
+                        customTags: [] 
+                    };
+                    cat.children.push(newSub);
+                    if(!globalTags.includes(name)) globalTags.push(name);
+                    saveData();
+                    renderCategoryManageList();
+                    renderMain();
+                    renderGlobalTags();
+                    input.value = '';
+                }
+            }
+        };
+    });
+}
 
-    function renderCategoryManageList() {
-        const container = document.getElementById('catManageList'); if(!container) return;
-        if(categories.length===0){ container.innerHTML='<div style="padding:20px; text-align:center;">暂无类别</div>'; return; }
-        container.innerHTML = categories.map(cat => `<div class="cat-card"><div class="cat-card-header"><span class="cat-name">${escapeHtml(cat.name)} <span style="font-size:0.7rem; color:#aaa;">(${cat.children?.length||0})</span></span><div><button class="icon-mini edit-cat-btn" data-id="${cat.id}" title="编辑类别">✎</button></div></div><div class="sub-list">${cat.children?.map(sub => `<div class="sub-item"><span>${sub.emoji||'📝'} ${escapeHtml(sub.name)}</span><div><button class="icon-mini edit-sub-btn" data-cat="${cat.id}" data-sub="${sub.id}" title="编辑子分类" style="font-size:0.75rem;">✎</button></div></div>`).join('')}<div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;"><input type="text" id="newSub-${cat.id}" placeholder="新子分类" style="flex: 1; min-width: 0; padding: 8px 12px; border-radius: 20px; border: 0.5px solid #e5e5ea; background: #f8f8fa; font-size: 0.8rem;"><button class="add-sub-btn" data-cat="${cat.id}" style="background: #007aff; border: none; width: 36px; height: 36px; border-radius: 30px; color: white; font-size: 1.2rem; cursor: pointer; flex-shrink: 0;">+</button></div></div></div>`).join('');
-        document.querySelectorAll('.edit-cat-btn').forEach(btn=>btn.onclick=()=>{ const id=btn.dataset.id; const cat=categories.find(c=>c.id===id); if(cat){ let newName=prompt('类别名',cat.name); if(newName) cat.name=newName; saveData(); renderCategoryManageList(); renderMain(); } });
-        document.querySelectorAll('.edit-sub-btn').forEach(btn=>btn.onclick=()=>{ const catId=btn.dataset.cat, subId=btn.dataset.sub; const cat=categories.find(c=>c.id===catId); const sub=cat?.children.find(s=>s.id===subId); if(sub) openEditSubDialog(sub, catId, subId); });
-        document.querySelectorAll('.add-sub-btn').forEach(btn=>{ btn.onclick=()=>{ const catId=btn.dataset.cat; const input=document.getElementById(`newSub-${catId}`); const name=input?.value.trim(); if(name){ const cat=categories.find(c=>c.id===catId); if(cat){ if(!cat.children) cat.children=[]; const newSub={ id:genId(), name:name, emoji:'📝', goodSentences:[], wordSentences:[], tagsMap:{}, customTags:[] }; cat.children.push(newSub); if(!globalTags.includes(name)) globalTags.push(name); saveData(); renderCategoryManageList(); renderMain(); renderGlobalTags(); input.value=''; } } }; });
+// 展开/收起函数（放在 renderCategoryManageList 函数外面）
+function toggleSubList(e) {
+    // 防止点击编辑按钮时触发
+    if(e.target.classList.contains('edit-cat-btn') || 
+       e.target.classList.contains('edit-sub-btn') || 
+       e.target.classList.contains('add-sub-btn')) {
+        e.stopPropagation();
+        return;
     }
+    const catCard = e.currentTarget.closest('.cat-card');
+    const subList = catCard.querySelector('.sub-list');
+    const expandIcon = catCard.querySelector('.cat-expand-icon');
+    if(subList) {
+        const isVisible = subList.style.display !== 'none';
+        subList.style.display = isVisible ? 'none' : 'block';
+        if(expandIcon) {
+            expandIcon.innerHTML = isVisible ? '▶' : '▼';
+        }
+    }
+}
 
     function openEditSubDialog(sub, catId, subId) {
         currentEditSubData = { catId, subId, sub };
