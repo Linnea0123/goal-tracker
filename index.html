@@ -570,10 +570,12 @@
             <h1>拾句</h1>
         </div>
         <div class="header-actions-right">
-            <button id="manageTagsBtn" class="icon-circle" style="font-size:1rem;">🏷️</button>
-            <button id="manageCategoryBtn" class="icon-circle" style="font-size:1rem;">📋</button>
-            <button id="settingsBtn" class="icon-circle">⚙️</button>
-        </div>
+ <div class="header-actions-right">
+    <button id="manageCategoryBtn" class="icon-circle" style="font-size:1rem;">📋</button>
+    <button id="manageTagsBtn" class="icon-circle" style="font-size:1rem;">🏷️</button>
+    <button id="settingsBtn" class="icon-circle" style="font-size:1rem;">⚙️</button>
+</div>
+</div>
     </div>
 
     <div class="section-card">
@@ -956,7 +958,7 @@ function renderSentencePage(sentences){
                         secId: currentPageRef.secId,
                         sentenceIndex: parseInt(idx),
                         sentenceText: arr[idx],
-                        tags: tags,
+                         tags: [...tags], 
                         listType: currentListType
                     }; 
                     openDialog(); 
@@ -977,7 +979,7 @@ function renderSentencePage(sentences){
                             secId: ref.secId,
                             sentenceIndex: ref.sentenceIndex,
                             sentenceText: arr[ref.sentenceIndex],
-                            tags: tags,
+                            tags: [...tags], 
                             listType: ref.type
                         };
                         openDialog();
@@ -987,39 +989,48 @@ function renderSentencePage(sentences){
         });
     });
 }
-    function openDialog(){ document.getElementById('dialogSentenceText').value=currentDialogContext.sentenceText; renderDialogTags(); document.getElementById('sentenceDialog').classList.add('active'); }
-    
-
+function openDialog() { 
+    document.getElementById('dialogSentenceText').value = currentDialogContext.sentenceText; 
+    // 确保 tags 是从原始数据重新读取的，而不是沿用旧的引用
+    const primary = categories.find(p => p.id === currentDialogContext.primaryId);
+    const sec = primary?.children.find(c => c.id === currentDialogContext.secId);
+    if(sec && sec.tagsMap && sec.tagsMap[currentDialogContext.sentenceIndex]) {
+        currentDialogContext.tags = [...sec.tagsMap[currentDialogContext.sentenceIndex]];
+    } else {
+        currentDialogContext.tags = [];
+    }
+    renderDialogTags(); 
+    document.getElementById('sentenceDialog').classList.add('active'); 
+}
 function renderDialogTags() {
     const container = document.getElementById('dialogTagList');
+    if (!container) return;
+    
     let tags = currentDialogContext.tags || [];
     
-    // 显示所有标签，不过滤任何标签
-    const displayTags = tags;
-    
-    if (displayTags.length === 0) { 
+    if (tags.length === 0) { 
         container.innerHTML = '<span style="font-size:0.7rem; color:#c6c6c8;">暂无标签</span>'; 
         return; 
     }
     
-    // 矮标签样式
-    container.innerHTML = displayTags.map(tag => `
-        <span style="background: #e9e9ef; padding: 3px 11px; border-radius: 3px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 3px; line-height: 1.5; height: 20px;">
+    container.innerHTML = tags.map(tag => `
+        <span style="background: #e9e9ef; padding: 3px 11px; border-radius: 6px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; line-height: 1.4;">
             ${escapeHtml(tag)}
-            <button class="dialog-tag-remove" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.6rem; color: #8e8e93; cursor: pointer; padding: 0; margin-left: 1px; line-height: 1;">✕</button>
+            <button class="dialog-tag-remove" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.7rem; color: #8e8e93; cursor: pointer; padding: 0; margin-left: 4px;">✕</button>
         </span>
     `).join('');
     
-    document.querySelectorAll('.dialog-tag-remove').forEach(btn => { 
-        btn.addEventListener('click', (e) => { 
-            e.stopPropagation(); 
-            const tag = btn.dataset.tag; 
-            currentDialogContext.tags = currentDialogContext.tags.filter(t => t !== tag); 
-            renderDialogTags(); 
-        }); 
+    document.querySelectorAll('.dialog-tag-remove').forEach(btn => {
+        // 在 renderDialogTags 函数内，找到 btn.onclick
+btn.onclick = (e) => {
+    e.stopPropagation();
+    const tagToRemove = btn.getAttribute('data-tag');
+    // 过滤掉要删除的标签
+    currentDialogContext.tags = currentDialogContext.tags.filter(t => t !== tagToRemove);
+    renderDialogTags();  // 重新渲染
+};
     });
 }
-
 
 function renderGlobalTags(){
     const c = document.getElementById('globalTagsContainer'); 
@@ -1240,10 +1251,7 @@ document.getElementById('batchAddConfirmBtn')?.addEventListener('click',()=>{
         if(sec){ 
             const arr=currentListType==='good'?sec.goodSentences:sec.wordSentences; 
             // 【关键修改】获取默认标签
-            const defaultTag = sec.name;
-            if(!globalTags.includes(defaultTag)) {
-                globalTags.push(defaultTag);
-            }
+            let finalTags = [...newTags];
             
             lines.forEach(l=>{
                 arr.push(l.trim());
@@ -1261,152 +1269,159 @@ document.getElementById('batchAddConfirmBtn')?.addEventListener('click',()=>{
 
 
 
+
 document.getElementById('dialogSaveBtn').onclick = () => { 
     const newText = document.getElementById('dialogSentenceText').value.trim(); 
-    if(!newText) return; 
-    const primary = categories.find(p => p.id === currentDialogContext.primaryId); 
-    if(primary) { 
-        const sec = primary.children.find(c => c.id === currentDialogContext.secId); 
-        if(sec) { 
-            const targetArr = currentDialogContext.listType === 'good' ? sec.goodSentences : sec.wordSentences; 
-            targetArr[currentDialogContext.sentenceIndex] = newText; 
-            if(!sec.tagsMap) sec.tagsMap = {}; 
-            
-            // 【关键修复】确保当前分类的默认标签始终存在
-            let finalTags = [...currentDialogContext.tags];
-            const currentDefaultTag = sec.name;
-            if(!finalTags.includes(currentDefaultTag)) {
-                finalTags.push(currentDefaultTag);
-                console.log(`添加默认标签: ${currentDefaultTag}`);
+    if(!newText) return;
+    
+    // 获取用户当前选择的标签（已删除/添加后的结果）
+    let newTags = [...(currentDialogContext.tags || [])];
+    
+    console.log('🔍 保存时读取的标签:', newTags);
+    
+    const oldListType = currentDialogContext.listType;
+    const sentenceText = newText;
+    
+    // ===== 第一步：从所有分类中删除这个句子（内容匹配，避免重复）=====
+    for(const primary of categories) {
+        for(const sub of (primary.children || [])) {
+            const arr = oldListType === 'good' ? sub.goodSentences : sub.wordSentences;
+            const idx = arr.indexOf(sentenceText);
+            if(idx !== -1) {
+                arr.splice(idx, 1);
+                if(sub.tagsMap) {
+                    delete sub.tagsMap[idx];
+                    // 重建 tagsMap 索引
+                    const newMap = {};
+                    arr.forEach((_, newIdx) => {
+                        const oldKey = Object.keys(sub.tagsMap || {}).find(k => parseInt(k) === newIdx);
+                        if(oldKey !== undefined) newMap[newIdx] = sub.tagsMap[oldKey];
+                        else if(sub.tagsMap[newIdx + 1] !== undefined) newMap[newIdx] = sub.tagsMap[newIdx + 1];
+                    });
+                    sub.tagsMap = newMap;
+                }
+                break;
             }
-            sec.tagsMap[currentDialogContext.sentenceIndex] = finalTags;
-            
-            // 检查当前句子的所有标签，自动归类到匹配的子分类
-            const sentenceText = newText;
-            const tags = finalTags;
-            
-            for(const tag of tags) {
-                for(const primaryOther of categories) {
-                    for(const subOther of (primaryOther.children || [])) {
-                        if((subOther.name === tag || (subOther.customTags && subOther.customTags.includes(tag))) &&
-                           !(subOther.id === sec.id && primaryOther.id === primary.id)) {
-                            
-                            const targetArrOther = currentDialogContext.listType === 'good' ? subOther.goodSentences : subOther.wordSentences;
-                            if(!targetArrOther.includes(sentenceText)) {
-                                targetArrOther.push(sentenceText);
-                                if(!subOther.tagsMap) subOther.tagsMap = {};
-                                const newIdx = targetArrOther.length - 1;
-                                // 复制完整的标签列表
-                                subOther.tagsMap[newIdx] = [...tags];
-                            }
-                        }
-                    }
+        }
+    }
+    
+    // ===== 第二步：确保有一个"未分类"的默认分类 =====
+    let uncategorizedPrimary = categories.find(p => p.name === "未分类");
+    if(!uncategorizedPrimary) {
+        uncategorizedPrimary = {
+            id: genId(),
+            name: "未分类",
+            emoji: "📂",
+            collapsed: false,
+            children: [{
+                id: genId(),
+                name: "未分类",
+                emoji: "📄",
+                goodSentences: [],
+                wordSentences: [],
+                tagsMap: {},
+                customTags: []
+            }]
+        };
+        categories.push(uncategorizedPrimary);
+    }
+    let uncategorizedSub = uncategorizedPrimary.children[0];
+    
+    // ===== 第三步：过滤掉子分类名称标签（这些会自动匹配分类）=====
+    // 收集所有子分类名称
+    const allSubNames = new Set();
+    for(const primary of categories) {
+        for(const sub of (primary.children || [])) {
+            allSubNames.add(sub.name);
+        }
+    }
+    
+    // 用户标签中，哪些是子分类名称（需要匹配到对应分类）
+    const matchedSubNames = newTags.filter(tag => allSubNames.has(tag));
+    // 剩余的自定义标签（仅用于标记，不决定分类归属）
+    const customTagsOnly = newTags.filter(tag => !allSubNames.has(tag));
+    
+    // 决定句子应该放到哪些分类
+    let targetSubs = [];
+    if(matchedSubNames.length > 0) {
+        // 有匹配的子分类名称 → 放到这些分类
+        for(const primary of categories) {
+            for(const sub of (primary.children || [])) {
+                if(matchedSubNames.includes(sub.name)) {
+                    targetSubs.push(sub);
                 }
             }
-            
-            saveData(); 
-            updateSentencePageByType(); 
-            renderMain(); 
-        } 
-    } 
-    document.getElementById('sentenceDialog').classList.remove('active'); 
+        }
+    } else {
+        // 没有任何匹配的分类 → 放到"未分类"
+        targetSubs = [uncategorizedSub];
+    }
+    
+    // ===== 第四步：去重，避免同一个句子在同一个分类出现两次 =====
+    const addedKeys = new Set();
+    for(const sub of targetSubs) {
+        const arr = oldListType === 'good' ? sub.goodSentences : sub.wordSentences;
+        const key = `${sub.id}_${oldListType}`;
+        
+        if(!addedKeys.has(key) && !arr.includes(sentenceText)) {
+            arr.push(sentenceText);
+            if(!sub.tagsMap) sub.tagsMap = {};
+            // 保存标签：包含匹配的分类名 + 自定义标签
+            const tagsToStore = [...matchedSubNames, ...customTagsOnly];
+            sub.tagsMap[arr.length - 1] = tagsToStore;
+            addedKeys.add(key);
+            console.log(`✅ 添加到: ${sub.name}，标签:`, tagsToStore);
+        }
+    }
+    
+    // 如果目标分类是"未分类"，确保它的标签正确
+    if(targetSubs[0] === uncategorizedSub) {
+        const arr = oldListType === 'good' ? uncategorizedSub.goodSentences : uncategorizedSub.wordSentences;
+        const idx = arr.indexOf(sentenceText);
+        if(idx !== -1 && uncategorizedSub.tagsMap) {
+            uncategorizedSub.tagsMap[idx] = [...customTagsOnly];
+        }
+    }
+    
+    saveData();
+    console.log('💾 保存完成');
+    
+    // 刷新页面
+    if(currentPageRef && currentPageRef.type === 'category') {
+        // 刷新当前打开的分类页面
+        const primary = categories.find(p => p.id === currentPageRef.primaryId);
+        const sec = primary?.children.find(s => s.id === currentPageRef.secId);
+        if(sec) {
+            currentPageRef.goodSentences = sec.goodSentences;
+            currentPageRef.wordSentences = sec.wordSentences;
+            currentPageRef.tagsMap = sec.tagsMap;
+            updateSentencePageByType();
+        }
+    }
+    renderMain();
+    renderGlobalTags();
+    
+    document.getElementById('sentenceDialog').classList.remove('active');
 };
-    document.getElementById('dialogDeleteBtn').onclick=()=>{ if(confirm('删除？')){ const p=categories.find(p=>p.id===currentDialogContext.primaryId); const sec=p?.children.find(s=>s.id===currentDialogContext.secId); if(sec){ const arr=currentDialogContext.listType==='good'?sec.goodSentences:sec.wordSentences; arr.splice(currentDialogContext.sentenceIndex,1); if(sec.tagsMap) delete sec.tagsMap[currentDialogContext.sentenceIndex]; saveData(); updateSentencePageByType(); renderMain(); } document.getElementById('sentenceDialog').classList.remove('active'); } };
+
+
+
+document.getElementById('dialogDeleteBtn').onclick=()=>{ if(confirm('删除？')){ const p=categories.find(p=>p.id===currentDialogContext.primaryId); const sec=p?.children.find(s=>s.id===currentDialogContext.secId); if(sec){ const arr=currentDialogContext.listType==='good'?sec.goodSentences:sec.wordSentences; arr.splice(currentDialogContext.sentenceIndex,1); if(sec.tagsMap) delete sec.tagsMap[currentDialogContext.sentenceIndex]; saveData(); updateSentencePageByType(); renderMain(); } document.getElementById('sentenceDialog').classList.remove('active'); } };
     document.getElementById('dialogCloseBtn').onclick=()=>document.getElementById('sentenceDialog').classList.remove('active');
 
 document.getElementById('dialogAddTagBtn').onclick = () => { 
     const input = document.getElementById('dialogNewTagInput'); 
     const tag = input.value.trim(); 
     if(tag && !currentDialogContext.tags.includes(tag)) {
-        // 检查这个标签是否匹配某个子分类
-        let matchedSubInfo = null;
-        let matchedPrimary = null;
-        let matchedSub = null;
-        
-        for(const primary of categories) {
-            for(const sub of (primary.children || [])) {
-                if(sub.name === tag || (sub.customTags && sub.customTags.includes(tag))) {
-                    matchedSubInfo = `${primary.name} · ${sub.name}`;
-                    matchedPrimary = primary;
-                    matchedSub = sub;
-                    break;
-                }
-            }
-            if(matchedSubInfo) break;
-        }
-        
-        // 添加标签到当前句子
-        currentDialogContext.tags.push(tag);
+        currentDialogContext.tags.push(tag);  // 这行必须有
         if(!globalTags.includes(tag)) {
             globalTags.push(tag);
         }
-        
-        // 获取当前编辑的句子内容和类型
-        const sentenceText = currentDialogContext.sentenceText;
-        const sourceListType = currentDialogContext.listType;
-        
-        // 获取当前子分类的默认标签（当前句子的原始分类名）
-        let sourceDefaultTag = '';
-        if(currentDialogContext.type === 'category') {
-            const primary = categories.find(p => p.id === currentDialogContext.primaryId);
-            const sec = primary?.children.find(s => s.id === currentDialogContext.secId);
-            if(sec) sourceDefaultTag = sec.name;
-        }
-        
-        // 构建完整的标签列表（包含当前分类的默认标签）
-        let fullTags = [...currentDialogContext.tags];
-        if(sourceDefaultTag && !fullTags.includes(sourceDefaultTag)) {
-            fullTags.push(sourceDefaultTag);
-        }
-        
-        // 无论当前在哪个分类，只要匹配到子分类，就把句子添加到匹配的子分类中
-        if(matchedSub && matchedPrimary) {
-            const targetArr = sourceListType === 'good' ? matchedSub.goodSentences : matchedSub.wordSentences;
-            if(!targetArr.includes(sentenceText)) {
-                targetArr.push(sentenceText);
-                if(!matchedSub.tagsMap) matchedSub.tagsMap = {};
-                const newIdx = targetArr.length - 1;
-                // 复制完整的标签列表（包含所有标签）
-                matchedSub.tagsMap[newIdx] = [...fullTags];
-                
-                saveData();
-                renderMain();
-                
-                if(currentPageRef && currentPageRef.type === 'category' && 
-                   currentPageRef.secId === matchedSub.id) {
-                    updateSentencePageByType();
-                }
-            }
-        }
-        
-        // 确保当前句子的标签也包含默认标签并保存
-        if(currentDialogContext.type === 'category') {
-            const primary = categories.find(p => p.id === currentDialogContext.primaryId);
-            const sec = primary?.children.find(s => s.id === currentDialogContext.secId);
-            if(sec) {
-                // 确保当前句子的标签包含默认标签
-                const currentFullTags = [...currentDialogContext.tags];
-                if(!currentFullTags.includes(sourceDefaultTag)) {
-                    currentFullTags.push(sourceDefaultTag);
-                }
-                sec.tagsMap[currentDialogContext.sentenceIndex] = currentFullTags;
-            }
-        }
-        
-        saveData();
         renderDialogTags();
         renderGlobalTags();
         input.value = '';
-        
-        // 刷新当前页面显示
-        if(currentPageRef && currentPageRef.type === 'category') {
-            updateSentencePageByType();
-        }
     } 
 };
-
-document.getElementById('dialogCopyBtn').onclick=()=>{ navigator.clipboard.writeText(currentDialogContext.sentenceText); alert('已复制'); };
-    
 
   document.getElementById('pageAddSentenceBtn').onclick = () => { 
     const inp = document.getElementById('pageSentenceInput'); 
