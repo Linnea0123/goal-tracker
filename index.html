@@ -1247,14 +1247,13 @@ function toggleSubList(e) {
         if(!sub.customTags) sub.customTags = [];
    
 
-        function renderCustomTags() {
+function renderCustomTags() {
     const container = document.getElementById('editSubCustomTagsList');
     const tags = sub.customTags || [];
     if(tags.length === 0) { 
         container.innerHTML = '<span style="font-size:0.65rem; color:#c6c6c8;">暂无</span>'; 
         return; 
     }
-    // 统一为矮标签样式：padding: 0 6px, height: 20px
     container.innerHTML = tags.map(tag => `
         <span style="background: #e9e9ef; padding: 0 6px; border-radius: 3px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 3px; line-height: 1.5; height: 20px;">
             ${escapeHtml(tag)}
@@ -1271,14 +1270,65 @@ function toggleSubList(e) {
         }; 
     });
 }
-      
-
 
 
 renderCustomTags();
-        document.getElementById('editSubAddTagBtn').onclick = () => { const input = document.getElementById('editSubNewTag'); const newTag = input.value.trim(); if(newTag && !sub.customTags.includes(newTag) && newTag !== sub.name) { sub.customTags.push(newTag); if(!globalTags.includes(newTag)) { globalTags.push(newTag); renderGlobalTags(); } renderCustomTags(); input.value = ''; } else if(newTag === sub.name) alert('不能添加与子分类同名的标签（已自动关联）'); };
+
+document.getElementById('editSubAddTagBtn').onclick = () => { 
+    const input = document.getElementById('editSubNewTag'); 
+    const newTag = input.value.trim(); 
+    if(newTag && !sub.customTags.includes(newTag) && newTag !== sub.name) { 
+        sub.customTags.push(newTag); 
+        if(!globalTags.includes(newTag)) { 
+            globalTags.push(newTag); 
+            renderGlobalTags();  // 刷新主页标签显示
+        } 
+        renderCustomTags(); 
+        input.value = ''; 
+    } else if(newTag === sub.name) {
+        alert('不能添加与子分类同名的标签（已自动关联）'); 
+    } 
+};
+
         const confirmBtn = document.getElementById('editSubConfirmBtn'); const newConfirm = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
-        newConfirm.onclick = () => { const newName = document.getElementById('editSubName').value.trim(); const newEmoji = document.getElementById('editSubEmoji').value.trim(); if(newName && newName !== sub.name) { if(!globalTags.includes(newName)) globalTags.push(newName); sub.name = newName; document.getElementById('defaultTagDisplay').innerText = newName; } if(newEmoji) sub.emoji = newEmoji; saveData(); renderCategoryManageList(); renderMain(); renderGlobalTags(); dialog.classList.remove('active'); currentEditSubData = null; };
+newConfirm.onclick = () => { 
+    const newName = document.getElementById('editSubName').value.trim(); 
+    const newEmoji = document.getElementById('editSubEmoji').value.trim(); 
+    if(newName && newName !== sub.name) { 
+        // 如果改名，需要更新全局标签
+        const oldName = sub.name;
+        if(globalTags.includes(oldName)) {
+            globalTags = globalTags.filter(t => t !== oldName);
+        }
+        if(!globalTags.includes(newName)) {
+            globalTags.push(newName);
+        }
+        sub.name = newName; 
+        document.getElementById('defaultTagDisplay').innerText = newName;
+        
+        // 更新所有句子中的标签引用
+        for(const primary of categories) {
+            for(const s of (primary.children || [])) {
+                if(s.tagsMap) {
+                    for(const idx in s.tagsMap) {
+                        if(s.tagsMap[idx] && s.tagsMap[idx].includes(oldName)) {
+                            s.tagsMap[idx] = s.tagsMap[idx].map(t => t === oldName ? newName : t);
+                        }
+                    }
+                }
+            }
+        }
+    } 
+    if(newEmoji) sub.emoji = newEmoji; 
+    saveData(); 
+    renderCategoryManageList(); 
+    renderMain(); 
+    renderGlobalTags(); 
+    dialog.classList.remove('active'); 
+    currentEditSubData = null; 
+};
+
+
         const deleteBtn = document.getElementById('editSubDeleteBtn'); const newDelete = deleteBtn.cloneNode(true); deleteBtn.parentNode.replaceChild(newDelete, deleteBtn);
         newDelete.onclick = () => { if(confirm(`确定删除子分类“${sub.name}”及其所有内容吗？`)) { const cat = categories.find(c => c.id === catId); if(cat) { cat.children = cat.children.filter(s => s.id !== subId); saveData(); renderCategoryManageList(); renderMain(); renderGlobalTags(); if(currentPageRef && currentPageRef.type === 'category' && currentPageRef.secId === subId) document.getElementById('sentencePage').classList.remove('open'); dialog.classList.remove('active'); currentEditSubData = null; } } };
         const cancelBtn = document.getElementById('editSubCancelBtn'); const newCancel = cancelBtn.cloneNode(true); cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
@@ -1289,28 +1339,40 @@ renderCustomTags();
     document.getElementById('batchAddBtn')?.addEventListener('click',()=>{ document.getElementById('batchAddTextarea').value=''; document.getElementById('batchAddDialog').classList.add('active'); });
     document.getElementById('batchAddCancelBtn')?.addEventListener('click',()=>{ document.getElementById('batchAddDialog').classList.remove('active'); });
     
-document.getElementById('batchAddConfirmBtn')?.addEventListener('click',()=>{ 
-    const val=document.getElementById('batchAddTextarea').value; 
+document.getElementById('batchAddConfirmBtn')?.addEventListener('click', () => { 
+    const val = document.getElementById('batchAddTextarea').value; 
     if(!val.trim()) return; 
-    const lines=val.split(/\r?\n/).filter(l=>l.trim().length); 
-    if(lines.length===0) return; 
-    if(!currentPageRef||currentPageRef.type!=='category'){ 
+    const lines = val.split(/\r?\n/).filter(l => l.trim().length); 
+    if(lines.length === 0) return; 
+    
+    if(!currentPageRef || currentPageRef.type !== 'category') { 
         alert('请先打开子分类'); 
         return; 
     } 
-    const primary=categories.find(p=>p.id===currentPageRef.primaryId); 
-    if(primary){ 
-        const sec=primary.children.find(c=>c.id===currentPageRef.secId); 
-        if(sec){ 
-            const arr=currentListType==='good'?sec.goodSentences:sec.wordSentences; 
-            // 【关键修改】获取默认标签
-            let finalTags = [...newTags];
+    
+    const primary = categories.find(p => p.id === currentPageRef.primaryId); 
+    if(primary) { 
+        const sec = primary.children.find(c => c.id === currentPageRef.secId); 
+        if(sec) { 
+            const arr = currentListType === 'good' ? sec.goodSentences : sec.wordSentences; 
+            // 获取默认标签：当前子分类的名称
+            const defaultTag = sec.name;
             
-            lines.forEach(l=>{
-                arr.push(l.trim());
-                if(!sec.tagsMap) sec.tagsMap = {};
-                sec.tagsMap[arr.length - 1] = [defaultTag];
+            // 确保默认标签存在于全局标签中
+            if(!globalTags.includes(defaultTag)) {
+                globalTags.push(defaultTag);
+            }
+            
+            lines.forEach(l => {
+                const trimmedLine = l.trim();
+                if(trimmedLine) {
+                    arr.push(trimmedLine);
+                    if(!sec.tagsMap) sec.tagsMap = {};
+                    // 使用默认标签作为新句子的标签
+                    sec.tagsMap[arr.length - 1] = [defaultTag];
+                }
             }); 
+            
             saveData(); 
             updateSentencePageByType(); 
             renderMain();
@@ -1321,8 +1383,6 @@ document.getElementById('batchAddConfirmBtn')?.addEventListener('click',()=>{
 });
 
 
-
-
 document.getElementById('dialogSaveBtn').onclick = () => { 
     const newText = document.getElementById('dialogSentenceText').value.trim(); 
     if(!newText) return;
@@ -1330,30 +1390,28 @@ document.getElementById('dialogSaveBtn').onclick = () => {
     // 获取用户当前选择的标签（已删除/添加后的结果）
     let newTags = [...(currentDialogContext.tags || [])];
     
-    console.log('🔍 保存时读取的标签:', newTags);
-    
     const oldListType = currentDialogContext.listType;
-    const sentenceText = newText;
+    const sentenceText = currentDialogContext.sentenceText; // 原文本用于删除
+    const isGoodType = oldListType === 'good';
     
-    // ===== 第一步：从所有分类中删除这个句子（内容匹配，避免重复）=====
-    for(const primary of categories) {
-        for(const sub of (primary.children || [])) {
-            const arr = oldListType === 'good' ? sub.goodSentences : sub.wordSentences;
-            const idx = arr.indexOf(sentenceText);
-            if(idx !== -1) {
-                arr.splice(idx, 1);
-                if(sub.tagsMap) {
-                    delete sub.tagsMap[idx];
-                    // 重建 tagsMap 索引
-                    const newMap = {};
-                    arr.forEach((_, newIdx) => {
-                        const oldKey = Object.keys(sub.tagsMap || {}).find(k => parseInt(k) === newIdx);
-                        if(oldKey !== undefined) newMap[newIdx] = sub.tagsMap[oldKey];
-                        else if(sub.tagsMap[newIdx + 1] !== undefined) newMap[newIdx] = sub.tagsMap[newIdx + 1];
-                    });
-                    sub.tagsMap = newMap;
-                }
-                break;
+    // ===== 第一步：从原分类中删除这个句子 =====
+    const oldPrimary = categories.find(p => p.id === currentDialogContext.primaryId);
+    const oldSec = oldPrimary?.children.find(s => s.id === currentDialogContext.secId);
+    if(oldSec) {
+        const arr = isGoodType ? oldSec.goodSentences : oldSec.wordSentences;
+        const idx = arr.indexOf(sentenceText);
+        if(idx !== -1) {
+            arr.splice(idx, 1);
+            if(oldSec.tagsMap) {
+                delete oldSec.tagsMap[idx];
+                // 重建 tagsMap 索引
+                const newMap = {};
+                arr.forEach((_, newIdx) => {
+                    const oldKey = Object.keys(oldSec.tagsMap || {}).find(k => parseInt(k) === newIdx);
+                    if(oldKey !== undefined) newMap[newIdx] = oldSec.tagsMap[oldKey];
+                    else if(oldSec.tagsMap[newIdx + 1] !== undefined) newMap[newIdx] = oldSec.tagsMap[newIdx + 1];
+                });
+                oldSec.tagsMap = newMap;
             }
         }
     }
@@ -1380,8 +1438,7 @@ document.getElementById('dialogSaveBtn').onclick = () => {
     }
     let uncategorizedSub = uncategorizedPrimary.children[0];
     
-    // ===== 第三步：过滤掉子分类名称标签（这些会自动匹配分类）=====
-    // 收集所有子分类名称
+    // ===== 第三步：过滤掉子分类名称标签 =====
     const allSubNames = new Set();
     for(const primary of categories) {
         for(const sub of (primary.children || [])) {
@@ -1389,15 +1446,14 @@ document.getElementById('dialogSaveBtn').onclick = () => {
         }
     }
     
-    // 用户标签中，哪些是子分类名称（需要匹配到对应分类）
+    // 用户标签中，哪些是子分类名称
     const matchedSubNames = newTags.filter(tag => allSubNames.has(tag));
-    // 剩余的自定义标签（仅用于标记，不决定分类归属）
+    // 剩余的自定义标签
     const customTagsOnly = newTags.filter(tag => !allSubNames.has(tag));
     
     // 决定句子应该放到哪些分类
     let targetSubs = [];
     if(matchedSubNames.length > 0) {
-        // 有匹配的子分类名称 → 放到这些分类
         for(const primary of categories) {
             for(const sub of (primary.children || [])) {
                 if(matchedSubNames.includes(sub.name)) {
@@ -1406,42 +1462,38 @@ document.getElementById('dialogSaveBtn').onclick = () => {
             }
         }
     } else {
-        // 没有任何匹配的分类 → 放到"未分类"
         targetSubs = [uncategorizedSub];
     }
     
-    // ===== 第四步：去重，避免同一个句子在同一个分类出现两次 =====
+    // ===== 第四步：添加到目标分类 =====
     const addedKeys = new Set();
     for(const sub of targetSubs) {
-        const arr = oldListType === 'good' ? sub.goodSentences : sub.wordSentences;
-        const key = `${sub.id}_${oldListType}`;
+        const arr = isGoodType ? sub.goodSentences : sub.wordSentences;
+        const key = `${sub.id}_${isGoodType ? 'good' : 'word'}`;
         
-        if(!addedKeys.has(key) && !arr.includes(sentenceText)) {
-            arr.push(sentenceText);
+        if(!addedKeys.has(key) && !arr.includes(newText)) {
+            arr.push(newText);
             if(!sub.tagsMap) sub.tagsMap = {};
-            // 保存标签：包含匹配的分类名 + 自定义标签
+            // 保存标签：匹配的分类名 + 自定义标签
             const tagsToStore = [...matchedSubNames, ...customTagsOnly];
             sub.tagsMap[arr.length - 1] = tagsToStore;
             addedKeys.add(key);
-            console.log(`✅ 添加到: ${sub.name}，标签:`, tagsToStore);
         }
     }
     
-    // 如果目标分类是"未分类"，确保它的标签正确
-    if(targetSubs[0] === uncategorizedSub) {
-        const arr = oldListType === 'good' ? uncategorizedSub.goodSentences : uncategorizedSub.wordSentences;
-        const idx = arr.indexOf(sentenceText);
-        if(idx !== -1 && uncategorizedSub.tagsMap) {
+    // 如果目标分类是"未分类"，确保标签正确
+    if(targetSubs[0] === uncategorizedSub && uncategorizedSub.tagsMap) {
+        const arr = isGoodType ? uncategorizedSub.goodSentences : uncategorizedSub.wordSentences;
+        const idx = arr.indexOf(newText);
+        if(idx !== -1) {
             uncategorizedSub.tagsMap[idx] = [...customTagsOnly];
         }
     }
     
     saveData();
-    console.log('💾 保存完成');
     
     // 刷新页面
     if(currentPageRef && currentPageRef.type === 'category') {
-        // 刷新当前打开的分类页面
         const primary = categories.find(p => p.id === currentPageRef.primaryId);
         const sec = primary?.children.find(s => s.id === currentPageRef.secId);
         if(sec) {
@@ -1450,6 +1502,10 @@ document.getElementById('dialogSaveBtn').onclick = () => {
             currentPageRef.tagsMap = sec.tagsMap;
             updateSentencePageByType();
         }
+    } else if(currentPageRef && currentPageRef.type === 'tag') {
+        // 如果是从标签页编辑的，关闭页面
+        document.getElementById('sentencePage').classList.remove('open');
+        currentPageRef = null;
     }
     renderMain();
     renderGlobalTags();
@@ -1458,24 +1514,25 @@ document.getElementById('dialogSaveBtn').onclick = () => {
 };
 
 
-
 document.getElementById('dialogDeleteBtn').onclick=()=>{ if(confirm('删除？')){ const p=categories.find(p=>p.id===currentDialogContext.primaryId); const sec=p?.children.find(s=>s.id===currentDialogContext.secId); if(sec){ const arr=currentDialogContext.listType==='good'?sec.goodSentences:sec.wordSentences; arr.splice(currentDialogContext.sentenceIndex,1); if(sec.tagsMap) delete sec.tagsMap[currentDialogContext.sentenceIndex]; saveData(); updateSentencePageByType(); renderMain(); } document.getElementById('sentenceDialog').classList.remove('active'); } };
     document.getElementById('dialogCloseBtn').onclick=()=>document.getElementById('sentenceDialog').classList.remove('active');
 
 document.getElementById('dialogAddTagBtn').onclick = () => { 
     const input = document.getElementById('dialogNewTagInput'); 
     const tag = input.value.trim(); 
-    if(tag && !currentDialogContext.tags.includes(tag)) {
-        currentDialogContext.tags.push(tag);  // 这行必须有
-        if(!globalTags.includes(tag)) {
-            globalTags.push(tag);
+    if(tag) {
+        if(!currentDialogContext.tags) currentDialogContext.tags = [];
+        if(!currentDialogContext.tags.includes(tag)) {
+            currentDialogContext.tags.push(tag);
+            if(!globalTags.includes(tag)) {
+                globalTags.push(tag);
+            }
+            renderDialogTags();
+            renderGlobalTags();
+            input.value = '';
         }
-        renderDialogTags();
-        renderGlobalTags();
-        input.value = '';
     } 
 };
-
   document.getElementById('pageAddSentenceBtn').onclick = () => { 
     const inp = document.getElementById('pageSentenceInput'); 
     const text = inp.value.trim(); 
