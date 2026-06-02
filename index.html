@@ -564,6 +564,46 @@
             background: #ffffff;
             border-radius: 12px;
         }
+
+/* 编辑弹窗中的标签 - 强制覆盖高度 */
+.dialog-tag,
+#dialogTagList span {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    line-height: 1 !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+#dialogTagList span button {
+    line-height: 1 !important;
+    height: auto !important;
+}
+
+
+/* 全局禁止所有输入框变色 */
+input, textarea {
+    background: #ffffff !important;
+    border: 0.5px solid #e2e2e6 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+input:focus, textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: 0.5px solid #e2e2e6 !important;
+}
+
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+    background-color: #ffffff !important;
+}
+
     </style>
 </head>
 <body>
@@ -738,7 +778,7 @@
         <textarea id="batchAddTextarea" rows="8" placeholder="每行一条内容" style="width:100%; padding:12px; border-radius:16px; border:0.5px solid #ddd; font-size: 1rem; line-height: 1.5;"></textarea>
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px;">
             <button id="batchAddCancelBtn" style="background:#e9e9ef; border:none; padding:8px 18px; border-radius:30px;">取消</button>
-            <button id="batchAddConfirmBtn" style="background:#007aff; color:white; border:none; padding:8px 18px; border-radius:30px;">确认添加</button>
+            <button id="batchAddConfirmBtn" style="background:#61A2DA; color:white; border:none; padding:8px 18px; border-radius:30px;">确认添加</button>
         </div>
     </div>
 </div>
@@ -753,18 +793,18 @@
             <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 8px;">内容</div>
             <textarea id="dialogSentenceText" rows="4" placeholder="写下你的句子或词语..." style="width:100%; padding: 14px; border: 0.5px solid #e2e2e6; border-radius: 20px; font-size: 0.9rem; font-family: inherit; background: #f8f8fa; resize: vertical;"></textarea>
         </div>
-        <div style="margin-bottom: 24px;">
-            <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 8px;">标签</div>
-            <div id="dialogTagList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; min-height: 36px;"></div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="text" id="dialogNewTagInput" placeholder="添加标签" style="flex: 1; padding: 8px 14px; border: 0.5px solid #e2e2e6; border-radius: 30px; font-size: 0.8rem; background: #ffffff;">
-                <button id="dialogAddTagBtn" style="background: #e9e9ef; border: none; width: 36px; height: 36px; border-radius: 30px; font-size: 1rem; color: #007aff; cursor: pointer;">+</button>
-            </div>
-        </div>
+        <div style="margin-bottom: 20px;">
+    <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 8px;">标签</div>
+    <div id="dialogTagList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; min-height: auto;"></div>
+    <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+        <input type="text" id="dialogNewTagInput" placeholder="添加标签" style="flex: 1; padding: 8px 14px; border: 0.5px solid #e2e2e6; border-radius: 30px; font-size: 0.8rem; background: #ffffff;">
+        <button id="dialogAddTagBtn" style="background: #e9e9ef; border: none; width: 36px; height: 36px; border-radius: 30px; font-size: 1rem; color: #007aff; cursor: pointer;">+</button>
+    </div>
+</div>
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
             <button id="dialogCopyBtn" style="background: #e9e9ef; border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; color: #8e8e93; cursor: pointer;">复制</button>
             <button id="dialogDeleteBtn" style="background: #fff0ef; border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; color: #ff3b30; cursor: pointer;">删除</button>
-            <button id="dialogSaveBtn" style="background: #007aff; border: none; padding: 10px 24px; border-radius: 30px; font-size: 0.85rem; color: white; cursor: pointer; font-weight: 500;">保存</button>
+            <button id="dialogSaveBtn" style="background: #61A2DA; border: none; padding: 10px 24px; border-radius: 30px; font-size: 0.85rem; color: white; cursor: pointer; font-weight: 500;">保存</button>
         </div>
     </div>
 </div>
@@ -776,10 +816,22 @@
             <button id="closeSettings" style="background: transparent; border: none; font-size: 1.2rem; color: #8e8e93; cursor: pointer; width: 32px; height: 32px; border-radius: 20px;">✕</button>
         </div>
         <p style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 20px; line-height: 1.4;">使用 GitHub Gist 备份和恢复数据</p>
-        <div style="margin-bottom: 16px;">
-            <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 6px;">GitHub Token</div>
-            <input type="text" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="width:100%; padding: 12px; border: 0.5px solid #e2e2e6; border-radius: 14px; font-size: 0.85rem; background: #f8f8fa;">
-        </div>
+        
+<div style="margin-bottom: 16px;">
+    <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 6px;">GitHub Token</div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+        <input type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxx" style="flex:1; padding: 12px; border: 0.5px solid #e2e2e6; border-radius: 14px; font-size: 0.85rem; background: #f8f8fa;">
+
+<button type="button" id="toggleTokenVisibility" style="background: transparent; border: none; width: 40px; height: 40px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #8e8e93;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12,17C10.89,17 10,16.1 10,15C10,13.89 10.89,13 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17M18,20V10H6V20H18M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V10C4,8.89 4.89,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
+    </svg>
+</button>
+
+    </div>
+</div>
+
+
         <div style="margin-bottom: 20px;">
             <div style="font-size: 0.75rem; color: #8e8e93; margin-bottom: 6px;">Gist ID</div>
             <input type="text" id="gistId" placeholder="xxxxxxxxxxxx" style="width:100%; padding: 12px; border: 0.5px solid #e2e2e6; border-radius: 14px; font-size: 0.85rem; background: #f8f8fa;">
@@ -1067,8 +1119,7 @@ function renderDialogTags() {
     }
     
     container.innerHTML = tags.map(tag => `
-        <span style="background: #e9e9ef; padding: 3px 11px; border-radius: 6px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; line-height: 1.4;">
-            ${escapeHtml(tag)}
+<span style="background: #e9e9ef; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 4px; line-height: 1;">            ${escapeHtml(tag)}
             <button class="dialog-tag-remove" data-tag="${escapeHtml(tag)}" style="background: transparent; border: none; font-size: 0.7rem; color: #8e8e93; cursor: pointer; padding: 0; margin-left: 4px;">✕</button>
         </span>
     `).join('');
@@ -1117,6 +1168,8 @@ function renderGlobalTags(){
         currentPageRef = { type:'tag', tagName:displayTagName, rawTagName:tag, sentences:sentencesList, tagsMapRef:tagsMapRef }; openSentencePage();
     }));
 }
+ 
+ 
    function renderCategoryManageList() {
     const container = document.getElementById('catManageList'); 
     if(!container) return;
@@ -1576,8 +1629,174 @@ document.getElementById('dialogAddTagBtn').onclick = () => {
     const settingsModal=document.getElementById('settingsModal');
     document.getElementById('settingsBtn').onclick=()=>settingsModal.classList.add('active');
     document.getElementById('closeSettings').onclick=()=>settingsModal.classList.remove('active');
-    async function syncToGist(){ const token=document.getElementById('gistToken').value.trim(); let gid=document.getElementById('gistId').value.trim(); if(!token){ document.getElementById('syncStatus').innerText='需要Token'; return; } try{ let url='https://api.github.com/gists'; let method='POST'; if(gid){ url+=`/${gid}`; method='PATCH'; } const res=await fetch(url,{method,headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({description:'拾句集',public:false,files:{'backup.json':{content:JSON.stringify({categories,globalTags})}}})}); if(res.ok){ const json=await res.json(); if(!gid)document.getElementById('gistId').value=json.id; document.getElementById('syncStatus').innerText='备份成功'; }else{document.getElementById('syncStatus').innerText='失败';} }catch(e){ document.getElementById('syncStatus').innerText='错误'; } }
-    async function restoreFromGist(){ const token=document.getElementById('gistToken').value.trim(); const gid=document.getElementById('gistId').value.trim(); if(!token||!gid)return; try{ const res=await fetch(`https://api.github.com/gists/${gid}`,{headers:{'Authorization':`Bearer ${token}`}}); if(res.ok){ const json=await res.json(); const data=JSON.parse(json.files['backup.json']?.content); if(data){ categories=data.categories; globalTags=data.globalTags||[]; categories.forEach(c=>c.children?.forEach(ensureArrays)); saveData(); renderMain(); renderGlobalTags(); document.getElementById('syncStatus').innerText='恢复成功'; } } }catch(e){} }
+
+async function syncToGist() { 
+    const token = document.getElementById('gistToken').value.trim(); 
+    let gid = document.getElementById('gistId').value.trim(); 
+    const syncBtn = document.getElementById('syncToGist');
+    const restoreBtn = document.getElementById('restoreFromGist');
+    const statusDiv = document.getElementById('syncStatus');
+    
+    if(!token) { 
+        statusDiv.innerText = '❌ 需要输入 GitHub Token'; 
+        return; 
+    } 
+    
+    // 保存当前按钮文字，设置为禁用状态
+    const originalText = syncBtn.innerHTML;
+    syncBtn.innerHTML = '⏳ 上传中...';
+    syncBtn.disabled = true;
+    syncBtn.style.opacity = '0.6';
+    if(restoreBtn) {
+        restoreBtn.disabled = true;
+        restoreBtn.style.opacity = '0.6';
+    }
+    statusDiv.innerText = '☁️ 正在上传备份...';
+    
+    try { 
+        let url = 'https://api.github.com/gists'; 
+        let method = 'POST'; 
+        if(gid) { 
+            url += `/${gid}`; 
+            method = 'PATCH'; 
+        } 
+        const res = await fetch(url, {
+            method, 
+            headers: {
+                'Authorization': `Bearer ${token}`, 
+                'Content-Type': 'application/json'
+            }, 
+            body: JSON.stringify({
+                description: '拾句集', 
+                public: false, 
+                files: {
+                    'backup.json': {
+                        content: JSON.stringify({ categories, globalTags })
+                    }
+                }
+            })
+        }); 
+        
+        if(res.ok) { 
+            const json = await res.json(); 
+            if(!gid) {
+                document.getElementById('gistId').value = json.id;
+                saveGistSettings();  // 自动保存新生成的 Gist ID
+            } 
+            statusDiv.innerText = '✅ 备份成功！'; 
+        } else {
+            const error = await res.text();
+            statusDiv.innerText = `❌ 备份失败: ${res.status}`;
+            console.error('Gist upload error:', error);
+        } 
+    } catch(e) { 
+        statusDiv.innerText = '❌ 网络错误，请重试'; 
+        console.error(e);
+    } finally {
+        // 恢复按钮状态
+        syncBtn.innerHTML = originalText;
+        syncBtn.disabled = false;
+        syncBtn.style.opacity = '1';
+        if(restoreBtn) {
+            restoreBtn.disabled = false;
+            restoreBtn.style.opacity = '1';
+        }
+        // 3秒后清除状态消息（保留成功/失败图标）
+        setTimeout(() => {
+            if(statusDiv.innerText.includes('成功') || statusDiv.innerText.includes('失败') || statusDiv.innerText.includes('错误')) {
+                statusDiv.innerText = '';
+            }
+        }, 3000);
+    } 
+}
+
+
+async function restoreFromGist() { 
+    const token = document.getElementById('gistToken').value.trim(); 
+    const gid = document.getElementById('gistId').value.trim(); 
+    const syncBtn = document.getElementById('syncToGist');
+    const restoreBtn = document.getElementById('restoreFromGist');
+    const statusDiv = document.getElementById('syncStatus');
+    
+    if(!token || !gid) { 
+        statusDiv.innerText = '❌ 需要填写 Token 和 Gist ID'; 
+        return; 
+    } 
+    
+    // 设置按钮为禁用状态
+    const originalText = restoreBtn.innerHTML;
+    restoreBtn.innerHTML = '⏳ 恢复中...';
+    restoreBtn.disabled = true;
+    restoreBtn.style.opacity = '0.6';
+    if(syncBtn) {
+        syncBtn.disabled = true;
+        syncBtn.style.opacity = '0.6';
+    }
+    statusDiv.innerText = '☁️ 正在从云端恢复...';
+    
+    try { 
+        const res = await fetch(`https://api.github.com/gists/${gid}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }); 
+        
+        if(res.ok) { 
+            const json = await res.json(); 
+            const content = json.files['backup.json']?.content; 
+            if(content) { 
+                const data = JSON.parse(content); 
+                if(data) { 
+                    categories = data.categories; 
+                    globalTags = data.globalTags || []; 
+                    categories.forEach(c => c.children?.forEach(ensureArrays)); 
+                    saveData(); 
+                    renderMain(); 
+                    renderGlobalTags(); 
+                    // 如果当前有打开的分类页面，刷新
+                    if(currentPageRef && currentPageRef.type === 'category') {
+                        const primary = categories.find(p => p.id === currentPageRef.primaryId);
+                        const sec = primary?.children.find(s => s.id === currentPageRef.secId);
+                        if(sec) {
+                            currentPageRef.goodSentences = sec.goodSentences;
+                            currentPageRef.wordSentences = sec.wordSentences;
+                            currentPageRef.tagsMap = sec.tagsMap;
+                            updateSentencePageByType();
+                        } else {
+                            document.getElementById('sentencePage').classList.remove('open');
+                            currentPageRef = null;
+                        }
+                    }
+                    statusDiv.innerText = '✅ 恢复成功！'; 
+                } else {
+                    statusDiv.innerText = '❌ 备份文件格式错误'; 
+                }
+            } else {
+                statusDiv.innerText = '❌ 未找到 backup.json 文件'; 
+            }
+        } else {
+            statusDiv.innerText = `❌ 恢复失败: ${res.status}`; 
+        } 
+    } catch(e) { 
+        statusDiv.innerText = '❌ 网络错误，请重试'; 
+        console.error(e);
+    } finally {
+        // 恢复按钮状态
+        restoreBtn.innerHTML = originalText;
+        restoreBtn.disabled = false;
+        restoreBtn.style.opacity = '1';
+        if(syncBtn) {
+            syncBtn.disabled = false;
+            syncBtn.style.opacity = '1';
+        }
+        // 3秒后清除状态消息
+        setTimeout(() => {
+            if(statusDiv.innerText.includes('成功') || statusDiv.innerText.includes('失败') || statusDiv.innerText.includes('错误')) {
+                statusDiv.innerText = '';
+            }
+        }, 3000);
+    } 
+}
+
+
     document.getElementById('syncToGist').onclick=syncToGist;
     document.getElementById('restoreFromGist').onclick=restoreFromGist;
     
@@ -1739,6 +1958,62 @@ document.getElementById('tagsManageDialog')?.addEventListener('click', (e) => {
 });
 
     loadData();
+
+
+// Token 显示/隐藏切换功能 - 使用锁/开锁图标
+const tokenInputElem = document.getElementById('gistToken');
+const toggleBtn = document.getElementById('toggleTokenVisibility');
+
+if(tokenInputElem && toggleBtn) {
+    const lockIconSvg = toggleBtn.querySelector('svg');
+    const lockPath = lockIconSvg ? lockIconSvg.querySelector('path') : null;
+    
+    // 保存原始路径（锁定状态）
+    const lockedPath = "M12,17C10.89,17 10,16.1 10,15C10,13.89 10.89,13 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17M18,20V10H6V20H18M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V10C4,8.89 4.89,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z";
+    // 开锁状态路径
+    const unlockedPath = "M18,20V10H6V20H18M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V10A2,2 0 0,1 6,8H15V6A3,3 0 0,0 12,3A3,3 0 0,0 9,6H7A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,17A2,2 0 0,1 10,15A2,2 0 0,1 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17Z";
+    
+    toggleBtn.addEventListener('click', function() {
+        const isPassword = tokenInputElem.getAttribute('type') === 'password';
+        tokenInputElem.setAttribute('type', isPassword ? 'text' : 'password');
+        
+        // 切换图标：锁定状态显示锁，显示密码时显示开锁
+        if(lockPath) {
+            lockPath.setAttribute('d', isPassword ? unlockedPath : lockedPath);
+        }
+    });
+}
+    
+// ========== Gist 配置自动保存 ==========
+function loadGistSettings() {
+    const savedToken = localStorage.getItem('gist_token');
+    const savedGistId = localStorage.getItem('gist_id');
+    const tokenField = document.getElementById('gistToken');
+    const gistIdField = document.getElementById('gistId');
+    if(tokenField && savedToken) tokenField.value = savedToken;
+    if(gistIdField && savedGistId) gistIdField.value = savedGistId;
+}
+
+function saveGistSettings() {
+    const tokenField = document.getElementById('gistToken');
+    const gistIdField = document.getElementById('gistId');
+    const token = tokenField ? tokenField.value.trim() : '';
+    const gistId = gistIdField ? gistIdField.value.trim() : '';
+    if(token) localStorage.setItem('gist_token', token);
+    else localStorage.removeItem('gist_token');
+    if(gistId) localStorage.setItem('gist_id', gistId);
+    else localStorage.removeItem('gist_id');
+}
+
+// 绑定自动保存事件
+const gistTokenField = document.getElementById('gistToken');
+const gistIdField = document.getElementById('gistId');
+if(gistTokenField) gistTokenField.addEventListener('input', saveGistSettings);
+if(gistIdField) gistIdField.addEventListener('input', saveGistSettings);
+
+// 加载已保存的配置
+loadGistSettings();
+
 </script>
 </body>
 </html>
