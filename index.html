@@ -863,6 +863,12 @@ input:-webkit-autofill {
     let categories = [];
     let globalTags = [];
     let currentDialogContext = null;
+
+    // 为每个网页生成唯一标识（不同网页设置不同值，避免 Gist ID 互相覆盖）
+const PAGE_ID = 'shiju_main';  // 拾句主网页
+// 其他网页可设置为：'shiju_poetry', 'shiju_prose' 等
+
+
     let currentPageRef = null;
     let currentListType = 'good';
     let currentEditSubData = null;
@@ -1986,8 +1992,8 @@ if(tokenInputElem && toggleBtn) {
     
 // ========== Gist 配置自动保存 ==========
 function loadGistSettings() {
-    const savedToken = localStorage.getItem('gist_token');
-    const savedGistId = localStorage.getItem('gist_id');
+    const savedToken = localStorage.getItem(PAGE_ID + '_gist_token');
+    const savedGistId = localStorage.getItem(PAGE_ID + '_gist_id');
     const tokenField = document.getElementById('gistToken');
     const gistIdField = document.getElementById('gistId');
     if(tokenField && savedToken) tokenField.value = savedToken;
@@ -1999,10 +2005,10 @@ function saveGistSettings() {
     const gistIdField = document.getElementById('gistId');
     const token = tokenField ? tokenField.value.trim() : '';
     const gistId = gistIdField ? gistIdField.value.trim() : '';
-    if(token) localStorage.setItem('gist_token', token);
-    else localStorage.removeItem('gist_token');
-    if(gistId) localStorage.setItem('gist_id', gistId);
-    else localStorage.removeItem('gist_id');
+    if(token) localStorage.setItem(PAGE_ID + '_gist_token', token);
+    else localStorage.removeItem(PAGE_ID + '_gist_token');
+    if(gistId) localStorage.setItem(PAGE_ID + '_gist_id', gistId);
+    else localStorage.removeItem(PAGE_ID + '_gist_id');
 }
 
 // 绑定自动保存事件
