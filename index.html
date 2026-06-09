@@ -20,11 +20,22 @@
             min-height: 100vh;
         }
 
-        .app, .page-container {
-            max-width: 600px;
-            margin: 0 auto;
-            width: 100%;
-        }
+  .app, .page-container {
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        padding: 0 24px;
+    }
+
+/* 网页版移除最大宽度限制 */
+@media (min-width: 641px) {
+    .app, .page-container {
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        padding: 0 24px;
+    }
+}
 
         .header-row {
             display: flex;
@@ -442,6 +453,72 @@
                 padding: 16px 12px 32px;
             }
         }
+
+
+        /* 网页版：屏幕宽度大于 640px 时 */
+@media (min-width: 641px) {
+    /* 主容器占满全屏 */
+    .app, .page-container {
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        padding: 0 24px;
+    }
+    
+    /* 分类 4 列布局 */
+    .two-columns {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        width: 100%;
+    }
+    
+    .two-columns .col {
+        display: contents;
+    }
+    
+    /* ===== 新增：句子列表页面 2 列布局 ===== */
+    .sentence-list-page {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        background: transparent;
+        border-radius: 0;
+    }
+    
+    .sentence-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border-bottom: none;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .sentence-card:active {
+        background: #f2f2f6;
+    }
+    
+    /* 让 body 左右边距为 0 */
+    body {
+        padding: 20px 0 40px;
+    }
+}
+
+
+/* 网页版：屏幕宽度大于 640px 时，一行显示 4 个分类 */
+@media (min-width: 641px) {
+    .two-columns {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        width: 100%;  /* 新增：确保占满 */
+    }
+    
+    .two-columns .col {
+        display: contents;
+    }
+}
+
 
         .add-sub-btn {
             background: transparent;
