@@ -1648,41 +1648,32 @@
             //  缩放计算 - 占满界面 + 可无限放大
             // ============================================================
 
-         // ============================================================
-//  缩放计算 - 针对移动端优化（修复顶部/底部工具栏遮挡）
+// ============================================================
+//  缩放计算 - 根据PDF实际容器高度计算
 // ============================================================
 
 let fitScale = 1.0;
 
 function calculateFitScale(pageWidth, pageHeight) {
-    // 获取实际可视尺寸
-    let viewWidth = window.innerWidth;
-    let viewHeight = window.innerHeight;
+    // ✅ 直接使用 PDF 容器的实际尺寸
+    const rect = viewport.getBoundingClientRect();
     
-    // 使用 visualViewport 获取更精确的尺寸（移动端支持）
-    if (window.visualViewport) {
-        viewWidth = window.visualViewport.width;
-        viewHeight = window.visualViewport.height;
-    }
+    // 容器的实际宽高（已经减去了顶部栏、右侧栏等）
+    const containerWidth = rect.width;
+    const containerHeight = rect.height;
     
-    // 右侧工具栏宽度（PC端280px，移动端隐藏）
-    const isMobile = /iPad|iPhone|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
-    const toolbarWidth = isMobile ? 0 : 280;
-    const padding = 10;
+    // 边距（让页面不贴边）
+    const padding = 20;
     
-    // 可用宽度 = 视口宽度 - 右侧工具栏 - 边距
-    const availableWidth = viewWidth - toolbarWidth - padding * 2;
-    
-    // 可用高度 = 视口高度 - 顶部/底部工具栏（移动端约120px）
-    const mobileToolbarHeight = 120;
-    const desktopToolbarHeight = 20;
-    const toolbarHeight = isMobile ? mobileToolbarHeight : desktopToolbarHeight;
-    const availableHeight = viewHeight - toolbarHeight - padding * 2;
+    const availableWidth = containerWidth - padding * 2;
+    const availableHeight = containerHeight - padding * 2;
     
     // 计算缩放
     const scaleX = availableWidth / pageWidth;
     const scaleY = availableHeight / pageHeight;
     fitScale = Math.min(scaleX, scaleY);
+    
+    // 限制范围
     if (fitScale < 0.2) fitScale = 0.2;
     if (fitScale > 2.0) fitScale = 2.0;
     return fitScale;
@@ -2032,16 +2023,20 @@ function calculateFitScale(pageWidth, pageHeight) {
     // ========================================
     // 窗口resize
     // ========================================
-    window.addEventListener('resize', function() {
-        if (pdfDoc) {
-            // 重新渲染时保持缩放
-            if (canvas) {
-                canvas.style.transform = 'scale(' + scaleFactor + ')';
-                canvas.style.transformOrigin = 'center center';
-            }
-        }
-    });
-
+  window.addEventListener('resize', function() {
+    if (window.innerWidth <= 768) {
+        menuToggle.style.display = 'flex';
+    } else {
+        menuToggle.style.display = 'none';
+        closeSidebar();
+    }
+    if (pdfDoc) {
+        pageCache.clear();
+        // ✅ 重新计算 fitScale
+        fitScale = 1.0;
+        renderPage(currentPage);
+    }
+});
     console.log('✅ 滚轮缩放已启用（无上限）');
 }  
 
@@ -2898,21 +2893,6 @@ newZipInput.style.display = 'none';
             renderPage(currentPage);
         }
     });
-
-// ========================================
-// 监听移动端视口变化（适应工具栏显示/隐藏）
-// ========================================
-if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', function() {
-        if (pdfDoc) {
-            pageCache.clear();
-            fitScale = 1.0;
-            renderPage(currentPage);
-        }
-    });
-}
-
-
 
     updateUI();
     updatePlayBtn();
