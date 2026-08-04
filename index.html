@@ -209,6 +209,32 @@
             .qr-modal .qr-code-container { padding: 10px; }
             .qr-modal .qr-code-container #qrcode img { width: 150px; height: 150px; }
         }
+
+        /* ===== 统计弹窗 ===== */
+        .stats-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; }
+        .stats-overlay.active { display: flex; }
+        .stats-modal { background: white; border-radius: 16px; padding: 24px; max-width: 700px; width: 92%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .stats-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .stats-header h3 { font-size: 20px; color: #0f172a; }
+        .stats-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; padding: 0 8px; }
+        .stats-close:hover { color: #1e293b; }
+        .stats-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #eef0f4; padding-bottom: 8px; }
+        .stats-tab { padding: 6px 16px; border: none; background: none; font-size: 13px; font-weight: 500; color: #94a3b8; cursor: pointer; border-radius: 6px; transition: all 0.15s; }
+        .stats-tab:hover { background: #f1f5f9; }
+        .stats-tab.active { color: #3b82f6; background: #eff6ff; }
+        .stats-content { min-height: 200px; }
+        .stats-summary { margin-top: 16px; padding-top: 16px; border-top: 2px solid #eef0f4; display: flex; gap: 20px; flex-wrap: wrap; }
+        .stats-summary-item { flex: 1; min-width: 100px; text-align: center; }
+        .stats-summary-item .num { font-size: 24px; font-weight: 700; color: #0f172a; }
+        .stats-summary-item .label { font-size: 11px; color: #94a3b8; }
+
+        .stats-record-item { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        .stats-record-item .name { color: #1e293b; }
+        .stats-record-item .time { color: #475569; font-weight: 500; }
+        .stats-record-item .date { color: #94a3b8; font-size: 11px; }
+        .stats-empty { text-align: center; color: #94a3b8; padding: 40px 0; }
+        .stats-date-header { font-weight: 600; color: #0f172a; padding: 12px 12px 6px; font-size: 14px; background: #f8fafc; border-radius: 6px; margin-top: 8px; }
+        .stats-total-day { text-align: right; padding: 4px 12px 8px; font-size: 12px; color: #64748b; font-weight: 500; border-bottom: 2px solid #eef0f4; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -250,11 +276,15 @@
             </button>
             <hr class="sidebar-divider">
             <button class="btn-side" id="qrSyncBtn">
-                📡 扫码同步
+                扫码同步
                 <span class="badge" id="qrBadge" style="display:none;">●</span>
             </button>
             <button class="btn-side" id="scanBtn">
-                📷 扫一扫
+                扫一扫
+            </button>
+            <hr class="sidebar-divider">
+            <button class="btn-side" id="statsBtn">
+                统计
             </button>
             <hr class="sidebar-divider">
             <button class="btn-side danger" id="clearAllBtn">
@@ -367,10 +397,26 @@
     </div>
 </div>
 
+<!-- ===== 统计弹窗 ===== -->
+<div class="stats-overlay" id="statsOverlay">
+    <div class="stats-modal">
+        <div class="stats-header">
+            <h3>📊 阅读统计</h3>
+            <button class="stats-close" id="statsCloseBtn">✕</button>
+        </div>
+        <div class="stats-tabs">
+            <button class="stats-tab active" data-tab="daily">📅 每日</button>
+            <button class="stats-tab" data-tab="weekly">📆 每周</button>
+            <button class="stats-tab" data-tab="monthly">📈 每月</button>
+        </div>
+        <div class="stats-content" id="statsContent"></div>
+        <div class="stats-summary" id="statsSummary"></div>
+    </div>
+</div>
+
 <!-- 隐藏文件输入 -->
 <input type="file" id="replaceAudioInput" accept=".mp3,.wav,.aac,.ogg,.m4a" class="hidden-input">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 (function(){
     'use strict';
@@ -465,6 +511,13 @@
     const scannerStatus = document.getElementById('scannerStatus');
     const qrContentArea = document.getElementById('qrContentArea');
     const scannerContentArea = document.getElementById('scannerContentArea');
+
+    // Stats DOM
+    const statsOverlay = document.getElementById('statsOverlay');
+    const statsCloseBtn = document.getElementById('statsCloseBtn');
+    const statsBtn = document.getElementById('statsBtn');
+    const statsContent = document.getElementById('statsContent');
+    const statsSummary = document.getElementById('statsSummary');
 
     // ============================================================
     //  Toast
@@ -617,52 +670,43 @@
     // ============================================================
     //  PeerJS 同步
     // ============================================================
-    // ============================================================
-//  PeerJS 同步
-// ============================================================
-function initPeer() {
-    try {
-        peer = new Peer(undefined, {
-            host: '0.peerjs.com',
-            port: 443,
-            path: '/',
-            secure: true
-        });
+    function initPeer() {
+        try {
+            peer = new Peer(undefined, {
+                host: '0.peerjs.com',
+                port: 443,
+                path: '/',
+                secure: true
+            });
 
-        peer.on('open', function(id) {
-    peerId = id;
-    console.log('🔵 PeerJS 已启动，ID:', id);
-    // showToast('PeerJS 已连接', 'success', 'ID: ' + id);
-    // ★★★ 注释掉下面两行 ★★★
-    // qrBadge.style.display = 'inline-flex';
-    // qrBadge.textContent = '●';
-    // qrBadge.style.background = '#22c55e';
-});
+            peer.on('open', function(id) {
+                peerId = id;
+                console.log('🔵 PeerJS 已启动，ID:', id);
+            });
 
-        peer.on('connection', function(conn) {
-            console.log('🔵 收到连接请求:', conn.peer);
-            peerConn = conn;
-            setupPeerConnection(conn);
-            // ★★★ 删除或注释掉下面这一行 ★★★
-            // showToast('设备已连接', 'success', conn.peer);
-            qrStatusText.textContent = '✅ 已连接: ' + conn.peer;
-            qrStatusText.style.color = '#22c55e';
-        });
+            peer.on('connection', function(conn) {
+                console.log('🔵 收到连接请求:', conn.peer);
+                peerConn = conn;
+                setupPeerConnection(conn);
+                qrStatusText.textContent = '✅ 已连接: ' + conn.peer;
+                qrStatusText.style.color = '#22c55e';
+            });
 
-        peer.on('error', function(err) {
-            console.error('PeerJS 错误:', err);
-        });
+            peer.on('error', function(err) {
+                console.error('PeerJS 错误:', err);
+            });
 
-        peer.on('disconnected', function() {
-            console.log('PeerJS 断开连接');
-            isPeerConnected = false;
-        });
+            peer.on('disconnected', function() {
+                console.log('PeerJS 断开连接');
+                isPeerConnected = false;
+            });
 
-    } catch(e) {
-        console.error('PeerJS 初始化失败:', e);
-        showToast('PeerJS 初始化失败', 'error', e.message);
+        } catch(e) {
+            console.error('PeerJS 初始化失败:', e);
+            showToast('PeerJS 初始化失败', 'error', e.message);
+        }
     }
-}
+
     function setupPeerConnection(conn) {
         isPeerConnected = true;
         conn.on('data', function(data) {
@@ -737,39 +781,38 @@ function initPeer() {
         }
     }
 
-   function connectToPeer(targetId) {
-    if (!peer) {
-        showToast('PeerJS 未初始化', 'error');
-        return;
+    function connectToPeer(targetId) {
+        if (!peer) {
+            showToast('PeerJS 未初始化', 'error');
+            return;
+        }
+        try {
+            const conn = peer.connect(targetId);
+            conn.on('open', function() {
+                console.log('✅ 连接成功:', targetId);
+                peerConn = conn;
+                isPeerConnected = true;
+                setupPeerConnection(conn);
+                qrStatusText.textContent = '✅ 已连接: ' + targetId;
+                qrStatusText.style.color = '#22c55e';
+                setTimeout(() => {
+                    if (peerConn && isPeerConnected) {
+                        peerConn.send({ type: 'sync_request' });
+                    }
+                }, 500);
+            });
+            conn.on('error', function(err) {
+                console.error('连接失败:', err);
+                showToast('连接失败', 'error', err.message);
+                qrStatusText.textContent = '连接失败: ' + err.message;
+                qrStatusText.style.color = '#ef4444';
+            });
+        } catch(e) {
+            console.error('连接异常:', e);
+            showToast('连接异常', 'error', e.message);
+        }
     }
-    try {
-        const conn = peer.connect(targetId);
-        conn.on('open', function() {
-            console.log('✅ 连接成功:', targetId);
-            peerConn = conn;
-            isPeerConnected = true;
-            setupPeerConnection(conn);
-            // ★★★ 删除或注释掉下面这一行 ★★★
-            // showToast('连接成功', 'success', targetId);
-            qrStatusText.textContent = '✅ 已连接: ' + targetId;
-            qrStatusText.style.color = '#22c55e';
-            setTimeout(() => {
-                if (peerConn && isPeerConnected) {
-                    peerConn.send({ type: 'sync_request' });
-                }
-            }, 500);
-        });
-        conn.on('error', function(err) {
-            console.error('连接失败:', err);
-            showToast('连接失败', 'error', err.message);
-            qrStatusText.textContent = '连接失败: ' + err.message;
-            qrStatusText.style.color = '#ef4444';
-        });
-    } catch(e) {
-        console.error('连接异常:', e);
-        showToast('连接异常', 'error', e.message);
-    }
-}
+
     // ============================================================
     //  导出全部ZIP
     // ============================================================
@@ -1054,6 +1097,7 @@ function initPeer() {
         if (!rec) return;
         if (isLoading) return;
         isLoading = true;
+        startReading(id);
         audioStatusText.textContent = '加载中...';
         topBarStatus.textContent = '加载中...';
 
@@ -1340,40 +1384,334 @@ function initPeer() {
 
     let currentRenderTask = null;
 
-    function renderPage(num) {
-        if (!pdfDoc) { placeholder.style.display = 'block'; canvas.style.display = 'none'; return; }
-        
-        if (currentRenderTask) {
-            currentRenderTask.cancel();
-            currentRenderTask = null;
-        }
+  
 
-        pdfDoc.getPage(num).then(page => {
-            const vp = page.getViewport({ scale: 1 });
-            baseScale = calculateFitScale(vp.width, vp.height);
-            const totalScale = baseScale * zoomLevel;
-            const svp = page.getViewport({ scale: totalScale });
+
+    // ============================================================
+//  渲染PDF - 完全修复版（前进后退一样快 + 大小一致）
+// ============================================================
+
+// 页面缓存
+const pageCache = new Map();
+let isRendering = false;
+let pendingPage = null;
+let preloadTimer = null;
+
+function renderPage(num) {
+    if (!pdfDoc) { 
+        placeholder.style.display = 'block'; 
+        canvas.style.display = 'none'; 
+        return; 
+    }
+    
+    if (isRendering) {
+        pendingPage = num;
+        return;
+    }
+    
+    isRendering = true;
+    
+    // 精确的缓存key
+    const cacheKey = num + '_' + zoomLevel.toFixed(4);
+    
+    // 检查缓存 - 使用完整质量的缓存
+    if (pageCache.has(cacheKey)) {
+        const cached = pageCache.get(cacheKey);
+        canvas.width = cached.width;
+        canvas.height = cached.height;
+        ctx.drawImage(cached.canvas, 0, 0);
+        canvas.style.display = 'block';
+        placeholder.style.display = 'none';
+        updateTransform();
+        renderAudioList();
+        setTimeout(() => autoPlay(), 300);
+        isRendering = false;
+        if (pendingPage !== null) {
+            const nextPage = pendingPage;
+            pendingPage = null;
+            renderPage(nextPage);
+        }
+        return;
+    }
+    
+    if (currentRenderTask) {
+        currentRenderTask.cancel();
+        currentRenderTask = null;
+    }
+
+    pdfDoc.getPage(num).then(page => {
+        const vp = page.getViewport({ scale: 1 });
+        baseScale = calculateFitScale(vp.width, vp.height);
+        // ✅ 使用完整缩放，不降低质量
+        const totalScale = baseScale * zoomLevel;
+        const svp = page.getViewport({ scale: totalScale });
+        
+        // 创建离屏canvas
+        const offscreen = document.createElement('canvas');
+        offscreen.width = svp.width;
+        offscreen.height = svp.height;
+        const offCtx = offscreen.getContext('2d');
+        
+        const renderTask = page.render({ 
+            canvasContext: offCtx, 
+            viewport: svp,
+            background: 'white'
+        });
+        currentRenderTask = renderTask;
+        return renderTask.promise.then(() => {
+            // ✅ 存储完整质量的缓存
+            pageCache.set(cacheKey, {
+                canvas: offscreen,
+                width: svp.width,
+                height: svp.height,
+                scale: zoomLevel
+            });
+            
+            // 限制缓存大小（增加到20页，让前后都能缓存）
+            if (pageCache.size > 20) {
+                const firstKey = pageCache.keys().next().value;
+                pageCache.delete(firstKey);
+            }
+            
             canvas.width = svp.width;
             canvas.height = svp.height;
-            
-            const renderTask = page.render({ canvasContext: ctx, viewport: svp });
-            currentRenderTask = renderTask;
-            return renderTask.promise;
-        }).then(() => {
-            currentRenderTask = null;
+            ctx.drawImage(offscreen, 0, 0);
             canvas.style.display = 'block';
             placeholder.style.display = 'none';
             updateTransform();
             renderAudioList();
             setTimeout(() => autoPlay(), 300);
-        }).catch(err => {
-            if (err.name !== 'RenderingCancelledException') {
-                console.warn('渲染警告:', err);
-            }
+            
+            // ✅ 预加载前后各2页（完整质量）
+            preloadAdjacentPages(num);
+            
             currentRenderTask = null;
+            isRendering = false;
+            
+            if (pendingPage !== null) {
+                const nextPage = pendingPage;
+                pendingPage = null;
+                renderPage(nextPage);
+            }
+        });
+    }).catch(err => {
+        if (err.name !== 'RenderingCancelledException') {
+            console.warn('渲染警告:', err);
+        }
+        currentRenderTask = null;
+        isRendering = false;
+        if (pendingPage !== null) {
+            const nextPage = pendingPage;
+            pendingPage = null;
+            renderPage(nextPage);
+        }
+    });
+}
+
+// ✅ 预加载相邻页面 - 使用完整质量
+function preloadAdjacentPages(num) {
+    // 清除之前的预加载定时器
+    if (preloadTimer) {
+        clearTimeout(preloadTimer);
+        preloadTimer = null;
+    }
+    
+    // 预加载前后各2页
+    const pagesToPreload = [];
+    for (let i = -2; i <= 2; i++) {
+        if (i === 0) continue;
+        const pageNum = num + i;
+        if (pageNum < 1 || pageNum > totalPages) continue;
+        pagesToPreload.push(pageNum);
+    }
+    
+    // 延迟执行预加载，避免影响当前页面渲染
+    preloadTimer = setTimeout(() => {
+        pagesToPreload.forEach(pageNum => {
+            const cacheKey = pageNum + '_' + zoomLevel.toFixed(4);
+            if (pageCache.has(cacheKey)) return;
+            
+            if (!pdfDoc) return;
+            pdfDoc.getPage(pageNum).then(page => {
+                const vp = page.getViewport({ scale: 1 });
+                baseScale = calculateFitScale(vp.width, vp.height);
+                // ✅ 预加载使用完整质量（但稍微降低分辨率以加快速度）
+                const totalScale = baseScale * zoomLevel;
+                const svp = page.getViewport({ scale: totalScale });
+                const offscreen = document.createElement('canvas');
+                offscreen.width = svp.width;
+                offscreen.height = svp.height;
+                const offCtx = offscreen.getContext('2d');
+                return page.render({ canvasContext: offCtx, viewport: svp }).promise.then(() => {
+                    pageCache.set(cacheKey, {
+                        canvas: offscreen,
+                        width: svp.width,
+                        height: svp.height,
+                        scale: zoomLevel
+                    });
+                });
+            }).catch(() => {});
+        });
+    }, 200);
+}
+
+// ============================================================
+//  缩放手势 - 修复版
+// ============================================================
+
+function handleZoomChange(newZoom) {
+    const oldZoom = zoomLevel;
+    zoomLevel = Math.min(Math.max(0.3, newZoom), 3.0);
+    
+    // 只有缩放真正变化时才清空缓存并重新渲染
+    if (Math.abs(zoomLevel - oldZoom) > 0.001) {
+        pageCache.clear();
+        zoomLevelDisplay.textContent = Math.round(zoomLevel * 100) + '%';
+        if (pdfDoc) {
+            renderPage(currentPage);
+        } else {
+            updateTransform();
+        }
+    }
+}
+
+// ✅ 滚轮缩放 - 修复版
+viewport.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const newZoom = Math.min(Math.max(0.3, zoomLevel + delta), 3.0);
+    if (newZoom !== zoomLevel) {
+        pageCache.clear();
+        zoomLevel = newZoom;
+        zoomLevelDisplay.textContent = Math.round(zoomLevel * 100) + '%';
+        if (pdfDoc) {
+            renderPage(currentPage);
+        } else {
+            updateTransform();
+        }
+    }
+}, { passive: false });
+
+// ✅ 双指缩放 - 修复版
+viewport.addEventListener('touchstart', function(e) {
+    if (!pdfDoc) return;
+    const t = e.touches;
+    if (t.length === 1) {
+        isTouching = true;
+        touchStartX = t[0].clientX;
+        touchStartY = t[0].clientY;
+        touchStartPanX = panX;
+        touchStartPanY = panY;
+    } else if (t.length === 2) {
+        const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+        lastTouchDist = Math.sqrt(dx*dx + dy*dy);
+        lastTouchZoom = zoomLevel;
+    }
+}, { passive: true });
+
+let lastTouchZoom = 1.0;
+
+viewport.addEventListener('touchmove', function(e) {
+    if (!pdfDoc) return;
+    const t = e.touches;
+    if (t.length === 1 && isTouching) {
+        panX = touchStartPanX + (t[0].clientX - touchStartX);
+        panY = touchStartPanY + (t[0].clientY - touchStartY);
+        updateTransform();
+    } else if (t.length === 2) {
+        const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const scale = dist / lastTouchDist;
+        const newZoom = Math.min(Math.max(0.3, lastTouchZoom * scale), 3.0);
+        if (newZoom !== zoomLevel) {
+            pageCache.clear();
+            zoomLevel = newZoom;
+            zoomLevelDisplay.textContent = Math.round(zoomLevel * 100) + '%';
+            if (pdfDoc) {
+                renderPage(currentPage);
+            } else {
+                updateTransform();
+            }
+        }
+    }
+}, { passive: true });
+
+// ============================================================
+//  goToPage - 改进版（增加预加载）
+// ============================================================
+
+function goToPage(num) {
+    if (!pdfDoc) return;
+    if (num < 1) num = 1;
+    if (num > totalPages) num = totalPages;
+    if (num === currentPage) { 
+        autoPlay(); 
+        return; 
+    }
+    endReading();
+    currentPage = num;
+    startReading(currentRecordId);
+    renderPage(currentPage);
+    updateUI();
+    const rec = records.find(r => r.id === currentRecordId);
+    if (rec) { 
+        rec.currentPage = currentPage; 
+        saveRecords(); 
+    }
+}
+
+// ============================================================
+//  初始化时预加载所有页面（后台进行）
+// ============================================================
+
+async function preloadAllPages() {
+    if (!pdfDoc) return;
+    // 先加载当前页
+    renderPage(currentPage);
+    // 然后逐步加载其他页
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) continue;
+        pages.push(i);
+    }
+    // 按距离当前页的距离排序（近的优先）
+    pages.sort((a, b) => Math.abs(a - currentPage) - Math.abs(b - currentPage));
+    
+    // 每隔200ms加载一页，避免卡顿
+    for (const pageNum of pages) {
+        await new Promise(resolve => {
+            setTimeout(() => {
+                const cacheKey = pageNum + '_' + zoomLevel.toFixed(4);
+                if (!pageCache.has(cacheKey) && pdfDoc) {
+                    pdfDoc.getPage(pageNum).then(page => {
+                        const vp = page.getViewport({ scale: 1 });
+                        baseScale = calculateFitScale(vp.width, vp.height);
+                        const totalScale = baseScale * zoomLevel;
+                        const svp = page.getViewport({ scale: totalScale });
+                        const offscreen = document.createElement('canvas');
+                        offscreen.width = svp.width;
+                        offscreen.height = svp.height;
+                        const offCtx = offscreen.getContext('2d');
+                        return page.render({ canvasContext: offCtx, viewport: svp }).promise.then(() => {
+                            pageCache.set(cacheKey, {
+                                canvas: offscreen,
+                                width: svp.width,
+                                height: svp.height,
+                                scale: zoomLevel
+                            });
+                        });
+                    }).catch(() => {});
+                }
+                resolve();
+            }, 200);
         });
     }
+}
 
+// 在 loadRecord 中调用预加载
+// 在 loadRecord 函数的最后，添加：
+// preloadAllPages();
+    
     function updateTransform() {
         canvasWrapper.style.transform = `translate(${panX}px, ${panY}px)`;
         zoomLevelDisplay.textContent = Math.round(zoomLevel * 100) + '%';
@@ -1628,7 +1966,10 @@ function initPeer() {
         if (num < 1) num = 1;
         if (num > totalPages) num = totalPages;
         if (num === currentPage) { autoPlay(); return; }
+        // 结束当前页阅读记录，开始新页
+        endReading();
         currentPage = num;
+        startReading(currentRecordId);
         renderPage(currentPage);
         updateUI();
         const rec = records.find(r => r.id === currentRecordId);
@@ -1642,96 +1983,216 @@ function initPeer() {
     function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
 
     // ============================================================
-    //  QR 扫码同步 - 修复版
-    
-    
-    // ★★★ 新增：立即生成二维码（不等待 PeerJS）★★★
-function generateQRCodeImmediate() {
-    // 清空容器
-    qrCodeContainer.innerHTML = '';
-    
-    // 使用临时 ID 或 "请稍后" 生成二维码
-    const tempId = peerId || 'connecting...';
-    const qrData = JSON.stringify({
-        type: 'smartbook_sync',
-        version: '1.0',
-        peerId: tempId,
-        timestamp: Date.now(),
-        device: 'computer'
-    });
-    
-    try {
-        qrCodeInstance = new QRCode(qrCodeContainer, {
-            text: qrData,
-            width: 200,
-            height: 200,
-            colorDark: '#0f172a',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-        });
-        qrStatusText.textContent = peerId ? '等待扫码连接... Peer ID: ' + peerId : '⏳ PeerJS 连接中...';
-        qrStatusText.style.color = '#475569';
-         // qrBadge.style.display = 'inline-flex';
-    // qrBadge.textContent = '●';
-    // qrBadge.style.background = '#22c55e';
-        
-        // 如果 PeerJS 还没连上，监听连接成功后刷新二维码
-        if (!peerId) {
-            const checkPeer = setInterval(() => {
-                if (peerId) {
-                    clearInterval(checkPeer);
-                    qrCodeContainer.innerHTML = '';
-                    generateQRCode(); // 用真实 ID 重新生成
-                    qrStatusText.textContent = '等待扫码连接... Peer ID: ' + peerId;
-                }
-            }, 500);
-            // 10秒超时
-            setTimeout(() => clearInterval(checkPeer), 10000);
-        }
-    } catch(e) {
-        console.error('生成二维码失败:', e);
-        qrCodeContainer.innerHTML = '<div style="padding:20px;color:#ef4444;">二维码生成失败，请重试</div>';
+    //  阅读统计
+    // ============================================================
+
+    let readingLogs = [];
+
+    function loadReadingLogs() {
+        try {
+            const data = localStorage.getItem('readingLogs');
+            readingLogs = data ? JSON.parse(data) : [];
+        } catch(e) { readingLogs = []; }
     }
-}
+
+    function saveReadingLogs() {
+        try {
+            localStorage.setItem('readingLogs', JSON.stringify(readingLogs));
+        } catch(e) { console.warn('保存阅读记录失败', e); }
+    }
+
+    let currentReadingStart = null;
+    let currentReadingRecordId = null;
+
+    function startReading(recordId) {
+        if (currentReadingRecordId === recordId && currentReadingStart) return;
+        if (currentReadingStart && currentReadingRecordId) {
+            endReading();
+        }
+        currentReadingStart = Date.now();
+        currentReadingRecordId = recordId;
+    }
+
+    function endReading() {
+        if (!currentReadingStart || !currentReadingRecordId) return;
+        const duration = Math.round((Date.now() - currentReadingStart) / 1000);
+        if (duration > 5) {
+            const rec = records.find(r => r.id === currentReadingRecordId);
+            readingLogs.push({
+                date: new Date().toISOString(),
+                recordId: currentReadingRecordId,
+                recordName: rec ? rec.name : '未知',
+                duration: duration,
+                pages: rec ? rec.pages : 0
+            });
+            saveReadingLogs();
+        }
+        currentReadingStart = null;
+        currentReadingRecordId = null;
+    }
+
+    function getStatsData() {
+        const logs = readingLogs;
+        if (logs.length === 0) return { daily: [], weekly: [], monthly: [], total: 0, totalRecords: 0 };
+        
+        const dailyMap = {};
+        logs.forEach(log => {
+            const date = log.date.split('T')[0];
+            if (!dailyMap[date]) dailyMap[date] = [];
+            dailyMap[date].push(log);
+        });
+        
+        const weeklyMap = {};
+        logs.forEach(log => {
+            const d = new Date(log.date);
+            const year = d.getFullYear();
+            const firstDay = new Date(year, 0, 1);
+            const week = Math.ceil((((d - firstDay) / 86400000) + firstDay.getDay() + 1) / 7);
+            const key = year + '-W' + String(week).padStart(2, '0');
+            if (!weeklyMap[key]) weeklyMap[key] = [];
+            weeklyMap[key].push(log);
+        });
+        
+        const monthlyMap = {};
+        logs.forEach(log => {
+            const key = log.date.substring(0, 7);
+            if (!monthlyMap[key]) monthlyMap[key] = [];
+            monthlyMap[key].push(log);
+        });
+        
+        function processGroup(groupMap) {
+            const result = [];
+            for (const [key, items] of Object.entries(groupMap)) {
+                const totalSeconds = items.reduce((sum, i) => sum + i.duration, 0);
+                const recordStats = {};
+                items.forEach(item => {
+                    if (!recordStats[item.recordId]) {
+                        recordStats[item.recordId] = { name: item.recordName, duration: 0, count: 0 };
+                    }
+                    recordStats[item.recordId].duration += item.duration;
+                    recordStats[item.recordId].count += 1;
+                });
+                const records = Object.values(recordStats).sort((a, b) => b.duration - a.duration);
+                result.push({
+                    key: key,
+                    totalSeconds: totalSeconds,
+                    records: records,
+                    count: items.length
+                });
+            }
+            return result.sort((a, b) => b.key.localeCompare(a.key));
+        }
+        
+        const totalSeconds = logs.reduce((sum, i) => sum + i.duration, 0);
+        const totalRecords = new Set(logs.map(i => i.recordId)).size;
+        
+        return {
+            daily: processGroup(dailyMap),
+            weekly: processGroup(weeklyMap),
+            monthly: processGroup(monthlyMap),
+            total: totalSeconds,
+            totalRecords: totalRecords
+        };
+    }
+
+    function formatDuration(seconds) {
+        if (seconds < 60) return seconds + '秒';
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        if (m < 60) return m + '分' + (s > 0 ? s + '秒' : '');
+        const h = Math.floor(m / 60);
+        const rm = m % 60;
+        return h + '小时' + (rm > 0 ? rm + '分' : '');
+    }
+
+    function renderStats(tab) {
+        const data = getStatsData();
+        let content = '';
+        let summary = '';
+        
+        let groupData = [];
+        if (tab === 'daily') { groupData = data.daily; }
+        else if (tab === 'weekly') { groupData = data.weekly; }
+        else if (tab === 'monthly') { groupData = data.monthly; }
+        
+        if (groupData.length === 0) {
+            content = '<div class="stats-empty">📭 暂无阅读记录<br><span style="font-size:12px;">开始阅读PDF后会自动记录</span></div>';
+        } else {
+            let html = '';
+            groupData.forEach(group => {
+                const dateDisplay = group.key;
+                html += `<div class="stats-date-header">📖 ${dateDisplay}</div>`;
+                html += `<div class="stats-total-day">总阅读：${formatDuration(group.totalSeconds)}（${group.count}次）</div>`;
+                group.records.forEach(rec => {
+                    html += `
+                        <div class="stats-record-item">
+                            <span class="name">${rec.name}</span>
+                            <span class="time">${formatDuration(rec.duration)}</span>
+                        </div>
+                    `;
+                });
+            });
+            content = html;
+        }
+        
+        summary = `
+            <div class="stats-summary-item">
+                <div class="num">${formatDuration(data.total)}</div>
+                <div class="label">总阅读时间</div>
+            </div>
+            <div class="stats-summary-item">
+                <div class="num">${data.totalRecords}</div>
+                <div class="label">阅读书籍数</div>
+            </div>
+            <div class="stats-summary-item">
+                <div class="num">${readingLogs.length}</div>
+                <div class="label">阅读次数</div>
+            </div>
+        `;
+        
+        statsContent.innerHTML = content;
+        statsSummary.innerHTML = summary;
+    }
+
+    // ============================================================
+    //  QR 扫码同步
     // ============================================================
     function generateQRCode() {
-    if (!peerId) {
-        qrStatusText.textContent = 'PeerJS 未就绪，请稍后...';
-        qrStatusText.style.color = '#f59e0b';
-        setTimeout(generateQRCode, 1000);
-        return;
-    }
-    
-    const qrData = JSON.stringify({
-        type: 'smartbook_sync',
-        version: '1.0',
-        peerId: peerId,
-        timestamp: Date.now(),
-        device: 'computer'
-    });
-    
-    qrCodeContainer.innerHTML = '';
-    
-    try {
-        qrCodeInstance = new QRCode(qrCodeContainer, {
-            text: qrData,
-            width: 200,
-            height: 200,
-            colorDark: '#0f172a',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
+        if (!peerId) {
+            qrStatusText.textContent = 'PeerJS 未就绪，请稍后...';
+            qrStatusText.style.color = '#f59e0b';
+            setTimeout(generateQRCode, 1000);
+            return;
+        }
+        
+        const qrData = JSON.stringify({
+            type: 'smartbook_sync',
+            version: '1.0',
+            peerId: peerId,
+            timestamp: Date.now(),
+            device: 'computer'
         });
-        qrStatusText.textContent = '等待扫码连接... Peer ID: ' + peerId;
-        qrStatusText.style.color = '#475569';
-          // qrBadge.style.display = 'inline-flex';
-    // qrBadge.textContent = '●';
-    // qrBadge.style.background = '#22c55e';
-    } catch(e) {
-        console.error('生成二维码失败:', e);
-        qrCodeContainer.innerHTML = '<div style="padding:20px;color:#ef4444;">二维码生成失败，请重试</div>';
-        showToast('二维码生成失败', 'error', e.message);
+        
+        qrCodeContainer.innerHTML = '';
+        
+        try {
+            qrCodeInstance = new QRCode(qrCodeContainer, {
+                text: qrData,
+                width: 200,
+                height: 200,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            qrStatusText.textContent = '等待扫码连接... Peer ID: ' + peerId;
+            qrStatusText.style.color = '#475569';
+        } catch(e) {
+            console.error('生成二维码失败:', e);
+            qrCodeContainer.innerHTML = '<div style="padding:20px;color:#ef4444;">二维码生成失败，请重试</div>';
+            showToast('二维码生成失败', 'error', e.message);
+        }
     }
-}
+
     function startScanner() {
         isScannerMode = true;
         qrContentArea.style.display = 'none';
@@ -1748,7 +2209,6 @@ function generateQRCodeImmediate() {
                     scannerVideo.play();
                     scannerStatus.textContent = '扫描二维码中...';
                     scannerStatus.style.color = '#475569';
-                    // 模拟扫描检测
                     detectQRFromVideo();
                 })
                 .catch(function(err) {
@@ -1776,15 +2236,12 @@ function generateQRCodeImmediate() {
     }
 
     function detectQRFromVideo() {
-        // 模拟 QR 检测 - 点击屏幕模拟扫码
         scannerVideo.addEventListener('click', function() {
             if (peerId) {
                 scannerStatus.textContent = '✅ 扫码成功！连接中...';
                 scannerStatus.style.color = '#22c55e';
                 showToast('扫码成功', 'success', '正在连接...');
-                if (peerId) {
-                    connectToPeer(peerId);
-                }
+                connectToPeer(peerId);
                 setTimeout(() => {
                     stopScanner();
                 }, 1500);
@@ -1814,14 +2271,13 @@ function generateQRCodeImmediate() {
         try { await openDB(); console.log('IndexedDB 已打开'); } catch(e) { console.warn('IndexedDB 打开失败:', e); }
 
         loadRecords();
+        loadReadingLogs();
         renderRecords();
         setupPanZoom();
         setupAudioPlayer();
 
-        // 初始化 PeerJS
         initPeer();
 
-        // 检测移动端
         if (window.innerWidth <= 768) {
             menuToggle.style.display = 'flex';
         }
@@ -1903,19 +2359,23 @@ function generateQRCodeImmediate() {
         });
 
         // ---- QR扫码同步 ----
-    
-qrSyncBtn.addEventListener('click', function() {
-    qrModal.classList.add('active');
-    qrContentArea.style.display = 'block';
-    scannerContentArea.style.display = 'none';
-    toggleScannerBtn.textContent = '📷 扫一扫';
-    isScannerMode = false;
-    // ★★★ 立即生成二维码，不等待 ★★★
-    generateQRCodeImmediate();
-});
+        qrSyncBtn.addEventListener('click', function() {
+            qrModal.classList.add('active');
+            qrContentArea.style.display = 'block';
+            scannerContentArea.style.display = 'none';
+            toggleScannerBtn.textContent = '📷 扫一扫';
+            isScannerMode = false;
+            if (peerId) {
+                generateQRCode();
+            } else {
+                qrStatusText.textContent = '⏳ PeerJS 连接中...';
+                qrStatusText.style.color = '#f59e0b';
+                setTimeout(() => {
+                    if (peerId) generateQRCode();
+                }, 2000);
+            }
+        });
 
-        
-        // 扫一扫按钮 (左侧菜单)
         scanBtn.addEventListener('click', function() {
             qrModal.classList.add('active');
             if (!isScannerMode) {
@@ -1935,7 +2395,6 @@ qrSyncBtn.addEventListener('click', function() {
             qrCodeInstance = null;
             qrCodeContainer.innerHTML = '';
             generateQRCode();
-            
         });
 
         toggleScannerBtn.addEventListener('click', function() {
@@ -1949,6 +2408,30 @@ qrSyncBtn.addEventListener('click', function() {
         qrCloseBtn.addEventListener('click', closeQRModal);
         qrModal.addEventListener('click', function(e) {
             if (e.target === qrModal) closeQRModal();
+        });
+
+        // ---- 统计 ----
+        statsBtn.addEventListener('click', function() {
+            statsOverlay.classList.add('active');
+            renderStats('daily');
+        });
+
+        statsCloseBtn.addEventListener('click', function() {
+            statsOverlay.classList.remove('active');
+        });
+
+        statsOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                statsOverlay.classList.remove('active');
+            }
+        });
+
+        document.querySelectorAll('.stats-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.stats-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                renderStats(this.dataset.tab);
+            });
         });
 
         // ---- 清空 ----
@@ -1989,10 +2472,20 @@ qrSyncBtn.addEventListener('click', function() {
             else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
         });
 
-        // ---- 点击画布切换播放 ----
         canvas.addEventListener('click', togglePlay);
 
-        // ---- 窗口resize ----
+        window.addEventListener('beforeunload', function() {
+            endReading();
+        });
+
+        window.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                endReading();
+            } else {
+                if (currentRecordId) startReading(currentRecordId);
+            }
+        });
+
         window.addEventListener('resize', function() {
             if (window.innerWidth <= 768) { menuToggle.style.display = 'flex'; }
             else { menuToggle.style.display = 'none'; closeSidebar(); }
