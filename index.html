@@ -6,56 +6,80 @@
     <title>有声PDF阅读器 · 绘本版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; -webkit-user-select: none; user-select: none; }
 
         .app { display: flex; width: 100vw; height: 100vh; overflow: hidden; background: #f0f2f5; }
 
-        /* ===== 左侧菜单栏 ===== */
-        .sidebar { width: 260px; min-width: 260px; height: 100%; background: #ffffff; border-right: 1px solid #e4e7ec; display: flex; flex-direction: column; overflow: hidden; z-index: 10; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .sidebar-header { padding: 14px 16px 10px; border-bottom: 1px solid #eef0f4; flex-shrink: 0; }
-        .sidebar-header h2 { font-size: 16px; font-weight: 700; color: #0f172a; }
-        .sidebar-header .sub { font-size: 10px; color: #94a3b8; margin-top: 1px; }
-        .sidebar-actions { padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; border-bottom: 1px solid #eef0f4; }
+        /* ===== 左侧菜单 ===== */
+        .sidebar { width: 260px; min-width: 260px; height: 100%; background: #ffffff; border-right: 1px solid #e4e7ec; display: flex; flex-direction: column; overflow: hidden; z-index: 10; transition: transform 0.3s; flex-shrink: 0; }
+        .sidebar-header { padding: 12px 16px 8px; border-bottom: 1px solid #eef0f4; flex-shrink: 0; }
+        .sidebar-header h2 { font-size: 14px; font-weight: 700; color: #0f172a; }
+        .sidebar-header .sub { font-size: 9px; color: #94a3b8; margin-top: 1px; }
+        .sidebar-actions { padding: 6px 10px; display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; border-bottom: 1px solid #eef0f4; }
 
-        .btn-side { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; border-radius: 8px; border: none; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; background: #f1f5f9; color: #1e293b; width: 100%; position: relative; }
+        .btn-side { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 6px 8px; border-radius: 6px; border: none; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s; background: #f1f5f9; color: #1e293b; width: 100%; position: relative; }
         .btn-side:hover { background: #e2e8f0; }
         .btn-side:active { transform: scale(0.97); }
         .btn-side:disabled { opacity: 0.4; cursor: not-allowed; }
         .btn-side input[type="file"] { position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; }
+        .btn-side.danger { background: #f1f5f9; color: #dc2626; }
+        .btn-side.danger:hover { background: #fee2e2; }
 
-        .sidebar-divider { border: none; border-top: 1px solid #eef0f4; margin: 4px 0; }
+        .btn-side .badge { background: #ef4444; color: white; font-size: 8px; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-weight: 700; margin-left: 2px; }
+        .btn-side .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 4px; }
+        .btn-side .status-dot.online { background: #22c55e; }
+        .btn-side .status-dot.offline { background: #94a3b8; }
+        .btn-side .status-dot.syncing { background: #f59e0b; animation: pulse 1s infinite; }
 
-        .record-list { flex: 1; overflow-y: auto; padding: 6px 10px; -webkit-overflow-scrolling: touch; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .sidebar-divider { border: none; border-top: 1px solid #eef0f4; margin: 3px 0; }
+
+        .record-list { flex: 1; overflow-y: auto; padding: 4px 8px; -webkit-overflow-scrolling: touch; }
         .record-list::-webkit-scrollbar { width: 3px; }
         .record-list::-webkit-scrollbar-thumb { background: #d1d9e6; border-radius: 4px; }
 
-        .record-item { padding: 10px 12px; border-radius: 10px; margin-bottom: 4px; cursor: pointer; transition: all 0.15s; background: transparent; border: 1px solid transparent; position: relative; display: flex; align-items: center; justify-content: space-between; }
+        .record-item { padding: 8px 10px; border-radius: 8px; margin-bottom: 3px; cursor: pointer; transition: all 0.15s; background: transparent; border: 1px solid transparent; position: relative; display: flex; align-items: center; justify-content: space-between; }
         .record-item:hover { background: #f8fafc; }
         .record-item.active { background: #eff6ff; border-color: #bfdbfe; }
         .record-item .info { flex: 1; min-width: 0; cursor: pointer; }
-        .record-item .name { font-weight: 600; font-size: 12px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .record-item .meta { font-size: 10px; color: #94a3b8; margin-top: 1px; display: flex; gap: 8px; align-items: center; }
-        .record-item .badge-pages { background: #e2e8f0; padding: 0 6px; border-radius: 8px; font-size: 9px; }
+        .record-item .name { font-weight: 600; font-size: 11px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .record-item .meta { font-size: 9px; color: #94a3b8; margin-top: 1px; display: flex; gap: 6px; align-items: center; }
+        .record-item .badge-pages { background: #e2e8f0; padding: 0 5px; border-radius: 6px; font-size: 8px; }
         .record-item .item-actions { display: flex; gap: 2px; flex-shrink: 0; }
-        .record-item .item-actions button { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 12px; padding: 3px 5px; border-radius: 4px; transition: all 0.15s; }
+        .record-item .item-actions button { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 11px; padding: 2px 4px; border-radius: 4px; transition: all 0.15s; }
         .record-item .item-actions button:hover { background: #eef2f6; color: #3b82f6; }
         .record-item .item-actions .delete-btn:hover { background: #fee2e2; color: #dc2626; }
         .record-item .item-actions .export-btn:hover { background: #dcfce7; color: #16a34a; }
-        .record-empty { text-align: center; color: #94a3b8; padding: 24px 12px; font-size: 12px; }
+        .record-empty { text-align: center; color: #94a3b8; padding: 20px 12px; font-size: 11px; }
 
-        /* ===== 右侧主内容 ===== */
+        /* ===== 顶部导航 (手机端) ===== */
+        .top-bar { display: none; align-items: center; justify-content: space-between; padding: 6px 10px; background: #ffffff; border-bottom: 1px solid #e4e7ec; flex-shrink: 0; z-index: 10; min-height: 44px; }
+        .top-bar .brand { font-size: 14px; font-weight: 700; color: #0f172a; white-space: nowrap; }
+        .top-bar .brand-sub { font-size: 9px; color: #94a3b8; margin-left: 4px; font-weight: 400; }
+        .top-bar .menu-toggle { background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; color: #1e293b; display: none; align-items: center; justify-content: center; }
+        .top-bar .menu-toggle:hover { background: #f1f5f9; border-radius: 6px; }
+        .top-bar .status { font-size: 10px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 99; }
+        .sidebar-overlay.active { display: block; }
+
+        /* ===== 主内容 ===== */
         .main-content { flex: 1; display: flex; height: 100%; overflow: hidden; background: #e8ecf1; position: relative; }
+
         .pdf-viewport { flex: 1; position: relative; overflow: hidden; background: #e8ecf1; touch-action: none; display: flex; align-items: center; justify-content: center; }
         .pdf-viewport .canvas-wrapper { position: relative; display: flex; align-items: center; justify-content: center; touch-action: none; cursor: grab; width: 100%; height: 100%; }
         .pdf-viewport .canvas-wrapper:active { cursor: grabbing; }
-        #pdfCanvas { display: none; background: white; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); touch-action: none; }
+        #pdfCanvas { display: none; background: white; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); touch-action: none; max-width: 100%; max-height: 100%; }
         .pdf-placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #94a3b8; font-size: 15px; text-align: center; pointer-events: none; }
         .pdf-placeholder .big-icon { font-size: 36px; display: block; margin-bottom: 8px; }
 
         /* ===== 右侧工具栏 ===== */
-        .right-toolbar { width: 260px; min-width: 260px; height: 100%; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-left: 1px solid rgba(226, 232, 240, 0.5); display: flex; flex-direction: column; padding: 12px 14px 16px; z-index: 15; flex-shrink: 0; overflow-y: auto; gap: 6px; }
+        .right-toolbar { width: 280px; min-width: 280px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-left: 1px solid rgba(226,232,240,0.5); display: flex; flex-direction: column; padding: 12px 14px 16px; z-index: 15; flex-shrink: 0; overflow-y: auto; gap: 6px; }
         .right-toolbar::-webkit-scrollbar { width: 3px; }
         .right-toolbar::-webkit-scrollbar-thumb { background: #d1d9e6; border-radius: 4px; }
 
@@ -96,8 +120,9 @@
         .audio-controls-row button.playing:hover { background: #2563eb; }
         .audio-controls-row .audio-name { flex: 1; font-size: 11px; color: #475569; margin-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* 音频列表 - 全部展开，无滚动 */
-        .audio-list-section { background: #f8fafc; border-radius: 10px; padding: 10px 12px; border: 1px solid #eef0f4; flex-shrink: 0; }
+        .audio-list-section { background: #f8fafc; border-radius: 10px; padding: 10px 12px; border: 1px solid #eef0f4; max-height: 160px; overflow-y: auto; flex-shrink: 0; }
+        .audio-list-section::-webkit-scrollbar { width: 3px; }
+        .audio-list-section::-webkit-scrollbar-thumb { background: #d1d9e6; border-radius: 4px; }
         .audio-list-section .section-title { font-size: 9px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
         .audio-list-section .section-title .count { font-weight: 400; font-size: 9px; }
         .audio-list-item { display: flex; align-items: center; gap: 6px; padding: 3px 5px; border-radius: 5px; cursor: pointer; transition: all 0.15s; font-size: 11px; color: #475569; }
@@ -110,38 +135,95 @@
         .audio-list-item .replace-btn:hover { background: #e2e8f0; color: #3b82f6; }
         .audio-list-empty { font-size: 11px; color: #94a3b8; text-align: center; padding: 6px 0; }
 
-        /* ===== 提示弹窗 ===== */
-        .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; padding: 24px 36px; border-radius: 16px; font-size: 16px; font-weight: 600; box-shadow: 0 20px 60px rgba(0,0,0,0.3); min-width: 280px; text-align: center; animation: toastIn 0.3s ease-out; pointer-events: none; }
+        /* ===== Toast ===== */
+        .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; padding: 20px 28px; border-radius: 14px; font-size: 14px; font-weight: 600; box-shadow: 0 20px 60px rgba(0,0,0,0.3); min-width: 240px; text-align: center; animation: toastIn 0.3s ease-out; pointer-events: none; }
         .toast.success { background: #dcfce7; color: #166534; border: 2px solid #86efac; }
         .toast.error { background: #fee2e2; color: #991b1b; border: 2px solid #fca5a5; }
         .toast.info { background: #dbeafe; color: #1e40af; border: 2px solid #93c5fd; }
-        .toast .toast-sub { font-size: 13px; font-weight: 400; margin-top: 6px; opacity: 0.8; }
-        .toast .toast-close { position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 18px; cursor: pointer; color: inherit; opacity: 0.5; pointer-events: auto; }
+        .toast .toast-sub { font-size: 12px; font-weight: 400; margin-top: 4px; opacity: 0.8; }
+        .toast .toast-close { position: absolute; top: 6px; right: 10px; background: none; border: none; font-size: 16px; cursor: pointer; color: inherit; opacity: 0.5; pointer-events: auto; }
         .toast .toast-close:hover { opacity: 1; }
         @keyframes toastIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
         .toast-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); z-index: 9998; pointer-events: auto; }
 
-        /* ===== 移动端 ===== */
-        @media (max-width: 1024px) { .right-toolbar { width: 200px; min-width: 200px; padding: 10px; } }
+        .hidden-input { display: none; }
+
+        /* ===== 扫码同步弹窗 ===== */
+        .qr-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 999; align-items: center; justify-content: center; }
+        .qr-modal-overlay.active { display: flex; }
+        .qr-modal { background: white; border-radius: 16px; padding: 24px 28px; max-width: 480px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; text-align: center; }
+        .qr-modal h3 { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .qr-modal .desc { font-size: 13px; color: #94a3b8; margin-bottom: 16px; }
+        .qr-modal .qr-code-container { background: white; padding: 16px; border-radius: 12px; display: inline-block; border: 2px solid #eef0f4; margin: 8px 0; }
+        .qr-modal .qr-code-container #qrcode { display: inline-block; }
+        .qr-modal .qr-code-container #qrcode img { display: block; margin: 0 auto; }
+        .qr-modal .qr-status { font-size: 13px; color: #475569; margin: 12px 0; }
+        .qr-modal .qr-status .connected { color: #22c55e; font-weight: 600; }
+        .qr-modal .btn-row { display: flex; gap: 8px; margin-top: 12px; justify-content: center; flex-wrap: wrap; }
+        .qr-modal .btn-row button { padding: 8px 20px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .qr-modal .btn-row .btn-close { background: #f1f5f9; color: #475569; }
+        .qr-modal .btn-row .btn-close:hover { background: #e2e8f0; }
+        .qr-modal .btn-row .btn-refresh { background: #3b82f6; color: white; }
+        .qr-modal .btn-row .btn-refresh:hover { background: #2563eb; }
+        .qr-modal .btn-row .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+        .qr-modal .btn-row .btn-scan { background: #8b5cf6; color: white; }
+        .qr-modal .btn-row .btn-scan:hover { background: #7c3aed; }
+
+        /* 扫一扫 - 摄像头区域 */
+        .scanner-container { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; background: #000; position: relative; aspect-ratio: 1/1; }
+        .scanner-container video { width: 100%; height: 100%; object-fit: cover; }
+        .scanner-container .scanner-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; border: 2px solid rgba(255,255,255,0.6); border-radius: 12px; pointer-events: none; }
+        .scanner-container .scanner-line { position: absolute; top: 15%; left: 15%; width: 70%; height: 2px; background: #22c55e; animation: scanMove 2s ease-in-out infinite; pointer-events: none; }
+        @keyframes scanMove { 0%, 100% { top: 15%; } 50% { top: 75%; } }
+
+        .qr-modal .scanner-status { font-size: 13px; color: #94a3b8; margin: 8px 0; }
+        .qr-modal .scanner-status .found { color: #22c55e; font-weight: 600; }
+
+        /* ===== 手机端布局 ===== */
         @media (max-width: 768px) {
+            .app { flex-direction: column; }
+            .top-bar { display: flex !important; }
+            .menu-toggle { display: flex !important; }
             .sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100%; transform: translateX(-100%); box-shadow: 4px 0 20px rgba(0,0,0,0.15); border-right: none; z-index: 100; }
             .sidebar.open { transform: translateX(0); }
-            .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 99; }
-            .sidebar-overlay.active { display: block; }
-            #toggleSidebarBtn { display: flex !important; }
-            .right-toolbar { width: 180px; min-width: 180px; padding: 8px; }
-            .toast { min-width: 200px; padding: 16px 24px; font-size: 14px; }
+            .sidebar-overlay { display: block; }
+            .main-content { flex: 1; flex-direction: column; }
+            .pdf-viewport { flex: 1; }
+            .right-toolbar { width: 100%; min-width: unset; height: auto; max-height: 50vh; border-left: none; border-top: 1px solid rgba(226,232,240,0.5); padding: 8px 10px; overflow-y: auto; flex-shrink: 0; }
+            .right-toolbar .tool-section { padding: 6px 8px; }
+            .right-toolbar .audio-list-section { max-height: 80px; }
+            .right-toolbar .audio-player { padding: 6px 8px; }
+            .right-toolbar .nav-controls button { width: 28px; height: 28px; font-size: 12px; }
+            .right-toolbar .zoom-controls button { width: 24px; height: 24px; font-size: 12px; }
+            .right-toolbar .page-info { font-size: 11px; min-width: 40px; }
+            .right-toolbar .zoom-level { font-size: 10px; min-width: 30px; }
+            .right-toolbar .file-info .name { font-size: 11px; }
+            .right-toolbar .file-info .detail { font-size: 9px; }
+            .right-toolbar .audio-controls-row button { width: 26px; height: 26px; font-size: 12px; }
+            .right-toolbar .audio-controls-row .audio-name { font-size: 10px; }
+            .right-toolbar .audio-list-item { font-size: 10px; }
+            .right-toolbar .audio-player .audio-header .label { font-size: 8px; }
+            .right-toolbar .audio-player .audio-header .status-text { font-size: 9px; }
+            .qr-modal { padding: 16px; }
+            .qr-modal h3 { font-size: 15px; }
+            .qr-modal .qr-code-container { padding: 10px; }
+            .qr-modal .qr-code-container #qrcode img { width: 150px; height: 150px; }
         }
-        #toggleSidebarBtn { display: none; background: transparent; border: none; font-size: 17px; cursor: pointer; padding: 4px 6px; color: #1e293b; border-radius: 6px; align-items: center; justify-content: center; }
-        #toggleSidebarBtn:hover { background: #f1f5f9; }
-
-        .hidden-input { display: none; }
     </style>
 </head>
 <body>
 
 <div class="app" id="app">
+
+    <!-- 侧边栏遮罩 -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ===== 顶部导航 (手机端) ===== -->
+    <div class="top-bar" id="topBar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <span class="brand">有声书库 <span class="brand-sub">本地存储</span></span>
+        <span class="status" id="topBarStatus">就绪</span>
+    </div>
 
     <!-- ===== 左侧菜单 ===== -->
     <div class="sidebar" id="sidebar">
@@ -167,16 +249,24 @@
                 <input type="file" id="zipFileInput" accept=".zip">
             </button>
             <hr class="sidebar-divider">
+            <button class="btn-side" id="qrSyncBtn">
+                📡 扫码同步
+                <span class="badge" id="qrBadge" style="display:none;">●</span>
+            </button>
+            <button class="btn-side" id="scanBtn">
+                📷 扫一扫
+            </button>
+            <hr class="sidebar-divider">
             <button class="btn-side danger" id="clearAllBtn">
                 清空所有记录
             </button>
         </div>
         <div class="record-list" id="recordList">
-            <div class="record-empty">暂无阅读记录<br><span style="font-size:10px;">导入PDF后自动保存</span></div>
+            <div class="record-empty">暂无阅读记录<br><span style="font-size:9px;">导入PDF后自动保存</span></div>
         </div>
     </div>
 
-    <!-- ===== 右侧主内容 ===== -->
+    <!-- ===== 主内容 ===== -->
     <div class="main-content">
         <div class="pdf-viewport" id="pdfViewport">
             <div class="canvas-wrapper" id="canvasWrapper">
@@ -188,10 +278,8 @@
             </div>
         </div>
 
-        <!-- 右侧工具栏 -->
+        <!-- ===== 右侧工具栏 ===== -->
         <div class="right-toolbar" id="rightToolbar">
-            <button id="toggleSidebarBtn">☰</button>
-
             <div class="tool-section">
                 <div class="file-info">
                     <div class="name" id="fileNameDisplay">未选择PDF</div>
@@ -237,7 +325,6 @@
                 </div>
             </div>
 
-            <!-- 音频列表 - 全部展开 -->
             <div class="audio-list-section" id="audioListSection">
                 <div class="section-title">
                     音频列表
@@ -247,6 +334,35 @@
                     <div class="audio-list-empty">暂无音频，请批量添加</div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 扫码同步弹窗 ===== -->
+<div class="qr-modal-overlay" id="qrModal">
+    <div class="qr-modal">
+        <h3 id="qrTitle">📡 扫码同步</h3>
+        <p class="desc" id="qrDesc">生成二维码或扫描对方二维码进行同步</p>
+        <div id="qrContentArea">
+            <div class="qr-code-container" id="qrCodeContainer">
+                <div id="qrcode"></div>
+            </div>
+            <div class="qr-status" id="qrStatus">
+                <span id="qrStatusText">等待连接...</span>
+            </div>
+        </div>
+        <div id="scannerContentArea" style="display:none;">
+            <div class="scanner-container" id="scannerContainer">
+                <video id="scannerVideo" playsinline muted></video>
+                <div class="scanner-overlay"></div>
+                <div class="scanner-line"></div>
+            </div>
+            <div class="scanner-status" id="scannerStatus">等待扫码...</div>
+        </div>
+        <div class="btn-row">
+            <button class="btn-refresh" id="qrRefreshBtn">刷新二维码</button>
+            <button class="btn-scan" id="toggleScannerBtn">📷 扫一扫</button>
+            <button class="btn-close" id="qrCloseBtn">关闭</button>
         </div>
     </div>
 </div>
@@ -283,6 +399,18 @@
     let isLoading = false;
     let replaceTargetPage = null;
 
+    // PeerJS
+    let peer = null;
+    let peerConn = null;
+    let peerId = null;
+    let isPeerConnected = false;
+
+    // QR
+    let qrCodeInstance = null;
+    let qrInterval = null;
+    let isScannerMode = false;
+    let scanStream = null;
+
     // DOM
     const canvas = document.getElementById('pdfCanvas');
     const ctx = canvas.getContext('2d');
@@ -302,6 +430,7 @@
     const progressBar = document.getElementById('progressBar');
     const audioListContainer = document.getElementById('audioListContainer');
     const audioCountDisplay = document.getElementById('audioCountDisplay');
+    const topBarStatus = document.getElementById('topBarStatus');
 
     const playBtn = document.getElementById('playBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -312,7 +441,7 @@
     const replaceAudioInput = document.getElementById('replaceAudioInput');
     const zipFileInput = document.getElementById('zipFileInput');
     const clearAllBtn = document.getElementById('clearAllBtn');
-    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     const zoomOutBtn = document.getElementById('zoomOutBtn');
@@ -321,8 +450,24 @@
     const exportAllBtn = document.getElementById('exportAllBtn');
     const importZipBtn = document.getElementById('importZipBtn');
 
+    // QR DOM
+    const qrModal = document.getElementById('qrModal');
+    const qrCodeContainer = document.getElementById('qrcode');
+    const qrStatusText = document.getElementById('qrStatusText');
+    const qrRefreshBtn = document.getElementById('qrRefreshBtn');
+    const qrCloseBtn = document.getElementById('qrCloseBtn');
+    const qrSyncBtn = document.getElementById('qrSyncBtn');
+    const qrBadge = document.getElementById('qrBadge');
+    const scanBtn = document.getElementById('scanBtn');
+    const toggleScannerBtn = document.getElementById('toggleScannerBtn');
+    const scannerContainer = document.getElementById('scannerContainer');
+    const scannerVideo = document.getElementById('scannerVideo');
+    const scannerStatus = document.getElementById('scannerStatus');
+    const qrContentArea = document.getElementById('qrContentArea');
+    const scannerContentArea = document.getElementById('scannerContentArea');
+
     // ============================================================
-    //  Toast 提示
+    //  Toast
     // ============================================================
     function showToast(message, type, subMessage) {
         const overlay = document.createElement('div');
@@ -470,6 +615,162 @@
     }
 
     // ============================================================
+    //  PeerJS 同步
+    // ============================================================
+    // ============================================================
+//  PeerJS 同步
+// ============================================================
+function initPeer() {
+    try {
+        peer = new Peer(undefined, {
+            host: '0.peerjs.com',
+            port: 443,
+            path: '/',
+            secure: true
+        });
+
+        peer.on('open', function(id) {
+    peerId = id;
+    console.log('🔵 PeerJS 已启动，ID:', id);
+    // showToast('PeerJS 已连接', 'success', 'ID: ' + id);
+    // ★★★ 注释掉下面两行 ★★★
+    // qrBadge.style.display = 'inline-flex';
+    // qrBadge.textContent = '●';
+    // qrBadge.style.background = '#22c55e';
+});
+
+        peer.on('connection', function(conn) {
+            console.log('🔵 收到连接请求:', conn.peer);
+            peerConn = conn;
+            setupPeerConnection(conn);
+            // ★★★ 删除或注释掉下面这一行 ★★★
+            // showToast('设备已连接', 'success', conn.peer);
+            qrStatusText.textContent = '✅ 已连接: ' + conn.peer;
+            qrStatusText.style.color = '#22c55e';
+        });
+
+        peer.on('error', function(err) {
+            console.error('PeerJS 错误:', err);
+        });
+
+        peer.on('disconnected', function() {
+            console.log('PeerJS 断开连接');
+            isPeerConnected = false;
+        });
+
+    } catch(e) {
+        console.error('PeerJS 初始化失败:', e);
+        showToast('PeerJS 初始化失败', 'error', e.message);
+    }
+}
+    function setupPeerConnection(conn) {
+        isPeerConnected = true;
+        conn.on('data', function(data) {
+            console.log('📥 收到数据:', data);
+            handlePeerData(data);
+        });
+        conn.on('close', function() {
+            console.log('连接关闭');
+            isPeerConnected = false;
+            showToast('连接已断开', 'info');
+            qrStatusText.textContent = '连接已断开';
+            qrStatusText.style.color = '#ef4444';
+        });
+    }
+
+    function handlePeerData(data) {
+        try {
+            if (data.type === 'ping') {
+                if (peerConn && isPeerConnected) {
+                    peerConn.send({ type: 'pong' });
+                }
+                return;
+            }
+            if (data.type === 'sync_request') {
+                sendDataToPeer();
+                return;
+            }
+            if (data.type === 'sync_data') {
+                importPeerData(data.payload);
+                return;
+            }
+        } catch(e) {
+            console.error('处理数据失败:', e);
+        }
+    }
+
+    async function sendDataToPeer() {
+        try {
+            showToast('正在打包数据...', 'info');
+            const blob = await exportAllData();
+            const reader = new FileReader();
+            reader.onload = function() {
+                const base64 = reader.result.split(',')[1];
+                if (peerConn && isPeerConnected) {
+                    peerConn.send({
+                        type: 'sync_data',
+                        payload: base64
+                    });
+                    showToast('数据已发送', 'success', (blob.size / 1024 / 1024).toFixed(1) + ' MB');
+                }
+            };
+            reader.readAsDataURL(blob);
+        } catch(e) {
+            console.error('发送数据失败:', e);
+            showToast('发送失败', 'error', e.message);
+        }
+    }
+
+    async function importPeerData(base64Data) {
+        try {
+            showToast('正在导入数据...', 'info');
+            const binary = atob(base64Data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            await importAllData(bytes.buffer);
+            showToast('同步完成！', 'success', records.length + ' 个绘本');
+        } catch(e) {
+            console.error('导入失败:', e);
+            showToast('导入失败', 'error', e.message);
+        }
+    }
+
+   function connectToPeer(targetId) {
+    if (!peer) {
+        showToast('PeerJS 未初始化', 'error');
+        return;
+    }
+    try {
+        const conn = peer.connect(targetId);
+        conn.on('open', function() {
+            console.log('✅ 连接成功:', targetId);
+            peerConn = conn;
+            isPeerConnected = true;
+            setupPeerConnection(conn);
+            // ★★★ 删除或注释掉下面这一行 ★★★
+            // showToast('连接成功', 'success', targetId);
+            qrStatusText.textContent = '✅ 已连接: ' + targetId;
+            qrStatusText.style.color = '#22c55e';
+            setTimeout(() => {
+                if (peerConn && isPeerConnected) {
+                    peerConn.send({ type: 'sync_request' });
+                }
+            }, 500);
+        });
+        conn.on('error', function(err) {
+            console.error('连接失败:', err);
+            showToast('连接失败', 'error', err.message);
+            qrStatusText.textContent = '连接失败: ' + err.message;
+            qrStatusText.style.color = '#ef4444';
+        });
+    } catch(e) {
+        console.error('连接异常:', e);
+        showToast('连接异常', 'error', e.message);
+    }
+}
+    // ============================================================
     //  导出全部ZIP
     // ============================================================
     async function exportAllData() {
@@ -568,7 +869,7 @@
     // ============================================================
     function renderRecords() {
         if (records.length === 0) {
-            recordListEl.innerHTML = `<div class="record-empty">暂无阅读记录<br><span style="font-size:10px;">导入PDF后自动保存</span></div>`;
+            recordListEl.innerHTML = `<div class="record-empty">暂无阅读记录<br><span style="font-size:9px;">导入PDF后自动保存</span></div>`;
             return;
         }
         let html = '';
@@ -703,6 +1004,7 @@
                 canvas.style.display = 'none';
                 updateUI();
                 audioStatusText.textContent = '就绪';
+                topBarStatus.textContent = '就绪';
             }
             saveRecords();
             renderRecords();
@@ -739,6 +1041,7 @@
             renderRecords();
             renderAudioList();
             audioStatusText.textContent = '已清空';
+            topBarStatus.textContent = '已清空';
             showToast('已清空所有记录', 'info');
         } catch(e) { console.error('清空失败:', e); showToast('清空失败', 'error', e.message); }
     }
@@ -752,11 +1055,13 @@
         if (isLoading) return;
         isLoading = true;
         audioStatusText.textContent = '加载中...';
+        topBarStatus.textContent = '加载中...';
 
         try {
             currentRecordId = id;
             fileNameDisplay.textContent = rec.name || '未命名';
             fileDetailDisplay.textContent = rec.pages + ' 页 · ' + (rec.audioMap ? Object.keys(rec.audioMap).length : 0) + ' 个音频';
+            topBarStatus.textContent = rec.name || '加载中';
 
             const pdfData = await getPDFFromDB(id);
             if (pdfData) {
@@ -800,6 +1105,7 @@
                 updateUI();
                 renderAudioList();
                 audioStatusText.textContent = totalPages + '页 · ' + pageAudioMap.size + '音频';
+                topBarStatus.textContent = rec.name || '已加载';
             } else {
                 placeholder.style.display = 'block';
                 canvas.style.display = 'none';
@@ -811,6 +1117,7 @@
                 updateUI();
                 renderAudioList();
                 audioStatusText.textContent = 'PDF丢失';
+                topBarStatus.textContent = 'PDF丢失';
             }
             renderRecords();
             updatePlayBtn();
@@ -818,6 +1125,7 @@
         } catch(e) {
             console.error('加载失败:', e);
             audioStatusText.textContent = '加载失败';
+            topBarStatus.textContent = '加载失败';
             placeholder.style.display = 'block';
             canvas.style.display = 'none';
             pdfDoc = null;
@@ -834,6 +1142,7 @@
         currentRecordId = id;
         saveRecords();
         renderRecords();
+        topBarStatus.textContent = file.name || '已导入';
         return rec;
     }
 
@@ -859,6 +1168,7 @@
         if (isLoading) return;
         isLoading = true;
         audioStatusText.textContent = '加载PDF...';
+        topBarStatus.textContent = '加载中...';
 
         try {
             const reader = new FileReader();
@@ -907,10 +1217,12 @@
             renderRecords();
             renderAudioList();
             audioStatusText.textContent = totalPages + '页 · 就绪';
+            topBarStatus.textContent = file.name || '已加载';
             showToast('PDF导入成功: ' + file.name, 'success', totalPages + ' 页');
         } catch(e) {
             console.error('PDF加载失败:', e);
             audioStatusText.textContent = '加载失败';
+            topBarStatus.textContent = '加载失败';
             showToast('PDF加载失败', 'error', e.message);
             placeholder.style.display = 'block';
             canvas.style.display = 'none';
@@ -1330,6 +1642,172 @@
     function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
 
     // ============================================================
+    //  QR 扫码同步 - 修复版
+    
+    
+    // ★★★ 新增：立即生成二维码（不等待 PeerJS）★★★
+function generateQRCodeImmediate() {
+    // 清空容器
+    qrCodeContainer.innerHTML = '';
+    
+    // 使用临时 ID 或 "请稍后" 生成二维码
+    const tempId = peerId || 'connecting...';
+    const qrData = JSON.stringify({
+        type: 'smartbook_sync',
+        version: '1.0',
+        peerId: tempId,
+        timestamp: Date.now(),
+        device: 'computer'
+    });
+    
+    try {
+        qrCodeInstance = new QRCode(qrCodeContainer, {
+            text: qrData,
+            width: 200,
+            height: 200,
+            colorDark: '#0f172a',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        qrStatusText.textContent = peerId ? '等待扫码连接... Peer ID: ' + peerId : '⏳ PeerJS 连接中...';
+        qrStatusText.style.color = '#475569';
+         // qrBadge.style.display = 'inline-flex';
+    // qrBadge.textContent = '●';
+    // qrBadge.style.background = '#22c55e';
+        
+        // 如果 PeerJS 还没连上，监听连接成功后刷新二维码
+        if (!peerId) {
+            const checkPeer = setInterval(() => {
+                if (peerId) {
+                    clearInterval(checkPeer);
+                    qrCodeContainer.innerHTML = '';
+                    generateQRCode(); // 用真实 ID 重新生成
+                    qrStatusText.textContent = '等待扫码连接... Peer ID: ' + peerId;
+                }
+            }, 500);
+            // 10秒超时
+            setTimeout(() => clearInterval(checkPeer), 10000);
+        }
+    } catch(e) {
+        console.error('生成二维码失败:', e);
+        qrCodeContainer.innerHTML = '<div style="padding:20px;color:#ef4444;">二维码生成失败，请重试</div>';
+    }
+}
+    // ============================================================
+    function generateQRCode() {
+    if (!peerId) {
+        qrStatusText.textContent = 'PeerJS 未就绪，请稍后...';
+        qrStatusText.style.color = '#f59e0b';
+        setTimeout(generateQRCode, 1000);
+        return;
+    }
+    
+    const qrData = JSON.stringify({
+        type: 'smartbook_sync',
+        version: '1.0',
+        peerId: peerId,
+        timestamp: Date.now(),
+        device: 'computer'
+    });
+    
+    qrCodeContainer.innerHTML = '';
+    
+    try {
+        qrCodeInstance = new QRCode(qrCodeContainer, {
+            text: qrData,
+            width: 200,
+            height: 200,
+            colorDark: '#0f172a',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        qrStatusText.textContent = '等待扫码连接... Peer ID: ' + peerId;
+        qrStatusText.style.color = '#475569';
+          // qrBadge.style.display = 'inline-flex';
+    // qrBadge.textContent = '●';
+    // qrBadge.style.background = '#22c55e';
+    } catch(e) {
+        console.error('生成二维码失败:', e);
+        qrCodeContainer.innerHTML = '<div style="padding:20px;color:#ef4444;">二维码生成失败，请重试</div>';
+        showToast('二维码生成失败', 'error', e.message);
+    }
+}
+    function startScanner() {
+        isScannerMode = true;
+        qrContentArea.style.display = 'none';
+        scannerContentArea.style.display = 'block';
+        toggleScannerBtn.textContent = '📄 显示二维码';
+        scannerStatus.textContent = '正在启动摄像头...';
+        scannerStatus.style.color = '#94a3b8';
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(function(stream) {
+                    scanStream = stream;
+                    scannerVideo.srcObject = stream;
+                    scannerVideo.play();
+                    scannerStatus.textContent = '扫描二维码中...';
+                    scannerStatus.style.color = '#475569';
+                    // 模拟扫描检测
+                    detectQRFromVideo();
+                })
+                .catch(function(err) {
+                    console.error('摄像头启动失败:', err);
+                    scannerStatus.textContent = '❌ 摄像头启动失败: ' + err.message;
+                    scannerStatus.style.color = '#ef4444';
+                    showToast('摄像头启动失败', 'error', err.message);
+                });
+        } else {
+            scannerStatus.textContent = '❌ 此设备不支持摄像头';
+            scannerStatus.style.color = '#ef4444';
+        }
+    }
+
+    function stopScanner() {
+        isScannerMode = false;
+        if (scanStream) {
+            scanStream.getTracks().forEach(track => track.stop());
+            scanStream = null;
+        }
+        scannerVideo.srcObject = null;
+        scannerContentArea.style.display = 'none';
+        qrContentArea.style.display = 'block';
+        toggleScannerBtn.textContent = '📷 扫一扫';
+    }
+
+    function detectQRFromVideo() {
+        // 模拟 QR 检测 - 点击屏幕模拟扫码
+        scannerVideo.addEventListener('click', function() {
+            if (peerId) {
+                scannerStatus.textContent = '✅ 扫码成功！连接中...';
+                scannerStatus.style.color = '#22c55e';
+                showToast('扫码成功', 'success', '正在连接...');
+                if (peerId) {
+                    connectToPeer(peerId);
+                }
+                setTimeout(() => {
+                    stopScanner();
+                }, 1500);
+            }
+        });
+        scannerStatus.textContent = '📱 点击屏幕模拟扫码（演示）';
+        scannerStatus.style.color = '#8b5cf6';
+    }
+
+    function closeQRModal() {
+        qrModal.classList.remove('active');
+        stopScanner();
+        if (qrInterval) {
+            clearInterval(qrInterval);
+            qrInterval = null;
+        }
+        qrCodeInstance = null;
+        qrCodeContainer.innerHTML = '';
+        qrStatusText.textContent = '等待连接...';
+        qrStatusText.style.color = '#475569';
+    }
+
+    // ============================================================
     //  初始化
     // ============================================================
     async function init() {
@@ -1340,7 +1818,13 @@
         setupPanZoom();
         setupAudioPlayer();
 
-        if (window.innerWidth <= 768) toggleSidebarBtn.style.display = 'flex';
+        // 初始化 PeerJS
+        initPeer();
+
+        // 检测移动端
+        if (window.innerWidth <= 768) {
+            menuToggle.style.display = 'flex';
+        }
 
         // ---- 导入PDF ----
         document.getElementById('importPdfBtn').addEventListener('click', function(e) {
@@ -1418,11 +1902,60 @@
             importZipBtn.disabled = false;
         });
 
+        // ---- QR扫码同步 ----
+    
+qrSyncBtn.addEventListener('click', function() {
+    qrModal.classList.add('active');
+    qrContentArea.style.display = 'block';
+    scannerContentArea.style.display = 'none';
+    toggleScannerBtn.textContent = '📷 扫一扫';
+    isScannerMode = false;
+    // ★★★ 立即生成二维码，不等待 ★★★
+    generateQRCodeImmediate();
+});
+
+        
+        // 扫一扫按钮 (左侧菜单)
+        scanBtn.addEventListener('click', function() {
+            qrModal.classList.add('active');
+            if (!isScannerMode) {
+                startScanner();
+            } else {
+                stopScanner();
+                startScanner();
+            }
+        });
+
+        qrRefreshBtn.addEventListener('click', function() {
+            if (isScannerMode) {
+                stopScanner();
+                startScanner();
+                return;
+            }
+            qrCodeInstance = null;
+            qrCodeContainer.innerHTML = '';
+            generateQRCode();
+            
+        });
+
+        toggleScannerBtn.addEventListener('click', function() {
+            if (isScannerMode) {
+                stopScanner();
+            } else {
+                startScanner();
+            }
+        });
+
+        qrCloseBtn.addEventListener('click', closeQRModal);
+        qrModal.addEventListener('click', function(e) {
+            if (e.target === qrModal) closeQRModal();
+        });
+
         // ---- 清空 ----
         clearAllBtn.addEventListener('click', clearAllRecords);
 
         // ---- 侧边栏切换 ----
-        toggleSidebarBtn.addEventListener('click', toggleSidebar);
+        menuToggle.addEventListener('click', toggleSidebar);
         sidebarOverlay.addEventListener('click', closeSidebar);
 
         // ---- 翻页 ----
@@ -1461,8 +1994,8 @@
 
         // ---- 窗口resize ----
         window.addEventListener('resize', function() {
-            if (window.innerWidth <= 768) { toggleSidebarBtn.style.display = 'flex'; }
-            else { toggleSidebarBtn.style.display = 'none'; closeSidebar(); }
+            if (window.innerWidth <= 768) { menuToggle.style.display = 'flex'; }
+            else { menuToggle.style.display = 'none'; closeSidebar(); }
             if (pdfDoc) renderPage(currentPage);
         });
 
