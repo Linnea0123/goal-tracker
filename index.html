@@ -1648,18 +1648,45 @@
             //  缩放计算 - 占满界面 + 可无限放大
             // ============================================================
 
-            let fitScale = 1.0;
+         // ============================================================
+//  缩放计算 - 针对移动端优化（修复顶部/底部工具栏遮挡）
+// ============================================================
 
-            function calculateFitScale(pageWidth, pageHeight) {
-                const rect = viewport.getBoundingClientRect();
-                const padding = 5;
-                const scaleX = (rect.width - padding * 2) / pageWidth;
-                const scaleY = (rect.height - padding * 2) / pageHeight;
-                fitScale = Math.min(scaleX, scaleY);
-                if (fitScale < 0.2) fitScale = 0.2;
-                return fitScale;
-            }
+let fitScale = 1.0;
 
+function calculateFitScale(pageWidth, pageHeight) {
+    // 获取实际可视尺寸
+    let viewWidth = window.innerWidth;
+    let viewHeight = window.innerHeight;
+    
+    // 使用 visualViewport 获取更精确的尺寸（移动端支持）
+    if (window.visualViewport) {
+        viewWidth = window.visualViewport.width;
+        viewHeight = window.visualViewport.height;
+    }
+    
+    // 右侧工具栏宽度（PC端280px，移动端隐藏）
+    const isMobile = /iPad|iPhone|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
+    const toolbarWidth = isMobile ? 0 : 280;
+    const padding = 10;
+    
+    // 可用宽度 = 视口宽度 - 右侧工具栏 - 边距
+    const availableWidth = viewWidth - toolbarWidth - padding * 2;
+    
+    // 可用高度 = 视口高度 - 顶部/底部工具栏（移动端约120px）
+    const mobileToolbarHeight = 120;
+    const desktopToolbarHeight = 20;
+    const toolbarHeight = isMobile ? mobileToolbarHeight : desktopToolbarHeight;
+    const availableHeight = viewHeight - toolbarHeight - padding * 2;
+    
+    // 计算缩放
+    const scaleX = availableWidth / pageWidth;
+    const scaleY = availableHeight / pageHeight;
+    fitScale = Math.min(scaleX, scaleY);
+    if (fitScale < 0.2) fitScale = 0.2;
+    if (fitScale > 2.0) fitScale = 2.0;
+    return fitScale;
+}
             // ============================================================
             //  renderPage - 支持无限缩放
             // ============================================================
@@ -2871,6 +2898,21 @@ newZipInput.style.display = 'none';
             renderPage(currentPage);
         }
     });
+
+// ========================================
+// 监听移动端视口变化（适应工具栏显示/隐藏）
+// ========================================
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function() {
+        if (pdfDoc) {
+            pageCache.clear();
+            fitScale = 1.0;
+            renderPage(currentPage);
+        }
+    });
+}
+
+
 
     updateUI();
     updatePlayBtn();
